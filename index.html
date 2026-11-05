@@ -495,6 +495,12 @@
       .desk-card{min-height:150px!important;padding:10px!important}
       .desk-card .truncate{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-word;line-height:1.2}
     }
+    /* ===== v6: telefonda fotoğraf üstte ortada, bilgiler altta ===== */
+    @media (max-width:640px){
+      .desk-av{position:relative!important;order:-1;align-self:center;margin:0 auto 6px!important;right:auto!important;top:auto!important;width:56px;height:56px;font-size:17px}
+      .desk-av-pad{padding-right:0!important}
+      .desk-card{min-height:170px!important}
+    }
 </style>
   <link rel="manifest" href="./manifest.json">
     <!-- PWA & Mobile Web App Meta Tags & App Icon -->
@@ -12550,6 +12556,22 @@
   </script>
 
   <script>
+  // Öğrenci ders + konu seçip kaydedince otomatik "Çalışıyor" konumuna geçer (mola / çevrim dışı elle seçilir)
+  var _ssd6 = saveStudyData;
+  saveStudyData = function() {
+    var r = _ssd6.apply(this, arguments);
+    try {
+      if (currentUser && currentUser.role === 'student') {
+        var d = ((branchesData[currentBranch] || {})[currentClass] || []).find(function(x){ return x.deskNumber === selectedDeskIndex; });
+        if (d && d.subject && d.topic && d.status !== 'active' && d.status !== 'break') setStudyStatus('active');
+      }
+    } catch(e) { console.warn(e); }
+    return r;
+  };
+  </script>
+
+
+  <script>
   // ===== v3 =====
   function openSettings() { if (!currentUser || currentUser.role !== 'admin') { alert('Bu bölüm yalnızca yöneticiler içindir.'); return; } document.getElementById('settingsModal').classList.remove('hidden'); }
   function openHwModule() { if (!currentUser || (currentUser.role !== 'coach' && currentUser.role !== 'admin')) return; document.getElementById('hwModuleModal').classList.remove('hidden'); }
@@ -12722,7 +12744,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=19', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=20', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
