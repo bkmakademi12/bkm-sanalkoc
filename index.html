@@ -12702,30 +12702,43 @@
     });
   }
 
-  // Masa verilerini yalnızca değişen masalar için buluta yaz (cihazlar birbirinin verisini ezmesin)
-  var lastBrSync = {}, lastBrLen = {}, _scn4 = syncCloudNode;
+  // Masa verileri: ilk bulut verisi gelmeden yazma yok, yalnızca yetkili cihaz yazar, yalnızca değişen alanlar gider
+  var brSeeded = false, lastBrSync = {}, _scn4 = syncCloudNode;
+  function canWriteDesk(d) {
+    if (!currentUser || !d) return false;
+    if (currentUser.role === 'coach' || currentUser.role === 'admin') return true;
+    return !!(d.username && currentUser.username && String(d.username).toLowerCase() === String(currentUser.username).toLowerCase());
+  }
   syncCloudNode = function(name, data) {
     if (name !== 'branchesData' || !fbDb || !isCloudReady || !data) return _scn4.apply(this, arguments);
+    if (!brSeeded) return; // bulut verisi gelmeden eski yerel veriyi buluta yazma (herkesi çevrimdışı yapıyordu)
     try {
-      var up = {}, n = 0, shrink = false, snap = {};
+      var up = {}, n = 0;
       Object.keys(data).forEach(function(b) { Object.keys(data[b] || {}).forEach(function(c) {
         var arr = data[b][c]; if (!Array.isArray(arr)) return;
-        var lk = b + '/' + c; if (lastBrLen[lk] !== undefined && arr.length < lastBrLen[lk]) shrink = true;
-        snap[lk] = arr.length;
-        arr.forEach(function(d, i) { var j = JSON.stringify(d), k = lk + '/' + i; if (lastBrSync[k] !== j) { up[k] = JSON.parse(j); n++; } });
+        arr.forEach(function(d, i) {
+          if (!d || !canWriteDesk(d)) return;
+          var k = b + '/' + c + '/' + i, cur = JSON.parse(JSON.stringify(d)), old = lastBrSync[k];
+          if (!old) { up[k] = cur; n++; }
+          else {
+            Object.keys(cur).concat(Object.keys(old)).forEach(function(f) {
+              if (JSON.stringify(cur[f]) !== JSON.stringify(old[f])) { up[k + '/' + f] = (cur[f] === undefined ? null : cur[f]); n++; }
+            });
+          }
+          lastBrSync[k] = cur;
+        });
       }); });
-      if (shrink || Object.keys(lastBrSync).length === 0 && n > 300) return _scn4.apply(this, arguments);
-      if (n === 0) return;
-      fbDb.ref('branchesData').update(up).catch(function(err){ console.warn('Masa güncelleme hatası:', err); });
-    } catch(e) { return _scn4.apply(this, arguments); }
+      if (n) fbDb.ref('branchesData').update(up).catch(function(err){ console.warn('Masa güncelleme hatası:', err); });
+    } catch(e) { console.warn(e); }
   };
   if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) {
     fbDb.ref('branchesData').on('value', function(sn) {
-      var v = sn.val(); if (!v) return; lastBrSync = {}; lastBrLen = {};
-      Object.keys(v).forEach(function(b) { Object.keys(v[b] || {}).forEach(function(c) {
-        var arr = Array.isArray(v[b][c]) ? v[b][c] : Object.values(v[b][c] || {}); lastBrLen[b + '/' + c] = arr.length;
-        arr.forEach(function(d, i) { lastBrSync[b + '/' + c + '/' + i] = JSON.stringify(d); });
+      var v = sn.val(); lastBrSync = {};
+      if (v) Object.keys(v).forEach(function(b) { Object.keys(v[b] || {}).forEach(function(c) {
+        var arr = Array.isArray(v[b][c]) ? v[b][c] : Object.values(v[b][c] || {});
+        arr.forEach(function(d, i) { lastBrSync[b + '/' + c + '/' + i] = JSON.parse(JSON.stringify(d)); });
       }); });
+      brSeeded = true;
     });
   }
   updateAuthUI(); renderDesks();
@@ -12744,7 +12757,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=20', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=22', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
