@@ -1,5 +1,5 @@
 // BKM Sanal Koç - Service Worker (ağ öncelikli: dosya güncellenince uygulama da güncellenir)
-const CACHE = 'bkm-sanal-koc-v18';
+const CACHE = 'bkm-sanal-koc-v19';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

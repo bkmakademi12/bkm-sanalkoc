@@ -477,6 +477,24 @@
     #welcomeGate label,#welcomeGate .text-slate-300{color:#cbd5e1!important}
     #welcomeGate .text-slate-500{color:#94a3b8!important}
     #welcomeGate input{background:rgba(255,255,255,.96)!important;color:#0f172a!important;border:1px solid rgba(255,255,255,.4)!important}
+    /* ===== v5: giriş kutusu, iPhone uyumu, telefon masa kartları ===== */
+    #welcomeGate input,#welcomeGate input.text-white{color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;caret-color:#0f172a}
+    #welcomeGate input::placeholder{color:#64748b!important;-webkit-text-fill-color:#64748b!important;opacity:1}
+    #desksGrid{transform-style:flat!important}
+    .classroom-stage-3d #desksGrid{transform-style:preserve-3d!important}
+    .desk-av{width:68px;height:68px}
+    .desk-av-pad{padding-right:78px}
+    .desk-table-3d .desk-av{width:52px;height:52px}
+    .desk-table-3d .desk-av-pad{padding-right:62px}
+    @media (max-width:767px){
+      #btnView3D,#camera3DControls{display:none!important}
+    }
+    @media (max-width:640px){
+      .desk-av{width:44px;height:44px;font-size:14px;border-width:3px;right:6px!important}
+      .desk-av-pad{padding-right:50px}
+      .desk-card{min-height:150px!important;padding:10px!important}
+      .desk-card .truncate{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-word;line-height:1.2}
+    }
 </style>
   <link rel="manifest" href="./manifest.json">
     <!-- PWA & Mobile Web App Meta Tags & App Icon -->
@@ -12655,10 +12673,10 @@
       var t3 = el.querySelector('.desk-table-3d'), host = t3 || el, body = el.querySelector('.mt-1,.my-auto'), sz = t3 ? 52 : 68;
       var url = studentPhotos[spKey(d.username)];
       var a = document.createElement('div');
-      a.className = 'st-avatar st-avatar-lg ' + (d.status === 'active' ? 's-active' : d.status === 'break' ? 's-break' : 's-offline');
-      a.style.cssText = 'position:absolute;right:10px;top:' + (t3 ? 34 : 32) + 'px;width:' + sz + 'px;height:' + sz + 'px;z-index:5';
+      a.className = 'st-avatar st-avatar-lg desk-av ' + (d.status === 'active' ? 's-active' : d.status === 'break' ? 's-break' : 's-offline');
+      a.style.cssText = 'position:absolute;right:8px;top:' + (t3 ? 34 : 30) + 'px;z-index:5';
       if (url) { var im = document.createElement('img'); im.src = url; im.style.cssText = 'width:100%;height:100%;object-fit:cover'; a.appendChild(im); } else a.textContent = initialsOf(d.studentName);
-      host.appendChild(a); if (body) body.style.paddingRight = (sz + 10) + 'px';
+      host.appendChild(a); if (body) body.classList.add('desk-av-pad');
     });
   }
 
@@ -12691,6 +12709,12 @@
   updateAuthUI(); renderDesks();
   </script>
 
+  <script>
+  // Telefonlarda 3B görünüm kapalı: 2B'ye geç (iPhone Safari uyumu)
+  (function(){ try { if (window.innerWidth < 768 && currentClassroomView === '3d') setClassroomViewMode('2d'); } catch(e) {} })();
+  </script>
+
+
 
 
 
@@ -12698,7 +12722,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=18', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=19', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
