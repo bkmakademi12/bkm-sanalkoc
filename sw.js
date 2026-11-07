@@ -1,5 +1,5 @@
 // BKM Sanal Koç - Service Worker (ağ öncelikli: dosya güncellenince uygulama da güncellenir)
-const CACHE = 'bkm-sanal-koc-v26';
+const CACHE = 'bkm-sanal-koc-v27';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -28,4 +28,29 @@ self.addEventListener('fetch', (e) => {
       })
       .catch(() => caches.match(req).then((m) => m || caches.match('./index.html')))
   );
+});
+
+// ---- Anlık bildirim (FCM / Web Push) ----
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) {}
+  const n = d.data || d.notification || {};
+  e.waitUntil(self.registration.showNotification(n.title || 'BKM Sanal Koç', {
+    body: n.body || '',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: n.tag || 'bkm',
+    renotify: true,
+    requireInteraction: true,
+    vibrate: [300, 100, 300, 100, 300],
+    data: { url: './' }
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) { if ('focus' in c) return c.focus(); }
+    return self.clients.openWindow('./');
+  }));
 });

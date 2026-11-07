@@ -537,6 +537,7 @@
   <!-- Google Firebase Realtime Database SDK (Canlı Senkronizasyon) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
@@ -625,6 +626,7 @@
       </button>
 
       <!-- YÖNETİCİ: ÖĞRETMEN EKLEME BUTONU (YENİ!) -->
+      <button id="pushBtn" type="button" style="display:none" onclick="pushRegister(false)" class="px-3 py-1.5 sm:py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-bell"></i> <span class="hidden lg:inline" id="pushBtnTxt">Bildirimleri Aç</span></button>
       <button id="moduleSwitchBtn" type="button" style="display:none" onclick="showModules()" class="px-3 py-1.5 sm:py-2 bg-slate-600 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-table-cells-large"></i> <span class="hidden lg:inline">Modüller</span></button>
       <button id="hwModuleBtn" type="button" style="display:none" onclick="openHwModule()" class="px-3 py-1.5 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-book-open-reader"></i> <span class="hidden lg:inline">Ödev Modülü</span><span class="lg:hidden">Ödev</span></button>
       <button id="settingsBtn" type="button" style="display:none" onclick="openSettings()" class="px-3 py-1.5 sm:py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-gear"></i> <span class="hidden lg:inline">Ayarlar</span></button>
@@ -12985,7 +12987,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=26', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=27', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13340,6 +13342,103 @@
   });
   // Tarayıcının uygulama verisini kendiliğinden silmesini zorlaştır
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
+  </script>
+
+  <script>
+  // ===== v10: rapor koruma (her rapor ayrı kayıt + yedek) ve anlık bildirim istemcisi =====
+  var repLegacy = [], repById = {}, repDeleted = {}, repLegacyReady = false, repByIdReady = false, lastRepJson = {};
+  function rkey(id) { return String(id).replace(/[.#$\/\[\]]/g, '_'); }
+  function repBackupLoad() { try { return JSON.parse(localStorage.getItem('bkm_reports_backup_v1')) || {}; } catch(e) { return {}; } }
+  function repBackupSave(m) { try { localStorage.setItem('bkm_reports_backup_v1', JSON.stringify(m)); } catch(e) {} }
+  // Güncelleme sonrası ilk açılışta cihazdaki eski rapor listesi hâlâ yerelde durur: yedeğe al
+  (function() { var bk = repBackupLoad(); (Array.isArray(dailyReports) ? dailyReports : []).forEach(function(r) { if (r && r.id) bk[rkey(r.id)] = r; }); repBackupSave(bk); })();
+
+  function mergeReports() {
+    if (!repLegacyReady || !repByIdReady) return;
+    var map = {}, noId = [];
+    repLegacy.forEach(function(r) { if (!r) return; if (!r.id) { noId.push(r); return; } if (!repDeleted[rkey(r.id)]) map[rkey(r.id)] = r; });
+    Object.keys(repById).forEach(function(k) { var r = repById[k]; if (r && r.id && !repDeleted[k]) map[k] = r; });
+    var bk = repBackupLoad();
+    Object.keys(bk).forEach(function(k) { if (!map[k] && !repDeleted[k]) map[k] = bk[k]; }); // bulutta kaybolanları yedekten geri getir
+    repBackupSave(map);
+    var arr = Object.keys(map).map(function(k){ return map[k]; }).concat(noId);
+    arr.sort(function(a, b){ return String(b.date || '').localeCompare(String(a.date || '')) || String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')); });
+    dailyReports = arr;
+    try { localStorage.setItem('bkm_daily_reports_v14', JSON.stringify(arr)); } catch(e) {}
+    lastRepJson = {}; arr.forEach(function(r){ if (r.id) lastRepJson[rkey(r.id)] = JSON.stringify(r); });
+    var up = {}, n = 0;
+    arr.forEach(function(r) { if (!r.id) return; var k = rkey(r.id); if (!repById[k]) { up['reportsById/' + k] = JSON.parse(JSON.stringify(r)); n++; } });
+    if (n && fbDb) fbDb.ref().update(up).catch(function(e){ console.warn('Rapor yedekleme hatası:', e); });
+    try { if (typeof renderTeacherDailyReports === 'function') renderTeacherDailyReports(); } catch(e) {}
+  }
+  var _scnR = syncCloudNode;
+  syncCloudNode = function(name, data) {
+    if (name !== 'dailyReports' || !fbDb || !isCloudReady) return _scnR.apply(this, arguments);
+    if (!repLegacyReady || !repByIdReady) return;
+    try {
+      var up = {}, cur = {}, n = 0;
+      (Array.isArray(data) ? data : []).forEach(function(r) {
+        if (!r || !r.id) return; var k = rkey(r.id), j = JSON.stringify(r); cur[k] = 1;
+        if (lastRepJson[k] !== j) { up['reportsById/' + k] = JSON.parse(j); lastRepJson[k] = j; n++; }
+      });
+      Object.keys(lastRepJson).forEach(function(k) { if (!cur[k]) { up['reportsById/' + k] = null; up['reportsDeleted/' + k] = true; delete lastRepJson[k]; repDeleted[k] = true; n++; } });
+      if (n) fbDb.ref().update(up).catch(function(e){ console.warn('Rapor yazma hatası:', e); });
+    } catch(e) { console.warn(e); }
+  };
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) {
+    fbDb.ref('dailyReports').on('value', function(sn) { var v = sn.val(); repLegacy = Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v).filter(function(x){ return x && typeof x === 'object'; }) : []); repLegacyReady = true; mergeReports(); });
+    fbDb.ref('reportsById').on('value', function(sn) { repById = sn.val() || {}; repByIdReady = true; mergeReports(); });
+    fbDb.ref('reportsDeleted').on('value', function(sn) { repDeleted = sn.val() || {}; mergeReports(); });
+  }
+
+  // ---- Anlık bildirim (FCM) ----
+  var FCM_VAPID_KEY = 'BURAYA_VAPID_ANAHTARI';
+  function pushKey(t) { return String(t).slice(-48).replace(/[^A-Za-z0-9_:-]/g, '_'); }
+  function pushBtnUpdate() {
+    var b = document.getElementById('pushBtn'), t = document.getElementById('pushBtnTxt'); if (!b) return;
+    b.style.display = currentUser ? 'inline-flex' : 'none';
+    var on = ('Notification' in window) && Notification.permission === 'granted' && localStorage.getItem('bkm_push_key');
+    if (t) t.innerText = on ? 'Bildirimler Açık' : 'Bildirimleri Aç';
+    b.style.background = on ? '#059669' : '';
+  }
+  async function pushRegister(silent) {
+    try {
+      if (!currentUser || !('Notification' in window) || !('serviceWorker' in navigator)) { if (!silent) alert('Bu cihaz anlık bildirimi desteklemiyor. iPhone için uygulamayı önce ana ekrana ekleyin (iOS 16.4 veya üstü).'); return false; }
+      if (!(firebase.messaging && firebase.messaging.isSupported())) { if (!silent) alert('Bu tarayıcı anlık bildirimi desteklemiyor.'); return false; }
+      if (String(FCM_VAPID_KEY).indexOf('BURAYA') === 0) { if (!silent) alert('Bildirim anahtarı (VAPID) henüz tanımlanmamış. BILDIRIM_KURULUM.md dosyasındaki adımları uygulayın.'); return false; }
+      var perm = Notification.permission;
+      if (perm === 'default' && !silent) perm = await Notification.requestPermission();
+      if (perm !== 'granted') { if (!silent) alert('Bildirim izni verilmedi. Tarayıcı ayarlarından izin verebilirsiniz.'); return false; }
+      var reg = await navigator.serviceWorker.ready;
+      var token = await firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+      if (!token) return false;
+      var k = pushKey(token); localStorage.setItem('bkm_push_key', k);
+      await fbDb.ref('fcmTokens/' + k).set({ token: token, username: currentUser.username, name: currentUser.name, role: currentUser.role, branch: currentUser.branch || '', class: currentUser.class || '', ts: Date.now() });
+      if (!window.__fcmFg) { window.__fcmFg = true; firebase.messaging().onMessage(function(p) { var d = p.data || p.notification || {}; try { playSchoolBellSound(); showSystemNotification(d.title, d.body); showInAppToast(d.title, 'Sanal Koç', d.body); } catch(e) {} }); }
+      pushBtnUpdate(); if (!silent) alert('✅ Bildirimler açıldı. Uygulama kapalı olsa bile bildirim alacaksınız.');
+      return true;
+    } catch(e) { console.warn(e); if (!silent) alert('Bildirim açılamadı: ' + e.message); return false; }
+  }
+  function pushUnregister() { var k = localStorage.getItem('bkm_push_key'); if (k && fbDb) { try { fbDb.ref('fcmTokens/' + k).remove(); } catch(e) {} } localStorage.removeItem('bkm_push_key'); }
+  var _lo10 = logout;
+  logout = function() { try { pushUnregister(); } catch(e) {} return _lo10.apply(this, arguments); };
+  var _uai10 = updateAuthUI, pushRegFor = null;
+  updateAuthUI = function() {
+    var r = _uai10.apply(this, arguments);
+    try {
+      pushBtnUpdate();
+      if (currentUser && pushRegFor !== currentUser.username && ('Notification' in window) && Notification.permission === 'granted') { pushRegFor = currentUser.username; pushRegister(true); }
+      if (!currentUser) pushRegFor = null;
+    } catch(e) {}
+    return r;
+  };
+  // Süre dolunca uygulama arka plandaysa sistem bildirimi de göster
+  var _bell10 = playSchoolBellSound;
+  playSchoolBellSound = function() {
+    _bell10.apply(this, arguments);
+    try { if (document.hidden && ('Notification' in window) && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(function(r){ r.showNotification('⏰ Süre doldu', { body: 'Etüt veya mola süreniz doldu.', icon: './icon-192.png', tag: 'bkm-bell', renotify: true, vibrate: [300, 100, 300] }); }); } catch(e) {}
+  };
+  pushBtnUpdate();
   </script>
 
 
