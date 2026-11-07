@@ -12825,6 +12825,8 @@
     var t = todayKey(), ch = false;
     BRANCHES.forEach(function(br) { CLASSES.forEach(function(cls) { ((branchesData[br] || {})[cls] || []).forEach(function(d) {
       if (!d || d.dayKey === t) return;
+      // Güncelleme sonrası ilk açılış: tarihsiz mevcut veriyi SİLME, bugüne işle
+      if (!d.dayKey && ((d.secondsStudied || 0) > 0 || (d.questions || 0) > 0 || (d.sessionsCompleted || 0) > 0)) { d.dayKey = t; ch = true; return; }
       try { autoReportFromDesk(d, br, cls); } catch(e) { console.warn(e); }
       d.dayKey = t; ch = true;
       d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null;
@@ -12983,7 +12985,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=25', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=26', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13316,6 +13318,28 @@
     } catch(e) { console.warn(e); }
     return r;
   };
+  </script>
+
+  <script>
+  // ===== v9: veri güvenliği (güncelleme / yeniden açılışta veri kaybını önle) =====
+  var seededNodes = {}, _scnG = syncCloudNode;
+  syncCloudNode = function(name, data) {
+    if (name === 'branchesData' || !fbDb || !isCloudReady) return _scnG.apply(this, arguments);
+    var empty = (Array.isArray(data) && data.length === 0) || (data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0);
+    // 1) Bulutta bu düğümün güncel hali gelmeden yerel (eski/varsayılan) veriyi yazma
+    if (!seededNodes[name]) {
+      try { fbDb.ref(name).once('value').then(function(){ seededNodes[name] = true; }, function(){ seededNodes[name] = true; }); } catch(e) { seededNodes[name] = true; }
+      return;
+    }
+    // 2) Boş veriyle dolu bulut verisinin üzerine yazma (silme yalnızca Ayarlar > Veri Silme ile yapılır)
+    if (empty && name !== 'classCoaches' && name !== 'noSeed') return;
+    return _scnG.apply(this, arguments);
+  };
+  ['usersData','dailyReports','studentBooks','homeworkData','notifications','customSchedules'].forEach(function(n) {
+    try { if (fbDb && isCloudReady) fbDb.ref(n).once('value').then(function(){ seededNodes[n] = true; }, function(){ seededNodes[n] = true; }); } catch(e) {}
+  });
+  // Tarayıcının uygulama verisini kendiliğinden silmesini zorlaştır
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
   </script>
 
 
