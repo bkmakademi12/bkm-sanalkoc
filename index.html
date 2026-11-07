@@ -2288,6 +2288,19 @@
     <div id="qsBody" style="max-width:900px;margin:0 auto;padding:12px"></div>
   </div>
 
+  <!-- MODAL: ŞİFRE YÖNETİMİ -->
+  <div id="pwdModal" class="hidden" style="position:fixed;inset:0;z-index:55;background:rgba(15,23,42,.75);padding:12px;overflow:auto">
+    <div style="max-width:720px;margin:0 auto;background:#f1f5f9;border-radius:20px;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:16px;color:#0f172a"><i class="fa-solid fa-key" style="color:#d97706"></i> Şifre Yönetimi</b><button type="button" onclick="document.getElementById('pwdModal').classList.add('hidden')" class="qs-btn" style="background:#475569">Kapat</button></div>
+      <div id="pwdTabs" style="margin-bottom:8px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+        <select id="pwdBranch" class="qs-in" onchange="pwdRender()"></select><select id="pwdClass" class="qs-in" onchange="pwdRender()"></select>
+        <input id="pwdSearch" class="qs-in" style="grid-column:1/-1" placeholder="Ad veya kullanıcı adı ara..." oninput="pwdRender()">
+      </div>
+      <div id="pwdList"></div>
+    </div>
+  </div>
+
   <!-- MODAL: ÖDEV MODÜLÜ -->
   <div id="hwModuleModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl text-slate-800">
@@ -2307,6 +2320,7 @@
         <button type="button" onclick="openTeacherAdminModal()" class="p-3 rounded-xl bg-purple-600/20 border border-purple-500/40 hover:bg-purple-600/30 text-left"><i class="fa-solid fa-chalkboard-user text-purple-300 text-base"></i><div class="font-bold mt-1 text-white">Öğretmen Yönetimi</div><div class="text-[10px] text-slate-400">Öğretmen ekle, sınıf koçu ata</div></button>
         <button type="button" onclick="openAdminModal()" class="p-3 rounded-xl bg-indigo-600/20 border border-indigo-500/40 hover:bg-indigo-600/30 text-left"><i class="fa-solid fa-user-gear text-indigo-300 text-base"></i><div class="font-bold mt-1 text-white">Öğrenci Yönetimi</div><div class="text-[10px] text-slate-400">Öğrenci, şube ve Excel işlemleri</div></button>
       </div>
+      <button type="button" onclick="openPwdManager()" class="w-full mb-4 p-3 rounded-xl bg-amber-600/20 border border-amber-500/40 hover:bg-amber-600/30 text-left"><i class="fa-solid fa-key text-amber-300 text-base"></i><div class="font-bold mt-1 text-white">Şifre Yönetimi</div><div class="text-[10px] text-slate-400">Öğrenci, öğretmen ve veli refakat şifrelerini değiştir / yeniden tanımla</div></button>
       <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-3 space-y-2">
         <div class="font-bold text-rose-300"><i class="fa-solid fa-trash-can mr-1.5"></i>Veri Silme (Tercihli)</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
@@ -12650,10 +12664,10 @@
   function stgDelete() {
     if (!currentUser || currentUser.role !== 'admin') { alert('Yetkisiz işlem.'); return; }
     var g = function(id){ return document.getElementById(id).checked; };
-    if (document.getElementById('stgDelPass').value !== currentUser.password) { alert('Şifre hatalı! İşlem iptal edildi.'); return; }
+    if (document.getElementById('stgDelPass').value !== stgAdminPass()) { alert('Şifre hatalı! İşlem iptal edildi.'); return; }
     var all = g('stgDelAll');
     if (!all && !['stgDelDesk','stgDelReports','stgDelHw','stgDelBooks','stgDelNotif','stgDelSched','stgDelPhotos'].some(g)) { alert('Silinecek veri seçmediniz.'); return; }
-    if (!confirm(all ? 'DİKKAT: Öğrenciler dahil TÜM veriler silinecek. Bu işlem geri alınamaz!\n\nDevam edilsin mi?' : 'Seçili veriler kalıcı olarak silinecek. Devam edilsin mi?')) return;
+    if (!confirm(all ? 'DİKKAT: Öğrenciler dahil TÜM veriler silinecek. Bu işlem geri alınamaz!\n\nDevam edilsin mi?' : 'Seçili veriler kalıcı olarak silinecek. Devam edilsin mi?')) return; stgPre();
     var ls = function(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
     if (all) {
       usersData = usersData.filter(function(u){ return u.role !== 'student'; });
@@ -12987,7 +13001,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=27', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=28', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13346,7 +13360,7 @@
 
   <script>
   // ===== v10: rapor koruma (her rapor ayrı kayıt + yedek) ve anlık bildirim istemcisi =====
-  var repLegacy = [], repById = {}, repDeleted = {}, repLegacyReady = false, repByIdReady = false, lastRepJson = {};
+  var repClearReady = false, repLegacy = [], repById = {}, repDeleted = {}, repLegacyReady = false, repByIdReady = false, lastRepJson = {};
   function rkey(id) { return String(id).replace(/[.#$\/\[\]]/g, '_'); }
   function repBackupLoad() { try { return JSON.parse(localStorage.getItem('bkm_reports_backup_v1')) || {}; } catch(e) { return {}; } }
   function repBackupSave(m) { try { localStorage.setItem('bkm_reports_backup_v1', JSON.stringify(m)); } catch(e) {} }
@@ -13354,7 +13368,7 @@
   (function() { var bk = repBackupLoad(); (Array.isArray(dailyReports) ? dailyReports : []).forEach(function(r) { if (r && r.id) bk[rkey(r.id)] = r; }); repBackupSave(bk); })();
 
   function mergeReports() {
-    if (!repLegacyReady || !repByIdReady) return;
+    if (!repLegacyReady || !repByIdReady || !repClearReady) return;
     var map = {}, noId = [];
     repLegacy.forEach(function(r) { if (!r) return; if (!r.id) { noId.push(r); return; } if (!repDeleted[rkey(r.id)]) map[rkey(r.id)] = r; });
     Object.keys(repById).forEach(function(k) { var r = repById[k]; if (r && r.id && !repDeleted[k]) map[k] = r; });
@@ -13439,6 +13453,106 @@
     try { if (document.hidden && ('Notification' in window) && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(function(r){ r.showNotification('⏰ Süre doldu', { body: 'Etüt veya mola süreniz doldu.', icon: './icon-192.png', tag: 'bkm-bell', renotify: true, vibrate: [300, 100, 300] }); }); } catch(e) {}
   };
   pushBtnUpdate();
+  </script>
+
+  <script>
+  // ===== v11: eksiksiz veri silme, güncel yönetici şifresi, şifre yönetimi, bulutta veli PIN =====
+  function stgAdminPass() { var u = usersData.find(function(x){ return x.username === currentUser.username; }); return u ? u.password : currentUser.password; }
+  function stgPre() {
+    var g = function(id){ return document.getElementById(id).checked; }, all = g('stgDelAll');
+    if (all || g('stgDelDesk')) {
+      // Geçmiş masa verisi de silinir: otomatik (masa kaynaklı) raporlar ve video izleme kayıtları
+      dailyReports = (dailyReports || []).filter(function(r){ return !(r && r.auto); });
+      try { localStorage.setItem('bkm_daily_reports_v14', JSON.stringify(dailyReports)); } catch(e) {}
+      syncCloudNode('dailyReports', dailyReports);
+      ['bkm_video_watch_logs_v14', 'bkm_video_notified_weeks_v14'].forEach(function(k){ localStorage.removeItem(k); });
+      stgResetDesks();
+    }
+    if (all || g('stgDelReports')) {
+      var ts = Date.now();
+      repById = {}; repDeleted = {}; repLegacy = []; lastRepJson = {};
+      localStorage.removeItem('bkm_reports_backup_v1'); localStorage.setItem('bkm_reports_cleared_seen', String(ts));
+      try { if (fbDb && isCloudReady) fbDb.ref().update({ reportsById: null, reportsDeleted: null, reportsClearedAt: ts }); } catch(e) {}
+    }
+  }
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) {
+    fbDb.ref('reportsClearedAt').on('value', function(sn) {
+      var v = sn.val() || 0, seen = +localStorage.getItem('bkm_reports_cleared_seen') || 0;
+      if (v > seen) { localStorage.setItem('bkm_reports_cleared_seen', String(v)); localStorage.removeItem('bkm_reports_backup_v1'); }
+      repClearReady = true; mergeReports();
+    });
+  } else { repClearReady = true; }
+
+  // ---- Veli PIN: cihazdan bağımsız (bulutta) saklanır, yönetici sıfırlayabilir ----
+  var pinMirroring = false, pinCache = {}, _lsSet = Storage.prototype.setItem, _lsRem = Storage.prototype.removeItem;
+  function pinCk(u) { return tpKey(String(u).toLowerCase()); }
+  function pinCloud(u, v) { if (pinMirroring || !fbDb || !isCloudReady) return; try { var r = fbDb.ref('parentPins/' + pinCk(u)); if (v === null) r.remove(); else r.set(v); } catch(e) {} }
+  Storage.prototype.setItem = function(k, v) { _lsSet.apply(this, arguments); if (this === localStorage && String(k).indexOf('parent_pin_') === 0) pinCloud(String(k).slice(11), String(v)); };
+  Storage.prototype.removeItem = function(k) { _lsRem.apply(this, arguments); if (this === localStorage && String(k).indexOf('parent_pin_') === 0) pinCloud(String(k).slice(11), null); };
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) {
+    fbDb.ref('parentPins').on('value', function(sn) {
+      var v = sn.val() || {}; pinCache = v; pinMirroring = true;
+      try {
+        var locals = Object.keys(localStorage).filter(function(k){ return k.indexOf('parent_pin_') === 0; });
+        if (!localStorage.getItem('bkm_pins_migrated')) {
+          locals.forEach(function(k){ var u = k.slice(11); if (v[pinCk(u)] === undefined) { pinMirroring = false; pinCloud(u, localStorage.getItem(k)); pinMirroring = true; } });
+          _lsSet.call(localStorage, 'bkm_pins_migrated', '1');
+        } else { locals.forEach(function(k){ if (v[pinCk(k.slice(11))] === undefined) _lsRem.call(localStorage, k); }); }
+        Object.keys(v).forEach(function(ck){ _lsSet.call(localStorage, 'parent_pin_' + decodeURIComponent(ck.replace(/%2E/g, '.')), String(v[ck])); });
+      } catch(e) {}
+      pinMirroring = false;
+    });
+  }
+
+  // ---- Şifre yönetimi (yalnızca yönetici) ----
+  var pwdTab = 'student';
+  function openPwdManager() {
+    if (!currentUser || currentUser.role !== 'admin') { alert('Bu bölüm yalnızca yöneticiler içindir.'); return; }
+    document.getElementById('pwdBranch').innerHTML = '<option value="Tümü">Tüm Şubeler</option>' + BRANCHES.map(function(b){ return '<option>' + b + '</option>'; }).join('');
+    document.getElementById('pwdClass').innerHTML = '<option value="Tümü">Tüm Sınıflar</option>' + CLASSES.map(function(c){ return '<option>' + c + '</option>'; }).join('');
+    document.getElementById('pwdModal').classList.remove('hidden'); pwdRender();
+  }
+  function pwdSetTab(t) { pwdTab = t; pwdRender(); }
+  function pwdRender() {
+    var T = [['student', 'Öğrenci'], ['staff', 'Öğretmen / Personel'], ['pin', 'Veli Refakat PIN']];
+    document.getElementById('pwdTabs').innerHTML = T.map(function(t){ return '<span class="qs-chip' + (pwdTab === t[0] ? ' on' : '') + '" onclick="pwdSetTab(\'' + t[0] + '\')">' + t[1] + '</span>'; }).join('');
+    var isStaff = pwdTab === 'staff';
+    document.getElementById('pwdBranch').style.display = document.getElementById('pwdClass').style.display = isStaff ? 'none' : '';
+    var br = document.getElementById('pwdBranch').value, cls = document.getElementById('pwdClass').value, q = document.getElementById('pwdSearch').value.trim().toLowerCase();
+    var list = usersData.filter(function(u) {
+      if (!u) return false;
+      if (isStaff ? !(u.role === 'coach' || u.role === 'admin') : u.role !== 'student') return false;
+      if (!isStaff && ((br !== 'Tümü' && u.branch !== br) || (cls !== 'Tümü' && u.class !== cls))) return false;
+      return !q || String(u.name).toLowerCase().indexOf(q) > -1 || String(u.username).toLowerCase().indexOf(q) > -1;
+    });
+    var shown = list.slice(0, 60), enc = encodeURIComponent;
+    var rows = shown.map(function(u) {
+      var cur = pwdTab === 'pin' ? (localStorage.getItem('parent_pin_' + String(u.username).toLowerCase()) || '') : (u.password || '');
+      var reveal = cur ? '<span style="font-family:monospace;cursor:pointer;color:#4338ca" data-v="' + enc(cur) + '" onclick="this.textContent=this.textContent===\'••••\'?decodeURIComponent(this.dataset.v):\'••••\'">••••</span>' : '<i style="color:#94a3b8">tanımlı değil</i>';
+      var action = pwdTab === 'pin'
+        ? '<input class="qs-in" maxlength="4" inputmode="numeric" placeholder="Yeni 4 haneli PIN" style="width:140px;display:inline-block"> <button class="qs-btn" data-u="' + enc(u.username) + '" onclick="pinSave(this)">Kaydet</button> <button class="qs-btn" style="background:#e11d48" data-u="' + enc(u.username) + '" onclick="pinReset(this)">Sıfırla</button>'
+        : '<input class="qs-in" placeholder="Yeni şifre" style="width:160px;display:inline-block"> <button class="qs-btn" data-u="' + enc(u.username) + '" onclick="pwdSave(this)">Kaydet</button>';
+      return '<div class="qs-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>' + u.name + '</b> <span style="color:#64748b;font-size:12px">' + u.username + (u.class ? ' · ' + u.class : '') + (u.branch && u.branch !== 'Tümü' ? ' · ' + String(u.branch).split(' ')[0] : '') + '</span></div><div style="font-size:13px">' + (pwdTab === 'pin' ? 'PIN: ' : 'Şifre: ') + reveal + '</div></div><div style="margin-top:8px">' + action + '</div></div>';
+    }).join('');
+    document.getElementById('pwdList').innerHTML = rows + (list.length > 60 ? '<div style="color:#64748b;font-size:12px;text-align:center">İlk 60 kayıt gösteriliyor, aramayı daraltın.</div>' : '') + (!list.length ? '<div class="qs-card" style="text-align:center;color:#64748b">Kayıt bulunamadı.</div>' : '');
+  }
+  function pwdSave(btn) {
+    var un = decodeURIComponent(btn.dataset.u), val = btn.previousElementSibling.value.trim();
+    if (val.length < 4) { alert('Şifre en az 4 karakter olmalı.'); return; }
+    var u = usersData.find(function(x){ return x.username === un; }); if (!u) return;
+    u.password = val; if (currentUser && currentUser.username === un) currentUser.password = val;
+    saveData(); alert(u.name + ' için yeni şifre kaydedildi.'); pwdRender();
+  }
+  function pinSave(btn) {
+    var un = decodeURIComponent(btn.dataset.u), val = btn.previousElementSibling.value.trim();
+    if (!/^\d{4}$/.test(val)) { alert('PIN 4 haneli rakam olmalı.'); return; }
+    localStorage.setItem('parent_pin_' + un.toLowerCase(), val); alert('Veli PIN kaydedildi.'); pwdRender();
+  }
+  function pinReset(btn) {
+    var un = decodeURIComponent(btn.dataset.u);
+    if (!confirm('Veli PIN sıfırlansın mı? Veli, ortak kod (2027) ile yeniden PIN belirleyecek.')) return;
+    localStorage.removeItem('parent_pin_' + un.toLowerCase()); alert('Veli PIN sıfırlandı.'); pwdRender();
+  }
   </script>
 
 
