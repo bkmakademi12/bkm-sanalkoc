@@ -8879,7 +8879,7 @@
           (r.deskIndex === st.deskNumber)
         );
 
-        stReps.forEach(rep => {
+        (currentLeaderboardFilter === 'today' ? [] : stReps).forEach(rep => {
           sTotal += ((rep.sessionCount || 0) * 40 * 60) + (((rep.bookReading && rep.bookReading.minutes) || 0) * 60);
           if (rep.subjects) {
             Object.values(rep.subjects).forEach(sv => {
@@ -9189,7 +9189,7 @@
         return;
       }
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = todayKey();
       const dateEl = document.getElementById('repDate');
       if (dateEl) dateEl.value = todayStr;
 
@@ -12825,6 +12825,7 @@
     var t = todayKey(), ch = false;
     BRANCHES.forEach(function(br) { CLASSES.forEach(function(cls) { ((branchesData[br] || {})[cls] || []).forEach(function(d) {
       if (!d || d.dayKey === t) return;
+      try { autoReportFromDesk(d, br, cls); } catch(e) { console.warn(e); }
       d.dayKey = t; ch = true;
       d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null;
       d.subject = ''; d.topic = ''; d.book = ''; d.parentSupervised = false;
@@ -12982,7 +12983,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=24', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=25', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13283,6 +13284,38 @@
       alert(`✅ ${branch} ${cls} sınıfının 15 masalık oturma planı başarıyla kaydedildi!`);
     }
 
+  </script>
+
+  <script>
+  // ===== v8: masa verisi -> otomatik rapor; rapordaki ekstralar masada görünmez =====
+  function autoReportFromDesk(d, br, cls) {
+    if (!d || !d.dayKey || !d.username || !currentUser) return;
+    var own = String(d.username).toLowerCase() === String(currentUser.username || '').toLowerCase();
+    if (!(own || currentUser.role === 'coach' || currentUser.role === 'admin')) return;
+    var secs = d.secondsStudied || 0, sess = Math.max(d.sessionsCompleted || 0, Math.round(secs / 2400));
+    if (secs < 300 && !sess) return;
+    var id = 'auto_' + d.dayKey + '_' + d.username;
+    if (dailyReports.some(function(r){ return r.id === id || (r.username && r.username.toLowerCase() === String(d.username).toLowerCase() && r.date === d.dayKey); })) return;
+    var subj = {};
+    if (d.questions > 0 && d.subject) subj[d.subject] = { d: d.questions, y: 0, b: 0, kazanim: { d: d.questions, y: 0, b: 0 }, yeniNesil: { d: 0, y: 0, b: 0 }, entries: [] };
+    dailyReports.unshift({ id: id, auto: true, date: d.dayKey, branch: br, class: cls, deskIndex: d.deskNumber, studentName: d.studentName, username: d.username,
+      sessionCount: Math.max(sess, 1), subjects: subj, bookEntries: [], bookReading: { title: '', minutes: 0, pages: 0 },
+      topics: d.subject ? (d.subject + (d.topic ? ': ' + d.topic : '')) : '', coachNote: '', deskSeconds: secs, updatedAt: new Date().toISOString() });
+  }
+  var _osrm8 = openStudentReportModal;
+  openStudentReportModal = function() {
+    var r = _osrm8.apply(this, arguments);
+    try {
+      if (!currentUser || currentUser.role !== 'student') return r;
+      var desk = ((branchesData[currentUser.branch] || {})[currentUser.class] || []).find(function(x){ return x.deskNumber === currentUser.deskIndex; }) || {};
+      var secs = desk.secondsStudied || 0, mins = Math.floor(secs / 60), sess = Math.max(desk.sessionsCompleted || 0, Math.round(secs / 2400));
+      var inp = document.getElementById('repSessionCount'), par = inp && inp.parentNode, info = document.getElementById('repDeskInfo');
+      if (par && !info) { info = document.createElement('div'); info.id = 'repDeskInfo'; info.style.cssText = 'grid-column:1/-1;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12px;font-weight:600'; par.parentNode.insertBefore(info, par); }
+      if (info) info.innerHTML = '<b>Masa verileriniz (otomatik):</b> ' + sess + ' etüt · ' + mins + ' dk · ' + (desk.questions || 0) + ' soru<br><span style="font-weight:500">Aşağıya yalnızca masada olmayan ekstra çalışmalarınızı yazın. Rapora yazdıklarınız masada görünmez ve masa verisiyle toplanmaz.</span>';
+      if (inp) { var fromDesk = sess > 0 && !activeEditingDailyReportId; if (fromDesk) inp.value = Math.min(15, Math.max(sess, 1)); inp.readOnly = fromDesk; }
+    } catch(e) { console.warn(e); }
+    return r;
+  };
   </script>
 
 
