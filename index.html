@@ -501,6 +501,24 @@
       .desk-av-pad{padding-right:0!important}
       .desk-card{min-height:170px!important}
     }
+    /* ===== v7: modüller ===== */
+    .mod-card{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;text-align:left;transition:.2s}
+    .mod-card:hover{background:rgba(255,255,255,.16);transform:translateY(-2px)}
+    .mod-card b{display:block;font-size:16px;color:#fff}.mod-card small{display:block;color:#cbd5e1;font-size:12px;margin-top:2px}
+    .mod-ic{width:50px;height:50px;border-radius:16px;background:var(--c);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;flex:none}
+    .mod-card.locked{opacity:.55;pointer-events:none}
+    .mod-etut #hwModuleBtn,.mod-etut #studentHomeworkBtn{display:none!important}
+    .qs-top{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px;background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:2}
+    .qs-tabs{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid #e2e8f0;overflow-x:auto}
+    .qs-tabs button{padding:8px 14px;border-radius:9999px;background:#e2e8f0;color:#334155;font-weight:700;font-size:13px;white-space:nowrap}
+    .qs-tabs button.on{background:#4f46e5;color:#fff}
+    .qs-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;background:#4f46e5;color:#fff;font-weight:700;font-size:12px}
+    .qs-in{padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-size:13px;width:100%}
+    .qs-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:10px;color:#0f172a;box-shadow:0 2px 8px -4px rgba(15,23,42,.2)}
+    .qs-chip{display:inline-block;padding:6px 12px;border-radius:9999px;background:#e2e8f0;color:#334155;font-weight:700;font-size:12px;margin:0 6px 6px 0}
+    .qs-chip.on{background:#4f46e5;color:#fff}
+    .qs-badge{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:800}
+    .qs-tbl{width:100%;border-collapse:collapse;font-size:13px;color:#0f172a}.qs-tbl th{background:#eef2ff;text-align:left;padding:8px}.qs-tbl td{padding:8px;border-bottom:1px solid #e2e8f0}
 </style>
   <link rel="manifest" href="./manifest.json">
     <!-- PWA & Mobile Web App Meta Tags & App Icon -->
@@ -607,6 +625,7 @@
       </button>
 
       <!-- YÖNETİCİ: ÖĞRETMEN EKLEME BUTONU (YENİ!) -->
+      <button id="moduleSwitchBtn" type="button" style="display:none" onclick="showModules()" class="px-3 py-1.5 sm:py-2 bg-slate-600 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-table-cells-large"></i> <span class="hidden lg:inline">Modüller</span></button>
       <button id="hwModuleBtn" type="button" style="display:none" onclick="openHwModule()" class="px-3 py-1.5 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-book-open-reader"></i> <span class="hidden lg:inline">Ödev Modülü</span><span class="lg:hidden">Ödev</span></button>
       <button id="settingsBtn" type="button" style="display:none" onclick="openSettings()" class="px-3 py-1.5 sm:py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow"><i class="fa-solid fa-gear"></i> <span class="hidden lg:inline">Ayarlar</span></button>
       <button id="addTeacherBtn" onclick="openTeacherAdminModal()" class="hidden px-3 py-1.5 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition items-center gap-1.5 shadow">
@@ -2213,7 +2232,7 @@
       </div>
       <h1 class="mt-5 text-4xl font-black tracking-wider text-white" style="text-shadow:0 2px 14px rgba(0,0,0,.45)">BKM SANAL KOÇ</h1>
       <p class="mt-1 text-sky-200 text-base font-semibold">Hoş Geldiniz</p>
-      <form onsubmit="gateLogin(event)" novalidate class="mt-6 bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl p-5 space-y-3 text-left shadow-2xl">
+      <form onsubmit="gateLogin(event)" novalidate class="mt-6 bg-slate-900/60 border border-white/15 rounded-3xl p-5 space-y-3 text-left shadow-2xl">
         <div><label class="block text-[11px] font-bold text-slate-300 mb-1">Kullanıcı Adı</label>
           <div class="relative"><i class="fa-solid fa-user absolute left-3 top-3 text-slate-400 text-xs"></i><input id="gateUser" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" placeholder="Kullanıcı adınız" class="w-full bg-slate-900/60 border border-white/15 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"></div></div>
         <div><label class="block text-[11px] font-bold text-slate-300 mb-1">Şifre</label>
@@ -2224,6 +2243,47 @@
       </form>
       <p class="mt-4 text-[10px] text-slate-500">BKM Akademi · Sanal Koç &amp; Etüt Portalı</p>
     </div>
+  </div>
+
+  <script>try{if(localStorage.getItem('bkm_active_session_user'))document.getElementById('welcomeGate').classList.add('hidden');}catch(e){}</script>
+
+  <!-- MODÜL SEÇİMİ -->
+  <div id="moduleGate" class="hidden" style="position:fixed;inset:0;z-index:44;overflow:auto;background:radial-gradient(900px 500px at 15% 0%,rgba(99,102,241,.35),transparent 60%),radial-gradient(800px 500px at 95% 100%,rgba(14,165,233,.3),transparent 60%),linear-gradient(160deg,#0b1020,#111a3a 55%,#0b1020);padding:20px">
+    <div style="max-width:560px;margin:0 auto;text-align:center;padding-top:4vh">
+      <img src="./icon-192.png" alt="BKM" style="width:84px;height:84px;border-radius:9999px;background:#fff;border:4px solid rgba(255,255,255,.4);margin:0 auto" onerror="this.style.display='none'">
+      <div style="color:#fff;font-weight:900;font-size:26px;letter-spacing:1px;margin-top:12px">BKM SANAL KOÇ</div>
+      <div id="modWelcome" style="color:#bae6fd;font-weight:700;margin:4px 0 18px">Girmek istediğiniz modülü seçin</div>
+      <div style="display:grid;gap:12px;text-align:left">
+        <button type="button" onclick="pickModule('kurs')" class="mod-card" style="--c:#f59e0b"><span class="mod-ic"><i class="fa-solid fa-book-open-reader"></i></span><span><b>Kurs &amp; Otomasyon Modülü</b><small>Ödev Modülü</small></span></button>
+        <button type="button" onclick="pickModule('etut')" class="mod-card" style="--c:#10b981"><span class="mod-ic"><i class="fa-solid fa-chalkboard-user"></i></span><span><b>Sanal Etüt Modülü</b><small>Sanal sınıf, masalar, çalışma takibi ve analizler</small></span></button>
+        <button type="button" id="modQsCard" onclick="pickModule('qs')" class="mod-card" style="--c:#6366f1"><span class="mod-ic"><i class="fa-solid fa-circle-question"></i></span><span><b>Soru Çözüm Modülü</b><small id="modQsSub">Öğretmen ile soru çözüm sırası ve istatistikleri</small></span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KURS & OTOMASYON PANELİ -->
+  <div id="kursPanel" class="hidden" style="position:fixed;inset:0;z-index:44;overflow:auto;background:#f1f5f9;padding:16px">
+    <div style="max-width:560px;margin:0 auto">
+      <button type="button" onclick="showModules()" class="qs-btn" style="background:#475569"><i class="fa-solid fa-arrow-left"></i> Modüller</button>
+      <div style="font-weight:900;font-size:20px;color:#0f172a;margin:14px 0 4px">Kurs &amp; Otomasyon Modülü</div>
+      <div style="color:#64748b;font-size:13px;margin-bottom:12px">Ödev Modülü</div>
+      <div id="kursBody" style="display:grid;gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- SORU ÇÖZÜM MODÜLÜ -->
+  <div id="qsModule" class="hidden" style="position:fixed;inset:0;z-index:44;overflow:auto;background:#f1f5f9">
+    <div class="qs-top">
+      <button type="button" onclick="showModules()" class="qs-btn" style="background:#475569"><i class="fa-solid fa-arrow-left"></i> Modüller</button>
+      <b style="color:#0f172a;font-size:16px">Soru Çözüm Modülü</b>
+      <select id="qsBranch" onchange="qsRender()" class="qs-in" style="max-width:190px"></select>
+    </div>
+    <div class="qs-tabs">
+      <button type="button" id="qsT_queue" onclick="qsSetTab('queue')">Sıra / Kuyruk</button>
+      <button type="button" id="qsT_add" onclick="qsSetTab('add')">Talep Ekle</button>
+      <button type="button" id="qsT_stats" onclick="qsSetTab('stats')">İstatistik</button>
+    </div>
+    <div id="qsBody" style="max-width:900px;margin:0 auto;padding:12px"></div>
   </div>
 
   <!-- MODAL: ÖDEV MODÜLÜ -->
@@ -12109,8 +12169,8 @@
     measurementId: "G-TXJ36E1P2F"
   };
 
-  let fbDb = null;
-  let isCloudReady = false;
+  var fbDb = null;
+  var isCloudReady = false;
 
   try {
     firebase.initializeApp(firebaseConfig);
@@ -12749,6 +12809,171 @@
   (function(){ try { if (window.innerWidth < 768 && currentClassroomView === '3d') setClassroomViewMode('2d'); } catch(e) {} })();
   </script>
 
+  <script>
+  // ===== v7: titreme azaltma, günlük sıfırlama, modül seçimi, Soru Çözüm =====
+  // -- Render birleştirme (art arda gelen çizimleri tek seferde yap) --
+  var _rdCo = renderDesks, rdTimer = null, rdLast = 0;
+  renderDesks = function() {
+    if (rdTimer) return;
+    var wait = Math.max(0, 250 - (Date.now() - rdLast));
+    rdTimer = setTimeout(function() { rdTimer = null; rdLast = Date.now(); try { if (normalizeDeskDays()) { try { saveData(); } catch(e) {} } } catch(e) {} _rdCo(); }, wait);
+  };
+
+  // -- Gün sonu masa sıfırlaması (tarih temelli, cihazlar arası tutarlı) --
+  function todayKey() { try { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' }); } catch(e) { return new Date().toISOString().slice(0, 10); } }
+  function normalizeDeskDays() {
+    var t = todayKey(), ch = false;
+    BRANCHES.forEach(function(br) { CLASSES.forEach(function(cls) { ((branchesData[br] || {})[cls] || []).forEach(function(d) {
+      if (!d || d.dayKey === t) return;
+      d.dayKey = t; ch = true;
+      d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null;
+      d.subject = ''; d.topic = ''; d.book = ''; d.parentSupervised = false;
+      d.status = (d.studentName && String(d.studentName).trim()) ? 'offline' : 'empty';
+    }); }); });
+    return ch;
+  }
+  setInterval(function() { try { if (normalizeDeskDays()) { saveData(); renderDesks(); } } catch(e) {} }, 60000);
+
+  // -- Modül seçimi --
+  function hideAllModules() { ['moduleGate','kursPanel','qsModule'].forEach(function(id){ document.getElementById(id).classList.add('hidden'); }); }
+  function showModules() {
+    sessionStorage.removeItem('bkm_module'); hideAllModules();
+    document.body.classList.remove('mod-etut');
+    var isAdm = currentUser && currentUser.role === 'admin', card = document.getElementById('modQsCard');
+    card.classList.toggle('locked', !isAdm);
+    document.getElementById('modQsSub').innerText = isAdm ? 'Öğretmen ile soru çözüm sırası ve istatistikleri' : 'Yakında (şimdilik yalnızca yönetici)';
+    document.getElementById('modWelcome').innerText = (currentUser ? 'Hoş geldiniz, ' + currentUser.name + ' — ' : '') + 'girmek istediğiniz modülü seçin';
+    document.getElementById('moduleGate').classList.remove('hidden');
+  }
+  function pickModule(m) {
+    if (!currentUser) return;
+    if (m === 'qs' && currentUser.role !== 'admin') return;
+    sessionStorage.setItem('bkm_module', m); hideAllModules();
+    document.body.classList.toggle('mod-etut', m === 'etut');
+    if (m === 'kurs') {
+      var st = currentUser.role === 'student';
+      document.getElementById('kursBody').innerHTML = st
+        ? '<button type="button" class="qs-card" style="text-align:left" onclick="openStudentHomeworkModal()"><b><i class="fa-solid fa-book-open-reader" style="color:#4f46e5"></i> Ödevlerim</b><div style="color:#64748b;font-size:12px">Verilen ödevleri gör ve tamamla</div></button>'
+        : '<button type="button" class="qs-card" style="text-align:left" onclick="openCoachHomeworkModal()"><b><i class="fa-solid fa-paper-plane" style="color:#d97706"></i> Ödevlendirme</b><div style="color:#64748b;font-size:12px">Öğrenci / sınıflara ödev tanımla</div></button><button type="button" class="qs-card" style="text-align:left" onclick="openCoachHomeworkCheckModal()"><b><i class="fa-solid fa-clipboard-check" style="color:#0f766e"></i> Ödev Kontrol</b><div style="color:#64748b;font-size:12px">Verilen ödevleri incele ve onayla</div></button>';
+      document.getElementById('kursPanel').classList.remove('hidden');
+    } else if (m === 'qs') { qsInit(); document.getElementById('qsModule').classList.remove('hidden'); qsRender(); }
+  }
+  var _uai7 = updateAuthUI;
+  updateAuthUI = function() {
+    var r = _uai7.apply(this, arguments);
+    try {
+      var b = document.getElementById('moduleSwitchBtn'); if (b) b.style.display = currentUser ? 'inline-flex' : 'none';
+      if (!currentUser) { sessionStorage.removeItem('bkm_module'); hideAllModules(); document.body.classList.remove('mod-etut'); }
+      else {
+        var m = sessionStorage.getItem('bkm_module');
+        if (!m) { if (document.getElementById('moduleGate').classList.contains('hidden')) showModules(); }
+        else document.body.classList.toggle('mod-etut', m === 'etut');
+      }
+    } catch(e) {}
+    return r;
+  };
+
+  // -- Soru Çözüm Modülü (şimdilik yalnızca yönetici) --
+  var QS_SUBJ = ['Türkçe', 'Matematik', 'Fen Bilimleri', 'İnkılap Tarihi/Sosyal Bilgiler', 'İngilizce'];
+  var qsItems = {}, qsTab = 'queue', qsSubj = 'Tüm Dersler', qsPeriod = 'today', qsInited = false;
+  try { qsItems = JSON.parse(localStorage.getItem('bkm_qs_items_v1')) || {}; } catch(e) {}
+  function qsInit() {
+    if (qsInited) return; qsInited = true;
+    document.getElementById('qsBranch').innerHTML = '<option value="Tümü">Tüm Şubeler</option>' + BRANCHES.map(function(b){ return '<option>' + b + '</option>'; }).join('');
+    if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) fbDb.ref('qsItems').on('value', function(sn) { qsItems = sn.val() || {}; try { localStorage.setItem('bkm_qs_items_v1', JSON.stringify(qsItems)); } catch(e) {} qsRender(); });
+  }
+  function qsSave(it) {
+    it = JSON.parse(JSON.stringify(it)); qsItems[it.id] = it;
+    try { localStorage.setItem('bkm_qs_items_v1', JSON.stringify(qsItems)); } catch(e) {}
+    try { if (fbDb && isCloudReady) fbDb.ref('qsItems/' + it.id).set(it); } catch(e) {}
+    qsRender();
+  }
+  function qsSetTab(t) { qsTab = t; qsRender(); }
+  function qsBr() { return document.getElementById('qsBranch').value; }
+  function qsInBranch(it) { var b = qsBr(); return b === 'Tümü' || it.branch === b; }
+  function qsMin(ts) { return Math.max(0, Math.floor((Date.now() - ts) / 60000)) + ' dk'; }
+  function qsRender() {
+    var box = document.getElementById('qsBody'); if (!box || document.getElementById('qsModule').classList.contains('hidden')) return;
+    ['queue','add','stats'].forEach(function(t){ document.getElementById('qsT_' + t).className = qsTab === t ? 'on' : ''; });
+    if (qsTab === 'queue') box.innerHTML = qsQueueHtml(); else if (qsTab === 'add') box.innerHTML = qsAddHtml(); else box.innerHTML = qsStatsHtml();
+    if (qsTab === 'add') qsFillStudents();
+  }
+  function qsQueueHtml() {
+    var chips = ['Tüm Dersler'].concat(QS_SUBJ).map(function(x){ return '<span class="qs-chip' + (qsSubj === x ? ' on' : '') + '" onclick="qsSubj=this.dataset.s;qsRender()" data-s="' + x + '">' + x + '</span>'; }).join('');
+    var list = Object.values(qsItems).filter(function(it){ return ['waiting','called','arrived'].indexOf(it.status) > -1 && qsInBranch(it) && (qsSubj === 'Tüm Dersler' || it.subject === qsSubj); }).sort(function(a, b){ return a.ts - b.ts; });
+    var rows = list.map(function(it) {
+      var badge = it.status === 'waiting' ? '<span class="qs-badge" style="background:#e2e8f0;color:#334155">Bekliyor · ' + qsMin(it.ts) + '</span>' : it.status === 'called' ? '<span class="qs-badge" style="background:#fef3c7;color:#92400e">Çağrıldı</span>' : '<span class="qs-badge" style="background:#d1fae5;color:#065f46">Öğretmende</span>';
+      var act = it.status === 'waiting' ? '<button class="qs-btn" onclick="qsAct(\'' + it.id + '\',\'call\')"><i class="fa-solid fa-bullhorn"></i> Öğrenciyi Çağır</button>'
+        : it.status === 'called' ? '<button class="qs-btn" style="background:#059669" onclick="qsAct(\'' + it.id + '\',\'arrive\')">Öğrenci Geçti</button> <button class="qs-btn" style="background:#0284c7" onclick="qsAct(\'' + it.id + '\',\'send\')">Gönder</button> <button class="qs-btn" style="background:#e11d48" onclick="qsAct(\'' + it.id + '\',\'absent\')">Öğrenci Yok</button>'
+        : '<input type="number" min="0" id="qc_' + it.id + '" placeholder="Soru sayısı" class="qs-in" style="width:120px;display:inline-block"> <button class="qs-btn" style="background:#059669" onclick="qsAct(\'' + it.id + '\',\'done\')">Kaydet</button>';
+      return '<div class="qs-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>' + it.name + '</b> <span style="color:#64748b;font-size:12px">' + it.class + ' · ' + String(it.branch).split(' ')[0] + '</span><div style="color:#4338ca;font-weight:700;font-size:13px">' + it.subject + '</div></div><div>' + badge + '</div></div><div style="margin-top:8px">' + act + '</div></div>';
+    }).join('');
+    return '<div style="margin-bottom:8px">' + chips + '</div>' + (rows || '<div class="qs-card" style="text-align:center;color:#64748b">Bu derste bekleyen öğrenci yok.</div>');
+  }
+  function qsAct(id, a) {
+    var it = qsItems[id]; if (!it) return; var who = currentUser ? currentUser.name : '';
+    if (a === 'call') { it.status = 'called'; it.teacher = who; it.calledTs = Date.now(); }
+    else if (a === 'arrive') { it.status = 'arrived'; it.via = 'student'; }
+    else if (a === 'send') { it.status = 'arrived'; it.via = 'staff'; }
+    else if (a === 'absent') { it.status = 'absent'; it.doneTs = Date.now(); it.doneDate = todayKey(); }
+    else if (a === 'done') {
+      var v = document.getElementById('qc_' + id).value; if (v === '' || isNaN(v) || +v < 0) { alert('Lütfen çözülen soru sayısını girin.'); return; }
+      it.status = 'done'; it.count = parseInt(v, 10); it.teacher = it.teacher || who; it.doneTs = Date.now(); it.doneDate = todayKey();
+    }
+    qsSave(it);
+  }
+  function qsAddHtml() {
+    var b0 = qsBr() === 'Tümü' ? currentBranch : qsBr();
+    return '<div class="qs-card"><b>Soru çözdürme talebi ekle</b><div style="color:#64748b;font-size:12px;margin-bottom:8px">Öğrenci veya personel adına; her ders için ayrı sıra oluşur.</div>' +
+      '<div style="display:grid;gap:8px"><select id="qaBranch" class="qs-in" onchange="qsFillStudents()">' + BRANCHES.map(function(b){ return '<option' + (b === b0 ? ' selected' : '') + '>' + b + '</option>'; }).join('') + '</select>' +
+      '<select id="qaClass" class="qs-in" onchange="qsFillStudents()">' + CLASSES.map(function(c){ return '<option>' + c + '</option>'; }).join('') + '</select>' +
+      '<select id="qaStudent" class="qs-in"></select><div>' + QS_SUBJ.map(function(x, i){ return '<label style="display:block;padding:4px 0;font-size:14px;color:#0f172a"><input type="checkbox" class="qaSub" value="' + x + '"> ' + x + '</label>'; }).join('') + '</div>' +
+      '<button class="qs-btn" style="justify-content:center;padding:12px" onclick="qsAddRequest()">Kuyruğa Ekle</button></div></div>';
+  }
+  function qsFillStudents() {
+    var br = document.getElementById('qaBranch').value, cls = document.getElementById('qaClass').value;
+    document.getElementById('qaStudent').innerHTML = usersData.filter(function(u){ return u && u.role === 'student' && u.branch === br && u.class === cls; })
+      .map(function(u){ return '<option value="' + u.username + '">' + u.name + '</option>'; }).join('') || '<option value="">(Bu sınıfta öğrenci yok)</option>';
+  }
+  function qsAddRequest() {
+    var br = document.getElementById('qaBranch').value, cls = document.getElementById('qaClass').value, un = document.getElementById('qaStudent').value;
+    var subs = Array.prototype.map.call(document.querySelectorAll('.qaSub:checked'), function(c){ return c.value; });
+    var u = usersData.find(function(x){ return x.username === un; });
+    if (!u || !subs.length) { alert('Öğrenci ve en az bir ders seçin.'); return; }
+    var added = 0;
+    subs.forEach(function(sub) {
+      var dup = Object.values(qsItems).some(function(it){ return it.student === un && it.subject === sub && ['waiting','called','arrived'].indexOf(it.status) > -1; });
+      if (dup) return;
+      qsSave({ id: 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), student: un, name: u.name, class: cls, branch: br, subject: sub, status: 'waiting', ts: Date.now() }); added++;
+    });
+    alert(added + ' ders için sıraya eklendi.'); qsTab = 'queue'; qsRender();
+  }
+  function qsPeriodMatch(d) {
+    if (!d) return false; var t = todayKey();
+    if (qsPeriod === 'all') return true; if (qsPeriod === 'today') return d === t;
+    var dt = new Date(t + 'T00:00:00'), ds = new Date(d + 'T00:00:00');
+    if (qsPeriod === 'yesterday') { dt.setDate(dt.getDate() - 1); return ds.getTime() === dt.getTime(); }
+    if (qsPeriod === 'week') { var day = (dt.getDay() + 6) % 7; dt.setDate(dt.getDate() - day); return ds >= dt; }
+    if (qsPeriod === 'month') return d.slice(0, 7) === t.slice(0, 7);
+    return true;
+  }
+  function qsStatsHtml() {
+    var P = [['today', 'Bugün'], ['yesterday', 'Dün'], ['week', 'Bu Hafta'], ['month', 'Bu Ay'], ['all', 'Toplam']];
+    var chips = P.map(function(p){ return '<span class="qs-chip' + (qsPeriod === p[0] ? ' on' : '') + '" onclick="qsPeriod=\'' + p[0] + '\';qsRender()">' + p[1] + '</span>'; }).join('');
+    var by = {}, tot = 0;
+    Object.values(qsItems).filter(function(it){ return it.status === 'done' && qsInBranch(it) && qsPeriodMatch(it.doneDate); }).forEach(function(it) {
+      var r = by[it.student] || (by[it.student] = { name: it.name, cls: it.class, br: it.branch, q: 0, n: 0, s: {} });
+      r.q += it.count || 0; r.n++; r.s[it.subject] = (r.s[it.subject] || 0) + (it.count || 0); tot += it.count || 0;
+    });
+    var rows = Object.values(by).sort(function(a, b){ return b.q - a.q; }).map(function(r) {
+      return '<tr><td><b>' + r.name + '</b></td><td>' + r.cls + '</td><td>' + String(r.br).split(' ')[0] + '</td><td style="font-weight:800;color:#4338ca">' + r.q + '</td><td>' + r.n + '</td><td style="font-size:12px;color:#475569">' + Object.keys(r.s).map(function(k){ return k.split('/')[0] + ': ' + r.s[k]; }).join(' · ') + '</td></tr>';
+    }).join('');
+    return '<div style="margin-bottom:8px">' + chips + '</div><div class="qs-card"><b>Toplam çözülen soru: <span style="color:#4338ca">' + tot + '</span></b></div>' +
+      '<div class="qs-card" style="overflow-x:auto"><table class="qs-tbl"><thead><tr><th>Öğrenci</th><th>Sınıf</th><th>Şube</th><th>Soru</th><th>Oturum</th><th>Derse göre</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:18px">Bu dönemde kayıt yok.</td></tr>') + '</tbody></table></div>';
+  }
+  updateAuthUI(); renderDesks();
+  </script>
+
 
 
 
@@ -12757,7 +12982,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=22', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=24', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
