@@ -2334,6 +2334,16 @@
     </div>
   </div>
 
+  <!-- REHBERLİK GÖRÜŞMELERİ -->
+  <div id="rgModule" class="hidden" style="position:fixed;inset:0;z-index:44;overflow:auto;background:#f1f5f9">
+    <div class="qs-top">
+      <button type="button" onclick="document.getElementById('rgModule').classList.add('hidden')" class="qs-btn" style="background:#475569"><i class="fa-solid fa-arrow-left"></i> Kurs &amp; Otomasyon</button>
+      <b style="color:#0f172a;font-size:16px">Rehberlik Görüşmeleri</b><span></span>
+    </div>
+    <div id="rgTabs" class="qs-tabs"></div>
+    <div id="rgBody" style="max-width:960px;margin:0 auto;padding:12px"></div>
+  </div>
+
   <!-- MODAL: ÖDEV MODÜLÜ -->
   <div id="hwModuleModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl text-slate-800">
@@ -12718,7 +12728,7 @@
     } else if (g('stgDelDesk')) stgResetDesks();
     if (all || g('stgDelReports')) { dailyReports = []; ls('bkm_daily_reports_v14', []); stgSentinel('dailyReports'); }
     if (all || g('stgDelHw')) { homeworkData = []; ls('bkm_homework_data_v14', []); stgSentinel('homeworkData'); }
-    if (all || g('stgDelBooks')) { studentBooks = []; ls('bkm_student_books_v14', []); stgSentinel('studentBooks'); try { localStorage.setItem('bkm_no_seed_v14', '1'); syncCloudNode('noSeed', true); } catch(e) {} }
+    if (all || g('stgDelBooks')) { studentBooks = []; ls('bkm_student_books_v14', []); stgSentinel('studentBooks'); }
     if (all || g('stgDelNotif')) { notifications = []; ls('bkm_notifications_v14', []); stgSentinel('notifications'); }
     if (all || g('stgDelSched')) { customSchedules = []; ls('bkm_custom_schedules_v14', []); stgSentinel('customSchedules'); }
     if (all || g('stgDelPhotos')) { studentPhotos = {}; savePhotosLocal(); try { if (fbDb && isCloudReady) fbDb.ref('studentPhotos').remove(); } catch(e) {} }
@@ -13040,7 +13050,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=30', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=32', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13664,8 +13674,8 @@
     if (m === 'kurs') {
       var st = currentUser.role === 'student', card = function(fn, ic, col, t, d){ return '<button type="button" class="qs-card" style="text-align:left" onclick="' + fn + '"><b><i class="fa-solid ' + ic + '" style="color:' + col + '"></i> ' + t + '</b><div style="color:#64748b;font-size:12px">' + d + '</div></button>'; };
       $('kursBody').innerHTML = st
-        ? card('openStudentHomeworkModal()', 'fa-book-open-reader', '#4f46e5', 'Ödevlerim', 'Verilen ödevleri gör ve tamamla') + card('openStudentBooksModal()', 'fa-book', '#0f766e', 'Kitaplarım', 'Kitap listeni yönet')
-        : card('openCoachHomeworkModal()', 'fa-paper-plane', '#d97706', 'Ödevlendirme', 'Öğrenci / sınıflara ödev tanımla') + card('openCoachHomeworkCheckModal()', 'fa-clipboard-check', '#0f766e', 'Ödev Kontrol', 'Verilen ödevleri incele ve onayla') + card('openStudentBooksModal()', 'fa-book', '#4f46e5', 'Öğrenci Kitapları', 'Öğrencilerin kitap listelerini yönet');
+        ? card('openStudentHomeworkModal()', 'fa-book-open-reader', '#4f46e5', 'Ödevlerim', 'Verilen ödevleri gör ve tamamla') + card('openStudentBooksModal()', 'fa-book', '#0f766e', 'Kitaplarım', 'Kitap listeni yönet') + rgCard()
+        : card('openCoachHomeworkModal()', 'fa-paper-plane', '#d97706', 'Ödevlendirme', 'Öğrenci / sınıflara ödev tanımla') + card('openCoachHomeworkCheckModal()', 'fa-clipboard-check', '#0f766e', 'Ödev Kontrol', 'Verilen ödevleri incele ve onayla') + card('openStudentBooksModal()', 'fa-book', '#4f46e5', 'Öğrenci Kitapları', 'Öğrencilerin kitap listelerini yönet') + rgCard();
       $('kursPanel').classList.remove('hidden');
     } else if (m === 'qs') {
       qsInit(); var sc = scopeBranches();
@@ -14030,6 +14040,129 @@
     try { if (currentUser && currentUser.role === 'admin' && !localStorage.getItem('bkm_books_restored_v2')) setTimeout(function(){ restoreCourseBooksSafe(true); }, 4000); } catch(e) {}
     return r;
   };
+  </script>
+
+  <script>
+  // ===== v15: kurs kitapları her girişte eksikse otomatik tamamlanır =====
+  function ensureCourseBooks() {
+    try {
+      if (!currentUser || !Array.isArray(studentBooks) || !seededNodes.studentBooks) return 0;
+      var cur = studentBooks, added = 0, byUser = {};
+      usersData.forEach(function(u){ if (u && u.role === 'student') byUser[String(u.username).toLowerCase()] = u; });
+      var own = currentUser.role === 'student' ? String(currentUser.username).toLowerCase() : null;
+      var have = {}; cur.forEach(function(b){ if (b && b.username) have[b.username.toLowerCase() + '|' + b.subject + '|' + String(b.title).toLowerCase()] = 1; });
+      DEFAULT_COURSE_BOOKS.forEach(function(cb) {
+        var key = String(cb.username || '').toLowerCase(), u = byUser[key]; if (!u || (own && key !== own)) return;
+        if (have[key + '|' + cb.subject + '|' + String(cb.title).toLowerCase()]) return;
+        var copy = JSON.parse(JSON.stringify(cb)); copy.branch = u.branch; copy.class = u.class; cur.push(copy); added++;
+      });
+      if (added) { studentBooks = cur; saveStudentBooksCloud(); }
+      return added;
+    } catch(e) { console.warn(e); return 0; }
+  }
+  var _uai15 = updateAuthUI, booksEnsuredFor = null;
+  updateAuthUI = function() {
+    var r = _uai15.apply(this, arguments);
+    try {
+      if (!currentUser) booksEnsuredFor = null;
+      else if (booksEnsuredFor !== currentUser.username) { booksEnsuredFor = currentUser.username; setTimeout(ensureCourseBooks, 3500); setTimeout(ensureCourseBooks, 12000); }
+    } catch(e) {}
+    return r;
+  };
+  </script>
+
+  <script>
+  // ===== v16: REHBERLİK GÖRÜŞMELERİ =====
+  var RG = {}, rgTab = 'ogrenci', rgBr = null, rgCls = null, rgDraft = {}, rgInited = false;
+  var rgF = { br: 'Tümü', cls: 'Tümü', st: 'Tümü', type: 'Tümü', from: '', to: '', q: '' };
+  try { RG = JSON.parse(localStorage.getItem('bkm_rg_records_v1')) || {}; } catch(e) {}
+  // Yetki: personel varsayılan olarak görür, öğrenci yalnızca yönetici izin verirse
+  if (MODS.every(function(m){ return m[0] !== 'rg'; })) MODS.push(['rg', 'Rehberlik Görüşmeleri']);
+  function rgDefaults() { ['mudur', 'rehber', 'ogretmen'].forEach(function(g){ rolePerms[g] = rolePerms[g] || {}; if (rolePerms[g].rg === undefined) rolePerms[g].rg = 1; }); rolePerms.ogrenci = rolePerms.ogrenci || {}; rolePerms.veli = rolePerms.veli || {}; }
+  rgDefaults();
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) fbDb.ref('rolePerms').on('value', function(){ rgDefaults(); });
+  var _permSave = permSave;
+  permSave = function() {
+    var chk = {}; document.querySelectorAll('.pmChk[data-m="rg"]').forEach(function(c){ chk[c.dataset.g] = c.checked ? 1 : 0; });
+    _permSave.apply(this, arguments);
+    AUTH_GROUPS.forEach(function(g){ rolePerms[g[0]] = rolePerms[g[0]] || {}; rolePerms[g[0]].rg = chk[g[0]] || 0; });
+    try { localStorage.setItem('bkm_role_perms_v1', JSON.stringify(rolePerms)); if (fbDb && isCloudReady) fbDb.ref('rolePerms').set(rolePerms); } catch(e) {}
+  };
+  function canRg() { if (!currentUser) return false; if (isMainAdmin()) return true; return !!(rolePerms[userGroup(currentUser)] || {}).rg; }
+  function rgCanReport() { return !!currentUser && currentUser.role !== 'student' && (isMainAdmin() || currentUser.role === 'admin' || ['rehber', 'mudur'].indexOf(userGroup(currentUser)) > -1); }
+  function rgCard() { return canRg() ? '<button type="button" class="qs-card" style="text-align:left" onclick="openRg()"><b><i class="fa-solid fa-comments" style="color:#7c3aed"></i> Rehberlik Görüşmeleri</b><div style="color:#64748b;font-size:12px">Öğrenci ve veli görüşmelerini kaydet' + (rgCanReport() ? ', kayıt ve rapor' : '') + '</div></button>' : ''; }
+  var _hideAll16 = hideAllModules;
+  hideAllModules = function() { _hideAll16(); $('rgModule').classList.add('hidden'); };
+
+  function rgInit() {
+    if (rgInited) return; rgInited = true;
+    if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) fbDb.ref('rgRecords').on('value', function(sn) { RG = sn.val() || {}; try { localStorage.setItem('bkm_rg_records_v1', JSON.stringify(RG)); } catch(e) {} rgRender(); });
+  }
+  function rgPut(r) { RG[r.id] = r; try { localStorage.setItem('bkm_rg_records_v1', JSON.stringify(RG)); } catch(e) {} try { if (fbDb && isCloudReady) fbDb.ref('rgRecords/' + r.id).set(JSON.parse(JSON.stringify(r))); } catch(e) {} }
+  function rgInScope(r) { return scopeBranches().indexOf(r.branch) > -1; }
+  function openRg() {
+    if (!canRg()) return; rgInit(); var sc = scopeBranches();
+    rgTab = currentUser.role === 'student' ? 'own' : 'ogrenci'; rgBr = sc[0]; rgCls = CLASSES[0];
+    $('rgModule').classList.remove('hidden'); rgRender();
+  }
+  function rgRender() {
+    if (!$('rgBody') || $('rgModule').classList.contains('hidden')) return;
+    var tabs = currentUser.role === 'student' ? [['own', 'Görüşmelerim']] : [['ogrenci', 'Öğrenci Görüşmesi'], ['veli', 'Veli Görüşmesi']].concat(rgCanReport() ? [['rapor', 'Kayıtlar & Rapor']] : []);
+    $('rgTabs').innerHTML = tabs.map(function(t){ return '<button type="button" class="' + (rgTab === t[0] ? 'on' : '') + '" onclick="rgTab=\'' + t[0] + '\';rgRender()">' + t[1] + '</button>'; }).join('');
+    $('rgBody').innerHTML = rgTab === 'rapor' ? rgReportHtml() : rgTab === 'own' ? rgOwnHtml() : rgEntryHtml(rgTab);
+  }
+  function rgEntryHtml(type) {
+    var sc = scopeBranches(), enc = encodeURIComponent;
+    var top = '<div class="qs-card" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select class="qs-in" onchange="rgBr=this.value;rgRender()">' + sc.map(function(b){ return '<option' + (b === rgBr ? ' selected' : '') + '>' + b + '</option>'; }).join('') + '</select><select class="qs-in" onchange="rgCls=this.value;rgRender()">' + CLASSES.map(function(c){ return '<option' + (c === rgCls ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>';
+    var studs = usersData.filter(function(u){ return u && u.role === 'student' && u.branch === rgBr && u.class === rgCls; }).sort(function(a, b){ return String(a.name).localeCompare(String(b.name), 'tr'); });
+    var rows = studs.map(function(u) {
+      var recs = Object.values(RG).filter(function(r){ return r.student === u.username && r.type === type; }), done = recs.length > 0, last = recs.map(function(r){ return r.date; }).sort().pop();
+      return '<div class="qs-card" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" data-u="' + enc(u.username) + '"><label style="display:flex;align-items:center;gap:6px;min-width:200px"><input type="checkbox" class="rgChk"' + (done ? ' checked' : '') + ' style="width:20px;height:20px"> <b>' + u.name + '</b></label>' +
+        (done ? '<span class="qs-badge" style="background:#d1fae5;color:#065f46">✔ ' + recs.length + ' görüşme · son ' + trDate(last) + '</span>' : '') +
+        '<input class="qs-in rgDet" style="flex:1;min-width:170px" placeholder="Görüşme detayı (hangi konularda görüşüldü)..." value="' + String(rgDraft[type + '|' + u.username] || '').replace(/"/g, '&quot;') + '" oninput="rgDraft[\'' + type + '|' + u.username.replace(/'/g, "\\'") + '\']=this.value"><button class="qs-btn" style="background:#059669" onclick="rgSave(this,\'' + type + '\')">Kaydet</button></div>'; }).join('');
+    return top + (rows || '<div class="qs-card" style="text-align:center;color:#64748b">Bu sınıfta öğrenci yok.</div>');
+  }
+  function rgSave(btn, type) {
+    var row = btn.parentNode, un = decodeURIComponent(row.dataset.u), u = usersData.find(function(x){ return x.username === un; }); if (!u) return;
+    var chk = row.querySelector('.rgChk').checked, det = row.querySelector('.rgDet').value.trim();
+    if (!chk) { alert('Önce "görüşüldü" kutusunu işaretleyin.'); return; }
+    if (!det) { alert('Lütfen görüşme detayını yazın.'); return; }
+    rgPut({ id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: type, student: un, name: u.name, class: u.class, branch: u.branch, date: todayKey(), detail: det, by: currentUser.username, byName: currentUser.name, ts: Date.now() });
+    delete rgDraft[type + '|' + un]; rgRender();
+  }
+  function rgOwnHtml() {
+    var mine = Object.values(RG).filter(function(r){ return r.student === currentUser.username; }).sort(function(a, b){ return b.ts - a.ts; });
+    return mine.map(function(r){ return '<div class="qs-card"><b>' + (r.type === 'veli' ? 'Veli Görüşmesi' : 'Öğrenci Görüşmesi') + '</b> <span style="color:#64748b;font-size:12px">' + trDate(r.date) + ' · ' + r.byName + '</span><div style="margin-top:4px">' + r.detail + '</div></div>'; }).join('') || '<div class="qs-card" style="text-align:center;color:#64748b">Kayıtlı görüşme yok.</div>';
+  }
+  // ---- Kayıtlar & rapor (admin / rehber / müdür) ----
+  function rgFiltered() {
+    return Object.values(RG).filter(function(r) {
+      if (!rgInScope(r)) return false;
+      if (rgF.br !== 'Tümü' && r.branch !== rgF.br) return false; if (rgF.cls !== 'Tümü' && r.class !== rgF.cls) return false;
+      if (rgF.st !== 'Tümü' && r.student !== rgF.st) return false; if (rgF.type !== 'Tümü' && r.type !== rgF.type) return false;
+      if (rgF.from && r.date < rgF.from) return false; if (rgF.to && r.date > rgF.to) return false;
+      if (rgF.q && (String(r.detail) + ' ' + r.name).toLowerCase().indexOf(rgF.q.toLowerCase()) < 0) return false; return true;
+    }).sort(function(a, b){ return b.ts - a.ts; });
+  }
+  function rgReportHtml() {
+    var sc = scopeBranches(), list = rgFiltered(), sel = function(val, opts, set) { return '<select class="qs-in" style="width:auto;display:inline-block" onchange="' + set + '=this.value;rgRender()">' + opts.map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select> '; };
+    var stu = {}; Object.values(RG).forEach(function(r){ if (rgInScope(r) && (rgF.cls === 'Tümü' || r.class === rgF.cls) && (rgF.br === 'Tümü' || r.branch === rgF.br)) stu[r.student] = r.name; });
+    var filters = sel(rgF.br, [['Tümü', 'Tüm Şubeler']].concat(sc.map(function(b){ return [b, b]; })), 'rgF.br') + sel(rgF.cls, [['Tümü', 'Tüm Sınıflar']].concat(CLASSES.map(function(c){ return [c, c]; })), 'rgF.cls') +
+      sel(rgF.st, [['Tümü', 'Tüm Öğrenciler']].concat(Object.keys(stu).map(function(k){ return [k, stu[k]]; })), 'rgF.st') + sel(rgF.type, [['Tümü', 'Öğrenci + Veli'], ['ogrenci', 'Öğrenci Görüşmesi'], ['veli', 'Veli Görüşmesi']], 'rgF.type') +
+      '<div style="margin-top:6px"><input type="date" class="qs-in" style="width:auto;display:inline-block" value="' + rgF.from + '" onchange="rgF.from=this.value;rgRender()"> - <input type="date" class="qs-in" style="width:auto;display:inline-block" value="' + rgF.to + '" onchange="rgF.to=this.value;rgRender()"> <input class="qs-in" style="width:200px;display:inline-block" placeholder="İçerikte ara..." value="' + rgF.q.replace(/"/g, '&quot;') + '" onchange="rgF.q=this.value;rgRender()"> <button class="qs-btn" style="background:#059669" onclick="rgExport()">Excel</button></div>';
+    var sum = {}; list.forEach(function(r){ var x = sum[r.student] || (sum[r.student] = { name: r.name, cls: r.class, br: r.branch, o: 0, v: 0, last: '' }); if (r.type === 'veli') x.v++; else x.o++; if (r.date > x.last) x.last = r.date; });
+    var srows = Object.keys(sum).sort(function(a, b){ return (sum[b].o + sum[b].v) - (sum[a].o + sum[a].v); }).map(function(k){ var x = sum[k]; return '<tr style="cursor:pointer" onclick="rgF.st=\'' + k.replace(/'/g, "\\'") + '\';rgRender()"><td><b>' + x.name + '</b></td><td>' + x.cls + '</td><td>' + String(x.br).split(' ')[0] + '</td><td>' + x.o + '</td><td>' + x.v + '</td><td>' + (x.o + x.v) + '</td><td>' + trDate(x.last) + '</td></tr>'; }).join('');
+    var drows = list.slice(0, 200).map(function(r){ return '<tr><td>' + trDate(r.date) + '</td><td>' + (r.type === 'veli' ? 'Veli' : 'Öğrenci') + '</td><td><b>' + r.name + '</b></td><td>' + r.class + '</td><td style="max-width:320px">' + r.detail + '</td><td>' + (r.byName || '') + '</td>' + (isMainAdmin() || currentUser.role === 'admin' ? '<td><a href="#" style="color:#b91c1c" onclick="rgDel(\'' + r.id + '\');return false">sil</a></td>' : '<td></td>') + '</tr>'; }).join('');
+    return '<div class="qs-card">' + filters + '</div><div class="qs-card" style="overflow-x:auto"><b>Özet — kimle kaç görüşme yapıldı (' + list.length + ' kayıt)</b><table class="qs-tbl"><thead><tr><th>Öğrenci</th><th>Sınıf</th><th>Şube</th><th>Öğrenci Gör.</th><th>Veli Gör.</th><th>Toplam</th><th>Son</th></tr></thead><tbody>' + (srows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:14px">Kayıt yok.</td></tr>') + '</tbody></table></div>' +
+      '<div class="qs-card" style="overflow-x:auto"><b>Görüşme içerikleri</b><table class="qs-tbl"><thead><tr><th>Tarih</th><th>Tür</th><th>Öğrenci</th><th>Sınıf</th><th>Detay</th><th>Görüşen</th><th></th></tr></thead><tbody>' + (drows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:14px">Kayıt yok.</td></tr>') + '</tbody></table></div>';
+  }
+  function rgDel(id) { if (!confirm('Bu görüşme kaydı silinsin mi?')) return; delete RG[id]; try { localStorage.setItem('bkm_rg_records_v1', JSON.stringify(RG)); if (fbDb && isCloudReady) fbDb.ref('rgRecords/' + id).remove(); } catch(e) {} rgRender(); }
+  function rgExport() {
+    var list = rgFiltered(), head = ['Tarih', 'Tür', 'Şube', 'Sınıf', 'Öğrenci', 'Detay', 'Görüşen'];
+    var mk = function(t) { return [head].concat(list.filter(function(r){ return r.type === t; }).map(function(r){ return [trDate(r.date), t === 'veli' ? 'Veli' : 'Öğrenci', r.branch, r.class, r.name, r.detail, r.byName || '']; })); };
+    var sum = {}; list.forEach(function(r){ var x = sum[r.student] || (sum[r.student] = [r.name, r.class, r.branch, 0, 0]); if (r.type === 'veli') x[4]++; else x[3]++; });
+    accXlsx('Rehberlik_Gorusmeleri_' + todayKey(), [['Özet', [['Öğrenci', 'Sınıf', 'Şube', 'Öğrenci Görüşmesi', 'Veli Görüşmesi']].concat(Object.values(sum))], ['Öğrenci Görüşmeleri', mk('ogrenci')], ['Veli Görüşmeleri', mk('veli')]]);
+  }
   </script>
 
 
