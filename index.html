@@ -2344,6 +2344,16 @@
     <div id="rgBody" style="max-width:960px;margin:0 auto;padding:12px"></div>
   </div>
 
+  <!-- REHBERLİK GÖRÜŞMESİ DÜZENLE -->
+  <div id="rgEditModal" class="hidden" style="position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.75);padding:14px;overflow:auto">
+    <div style="max-width:520px;margin:6vh auto 0;background:#fff;border-radius:18px;padding:16px;color:#0f172a">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b id="rgEditTitle">Görüşmeyi Düzenle</b><button type="button" class="qs-btn" style="background:#475569" onclick="document.getElementById('rgEditModal').classList.add('hidden')">Kapat</button></div>
+      <label style="font-size:12px;color:#64748b">Görüşme tarihi</label><input id="rgEditDate" type="date" class="qs-in" style="margin-bottom:8px">
+      <label style="font-size:12px;color:#64748b">Görüşme detayı</label><textarea id="rgEditDetail" class="qs-in" rows="6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="qs-btn" style="background:#059669;padding:10px 16px" onclick="rgEditSave()">Değişikliği Kaydet</button><button type="button" class="qs-btn" style="background:#64748b" onclick="document.getElementById('rgEditModal').classList.add('hidden')">Vazgeç</button></div>
+    </div>
+  </div>
+
   <!-- MODAL: ÖDEV MODÜLÜ -->
   <div id="hwModuleModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl text-slate-800">
@@ -2372,7 +2382,7 @@
       <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-3 space-y-2">
         <div class="font-bold text-rose-300"><i class="fa-solid fa-trash-can mr-1.5"></i>Veri Silme (Tercihli)</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-          <label class="flex items-center gap-2"><input type="checkbox" id="stgDelDesk"> Masa verileri (etüt, süre, konu, soru)</label>
+          <label class="flex items-center gap-2"><input type="checkbox" id="stgDelDesk"> Masa verileri: süre, etüt sayısı, çalışılan konu ve soru (geçmiş dahil). Kitap, fotoğraf, rehberlik görüşmesi ve raporlar silinmez</label>
           <label class="flex items-center gap-2"><input type="checkbox" id="stgDelReports"> Gün sonu raporları</label>
           <label class="flex items-center gap-2"><input type="checkbox" id="stgDelHw"> Ödevler</label>
           <label class="flex items-center gap-2"><input type="checkbox" id="stgDelBooks"> Öğrenci kitapları</label>
@@ -13050,7 +13060,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=32', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=34', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13517,6 +13527,7 @@
       ['bkm_video_watch_logs_v14', 'bkm_video_notified_weeks_v14'].forEach(function(k){ localStorage.removeItem(k); });
       stgResetDesks();
     }
+    if (all || g('stgDelBooks')) { bkById = {}; bkDeleted = {}; bkLegacy = []; lastBkJson = {}; try { if (fbDb && isCloudReady) fbDb.ref().update({ booksById: null, booksDeleted: null }); } catch(e) {} }
     if (all || g('stgDelReports')) {
       var ts = Date.now();
       repById = {}; repDeleted = {}; repLegacy = []; lastRepJson = {};
@@ -14119,7 +14130,7 @@
       var recs = Object.values(RG).filter(function(r){ return r.student === u.username && r.type === type; }), done = recs.length > 0, last = recs.map(function(r){ return r.date; }).sort().pop();
       return '<div class="qs-card" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" data-u="' + enc(u.username) + '"><label style="display:flex;align-items:center;gap:6px;min-width:200px"><input type="checkbox" class="rgChk"' + (done ? ' checked' : '') + ' style="width:20px;height:20px"> <b>' + u.name + '</b></label>' +
         (done ? '<span class="qs-badge" style="background:#d1fae5;color:#065f46">✔ ' + recs.length + ' görüşme · son ' + trDate(last) + '</span>' : '') +
-        '<input class="qs-in rgDet" style="flex:1;min-width:170px" placeholder="Görüşme detayı (hangi konularda görüşüldü)..." value="' + String(rgDraft[type + '|' + u.username] || '').replace(/"/g, '&quot;') + '" oninput="rgDraft[\'' + type + '|' + u.username.replace(/'/g, "\\'") + '\']=this.value"><button class="qs-btn" style="background:#059669" onclick="rgSave(this,\'' + type + '\')">Kaydet</button></div>'; }).join('');
+        '<input class="qs-in rgDet" style="flex:1;min-width:170px" placeholder="Görüşme detayı (hangi konularda görüşüldü)..." value="' + String(rgDraft[type + '|' + u.username] || '').replace(/"/g, '&quot;') + '" oninput="rgDraft[\'' + type + '|' + u.username.replace(/'/g, "\\'") + '\']=this.value"><button class="qs-btn" style="background:#059669" onclick="rgSave(this,\'' + type + '\')">Kaydet</button>' + rgEditBtn(recs) + '</div>'; }).join('');
     return top + (rows || '<div class="qs-card" style="text-align:center;color:#64748b">Bu sınıfta öğrenci yok.</div>');
   }
   function rgSave(btn, type) {
@@ -14152,9 +14163,9 @@
       '<div style="margin-top:6px"><input type="date" class="qs-in" style="width:auto;display:inline-block" value="' + rgF.from + '" onchange="rgF.from=this.value;rgRender()"> - <input type="date" class="qs-in" style="width:auto;display:inline-block" value="' + rgF.to + '" onchange="rgF.to=this.value;rgRender()"> <input class="qs-in" style="width:200px;display:inline-block" placeholder="İçerikte ara..." value="' + rgF.q.replace(/"/g, '&quot;') + '" onchange="rgF.q=this.value;rgRender()"> <button class="qs-btn" style="background:#059669" onclick="rgExport()">Excel</button></div>';
     var sum = {}; list.forEach(function(r){ var x = sum[r.student] || (sum[r.student] = { name: r.name, cls: r.class, br: r.branch, o: 0, v: 0, last: '' }); if (r.type === 'veli') x.v++; else x.o++; if (r.date > x.last) x.last = r.date; });
     var srows = Object.keys(sum).sort(function(a, b){ return (sum[b].o + sum[b].v) - (sum[a].o + sum[a].v); }).map(function(k){ var x = sum[k]; return '<tr style="cursor:pointer" onclick="rgF.st=\'' + k.replace(/'/g, "\\'") + '\';rgRender()"><td><b>' + x.name + '</b></td><td>' + x.cls + '</td><td>' + String(x.br).split(' ')[0] + '</td><td>' + x.o + '</td><td>' + x.v + '</td><td>' + (x.o + x.v) + '</td><td>' + trDate(x.last) + '</td></tr>'; }).join('');
-    var drows = list.slice(0, 200).map(function(r){ return '<tr><td>' + trDate(r.date) + '</td><td>' + (r.type === 'veli' ? 'Veli' : 'Öğrenci') + '</td><td><b>' + r.name + '</b></td><td>' + r.class + '</td><td style="max-width:320px">' + r.detail + '</td><td>' + (r.byName || '') + '</td>' + (isMainAdmin() || currentUser.role === 'admin' ? '<td><a href="#" style="color:#b91c1c" onclick="rgDel(\'' + r.id + '\');return false">sil</a></td>' : '<td></td>') + '</tr>'; }).join('');
+    var drows = list.slice(0, 200).map(function(r){ return '<tr><td>' + trDate(r.date) + '</td><td>' + (r.type === 'veli' ? 'Veli' : 'Öğrenci') + '</td><td><b>' + r.name + '</b></td><td>' + r.class + '</td><td style="max-width:320px">' + r.detail + '</td><td>' + (r.byName || '') + '</td><td>' + (rgCanEdit(r) ? '<a href="#" style="color:#0284c7" onclick="rgEdit(\'' + r.id + '\');return false">düzenle</a>' : '') + '</td>' + (isMainAdmin() || currentUser.role === 'admin' ? '<td><a href="#" style="color:#b91c1c" onclick="rgDel(\'' + r.id + '\');return false">sil</a></td>' : '<td></td>') + '</tr>'; }).join('');
     return '<div class="qs-card">' + filters + '</div><div class="qs-card" style="overflow-x:auto"><b>Özet — kimle kaç görüşme yapıldı (' + list.length + ' kayıt)</b><table class="qs-tbl"><thead><tr><th>Öğrenci</th><th>Sınıf</th><th>Şube</th><th>Öğrenci Gör.</th><th>Veli Gör.</th><th>Toplam</th><th>Son</th></tr></thead><tbody>' + (srows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:14px">Kayıt yok.</td></tr>') + '</tbody></table></div>' +
-      '<div class="qs-card" style="overflow-x:auto"><b>Görüşme içerikleri</b><table class="qs-tbl"><thead><tr><th>Tarih</th><th>Tür</th><th>Öğrenci</th><th>Sınıf</th><th>Detay</th><th>Görüşen</th><th></th></tr></thead><tbody>' + (drows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:14px">Kayıt yok.</td></tr>') + '</tbody></table></div>';
+      '<div class="qs-card" style="overflow-x:auto"><b>Görüşme içerikleri</b><table class="qs-tbl"><thead><tr><th>Tarih</th><th>Tür</th><th>Öğrenci</th><th>Sınıf</th><th>Detay</th><th>Görüşen</th><th></th><th></th></tr></thead><tbody>' + (drows || '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:14px">Kayıt yok.</td></tr>') + '</tbody></table></div>';
   }
   function rgDel(id) { if (!confirm('Bu görüşme kaydı silinsin mi?')) return; delete RG[id]; try { localStorage.setItem('bkm_rg_records_v1', JSON.stringify(RG)); if (fbDb && isCloudReady) fbDb.ref('rgRecords/' + id).remove(); } catch(e) {} rgRender(); }
   function rgExport() {
@@ -14163,6 +14174,75 @@
     var sum = {}; list.forEach(function(r){ var x = sum[r.student] || (sum[r.student] = [r.name, r.class, r.branch, 0, 0]); if (r.type === 'veli') x[4]++; else x[3]++; });
     accXlsx('Rehberlik_Gorusmeleri_' + todayKey(), [['Özet', [['Öğrenci', 'Sınıf', 'Şube', 'Öğrenci Görüşmesi', 'Veli Görüşmesi']].concat(Object.values(sum))], ['Öğrenci Görüşmeleri', mk('ogrenci')], ['Veli Görüşmeleri', mk('veli')]]);
   }
+  </script>
+
+  <script>
+  // ===== v17: rehberlik görüşmesi düzenleme =====
+  var rgEditId = null;
+  function rgCanEdit(r) { return !!currentUser && currentUser.role !== 'student' && (rgCanReport() || r.by === currentUser.username); }
+  function rgEditBtn(recs) {
+    var mine = recs.filter(rgCanEdit).sort(function(a, b){ return b.ts - a.ts; })[0];
+    return mine ? '<button class="qs-btn" style="background:#0284c7" onclick="rgEdit(\'' + mine.id + '\')"><i class="fa-solid fa-pen"></i> Düzenle</button>' : '';
+  }
+  function rgEdit(id) {
+    var r = RG[id]; if (!r || !rgCanEdit(r)) { alert('Bu kaydı düzenleme yetkiniz yok.'); return; }
+    rgEditId = id; $('rgEditTitle').innerText = (r.type === 'veli' ? 'Veli' : 'Öğrenci') + ' Görüşmesi — ' + r.name;
+    $('rgEditDate').value = r.date; $('rgEditDetail').value = r.detail; $('rgEditModal').classList.remove('hidden');
+  }
+  function rgEditSave() {
+    var r = RG[rgEditId]; if (!r) return; var det = $('rgEditDetail').value.trim(); if (!det) { alert('Görüşme detayı boş olamaz.'); return; }
+    r.detail = det; r.date = $('rgEditDate').value || r.date; r.editedBy = currentUser.name; r.editedTs = Date.now(); rgPut(r);
+    $('rgEditModal').classList.add('hidden'); rgRender();
+  }
+  </script>
+
+  <script>
+  // ===== v18: kitaplar tek tek (kitap başına) kaydedilir: eşzamanlı yazmalar birbirini silmez =====
+  var bkLegacy = [], bkById = {}, bkDeleted = {}, bkLegacyReady = false, bkByIdReady = false, lastBkJson = {}, bkLocalExtra = [], bkHealed = false;
+  function bkKey(id) { return String(id).replace(/[.#$\/\[\]]/g, '_'); }
+  (function() { try { bkLocalExtra = (Array.isArray(studentBooks) ? studentBooks : []).filter(function(b){ return b && b.id && String(b.id).indexOf('book_crs_') !== 0; }); } catch(e) {} })();
+  function mergeBooks() {
+    if (!bkLegacyReady || !bkByIdReady) return;
+    var map = {}, noId = [];
+    bkLegacy.forEach(function(b) { if (!b) return; if (!b.id) { noId.push(b); return; } if (!bkDeleted[bkKey(b.id)]) map[bkKey(b.id)] = b; });
+    Object.keys(bkById).forEach(function(k) { var b = bkById[k]; if (b && b.id && !bkDeleted[k]) map[k] = b; });
+    var arr = Object.keys(map).map(function(k){ return map[k]; }).concat(noId);
+    studentBooks = arr; lastBkJson = {}; arr.forEach(function(b){ if (b.id) lastBkJson[bkKey(b.id)] = JSON.stringify(b); });
+    try { localStorage.setItem('bkm_student_books_v14', JSON.stringify(arr)); } catch(e) {}
+    try { healLocalBooks(); } catch(e) {}
+    try { if (typeof renderStudentBooks === 'function') renderStudentBooks(); } catch(e) {}
+  }
+  // Öğrencinin telefonunda kalan ama buluttan kaybolmuş kendi kitaplarını geri yükle (bir kez)
+  function healLocalBooks() {
+    if (bkHealed || !bkLegacyReady || !bkByIdReady || !currentUser || currentUser.role !== 'student') return;
+    bkHealed = true; var have = {}, me = String(currentUser.username).toLowerCase(), added = 0;
+    studentBooks.forEach(function(b){ if (b && b.id) have[bkKey(b.id)] = 1; });
+    bkLocalExtra.forEach(function(b){ var k = bkKey(b.id); if (!have[k] && !bkDeleted[k] && String(b.username || '').toLowerCase() === me) { studentBooks.push(b); added++; } });
+    if (added) saveStudentBooksCloud();
+  }
+  var _scnB = syncCloudNode;
+  syncCloudNode = function(name, data) {
+    if (name !== 'studentBooks' || !fbDb || !isCloudReady) return _scnB.apply(this, arguments);
+    if (!bkLegacyReady || !bkByIdReady) return;
+    try {
+      var up = {}, cur = {}, n = 0, removed = [];
+      (Array.isArray(data) ? data : []).forEach(function(b) {
+        if (!b || !b.id) return; var k = bkKey(b.id), j = JSON.stringify(b); cur[k] = 1;
+        if (lastBkJson[k] !== j) { up['booksById/' + k] = JSON.parse(j); lastBkJson[k] = j; n++; }
+      });
+      Object.keys(lastBkJson).forEach(function(k) { if (!cur[k]) removed.push(k); });
+      if (removed.length > 25) { console.warn('Toplu kitap silme engellendi (' + removed.length + ')'); }
+      else removed.forEach(function(k){ up['booksById/' + k] = null; up['booksDeleted/' + k] = true; delete lastBkJson[k]; bkDeleted[k] = true; n++; });
+      if (n) fbDb.ref().update(up).catch(function(e){ console.warn('Kitap yazma hatası:', e); });
+    } catch(e) { console.warn(e); }
+  };
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) {
+    fbDb.ref('studentBooks').on('value', function(sn) { var v = sn.val(); bkLegacy = Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v).filter(function(x){ return x && typeof x === 'object'; }) : []); bkLegacyReady = true; mergeBooks(); });
+    fbDb.ref('booksById').on('value', function(sn) { bkById = sn.val() || {}; bkByIdReady = true; mergeBooks(); });
+    fbDb.ref('booksDeleted').on('value', function(sn) { bkDeleted = sn.val() || {}; mergeBooks(); });
+  }
+  var _uai18 = updateAuthUI;
+  updateAuthUI = function() { var r = _uai18.apply(this, arguments); try { if (currentUser && currentUser.role === 'student') setTimeout(healLocalBooks, 5000); } catch(e) {} return r; };
   </script>
 
 
