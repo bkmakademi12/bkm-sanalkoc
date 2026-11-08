@@ -2357,6 +2357,7 @@
         <button type="button" onclick="openClsMgr()" class="p-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 text-left"><i class="fa-solid fa-people-roof text-emerald-300 text-base"></i><div class="font-bold mt-1 text-white">Sınıf Yönetimi</div><div class="text-[10px] text-slate-400">Öğrencileri sınıflara taşı, masaları dağıt</div></button>
         <button type="button" onclick="openPermMgr()" class="p-3 rounded-xl bg-sky-600/20 border border-sky-500/40 hover:bg-sky-600/30 text-left"><i class="fa-solid fa-user-shield text-sky-300 text-base"></i><div class="font-bold mt-1 text-white">Kullanıcı Yetkilendirme</div><div class="text-[10px] text-slate-400">Hangi grup hangi modülü görsün</div></button>
       </div>
+      <button type="button" onclick="restoreCourseBooksSafe(false)" class="w-full mb-3 p-3 rounded-xl bg-teal-600/20 border border-teal-500/40 hover:bg-teal-600/30 text-left"><i class="fa-solid fa-book-medical text-teal-300 text-base"></i><div class="font-bold mt-1 text-white">Kurs Kitaplarını Geri Yükle</div><div class="text-[10px] text-slate-400">Silinen kurs kitaplarını mevcut öğrencilere yeniden ekler (öğrencilerin kendi kitaplarına dokunmaz)</div></button>
       <button type="button" onclick="openPwdManager()" class="w-full mb-4 p-3 rounded-xl bg-amber-600/20 border border-amber-500/40 hover:bg-amber-600/30 text-left"><i class="fa-solid fa-key text-amber-300 text-base"></i><div class="font-bold mt-1 text-white">Şifre Yönetimi</div><div class="text-[10px] text-slate-400">Öğrenci, öğretmen ve veli refakat şifrelerini değiştir / yeniden tanımla</div></button>
       <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-3 space-y-2">
         <div class="font-bold text-rose-300"><i class="fa-solid fa-trash-can mr-1.5"></i>Veri Silme (Tercihli)</div>
@@ -13039,7 +13040,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=29', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=30', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -14003,6 +14004,32 @@
     rd.readAsArrayBuffer(f);
   }
   function accTplPreview(type) { var t = (ACC.templates[type] && ACC.templates[type].html) || DEF_TPL[type]; accPrintHtml('Şablon önizleme', '<div class="h"><img src="' + accLogo() + '"><div style="font-size:22px;font-weight:800;color:#1d4ed8">BKM AKADEMİ</div></div>' + t); }
+  </script>
+
+  <script>
+  // ===== v14: kurs kitaplarını güvenle geri yükle =====
+  function restoreCourseBooksSafe(silent) {
+    if (!currentUser || currentUser.role !== 'admin') { if (!silent) alert('Bu işlem yalnızca yöneticiler içindir.'); return; }
+    var cur = Array.isArray(studentBooks) ? studentBooks : [], added = 0, byUser = {};
+    usersData.forEach(function(u){ if (u && u.role === 'student') byUser[String(u.username).toLowerCase()] = u; });
+    DEFAULT_COURSE_BOOKS.forEach(function(cb) {
+      var u = byUser[String(cb.username || '').toLowerCase()]; if (!u) return;
+      var exists = cur.some(function(b){ return b.username && b.username.toLowerCase() === cb.username.toLowerCase() && b.subject === cb.subject && String(b.title).toLowerCase() === String(cb.title).toLowerCase(); });
+      if (exists) return;
+      var copy = JSON.parse(JSON.stringify(cb)); copy.branch = u.branch; copy.class = u.class; cur.push(copy); added++;
+    });
+    try { localStorage.removeItem('bkm_no_seed_v14'); if (fbDb && isCloudReady) fbDb.ref('noSeed').remove(); } catch(e) {}
+    studentBooks = cur; saveStudentBooksCloud();
+    localStorage.setItem('bkm_books_restored_v2', '1');
+    if (!silent || added) alert(added ? '✅ ' + added + ' kurs kitabı geri yüklendi.' : 'Eksik kurs kitabı yok; tüm kurs kitapları mevcut.');
+  }
+  // Bu güncellemeden sonra ilk yönetici girişinde bir kez otomatik geri yükle
+  var _uai14 = updateAuthUI;
+  updateAuthUI = function() {
+    var r = _uai14.apply(this, arguments);
+    try { if (currentUser && currentUser.role === 'admin' && !localStorage.getItem('bkm_books_restored_v2')) setTimeout(function(){ restoreCourseBooksSafe(true); }, 4000); } catch(e) {}
+    return r;
+  };
   </script>
 
 
