@@ -519,6 +519,7 @@
     .qs-chip.on{background:#4f46e5;color:#fff}
     .qs-badge{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:800}
     .qs-tbl{width:100%;border-collapse:collapse;font-size:13px;color:#0f172a}.qs-tbl th{background:#eef2ff;text-align:left;padding:8px}.qs-tbl td{padding:8px;border-bottom:1px solid #e2e8f0}
+    .hide-books-btn #studentBooksBtn{display:none!important}
 </style>
   <link rel="manifest" href="./manifest.json">
     <!-- PWA & Mobile Web App Meta Tags & App Icon -->
@@ -538,6 +539,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
@@ -1873,6 +1876,7 @@
             <option value="Din Kültürü">Din Kültürü</option>
             <option value="Paragraf">Paragraf</option>
             <option value="Hata Kitapçığı Çözümü" class="text-rose-400 font-bold">📕 Hata Kitapçığı Çözümü</option>
+            <option value="Yanlış Soru Tekrarı" class="text-orange-400 font-bold">📝 Yanlış Soru Tekrarı</option>
             <option value="Video Çözüm İzleme" class="text-amber-300 font-bold">🎬 Video Çözüm İzleme</option>
           </select>
         </div>
@@ -2256,8 +2260,9 @@
       <div style="color:#fff;font-weight:900;font-size:26px;letter-spacing:1px;margin-top:12px">BKM SANAL KOÇ</div>
       <div id="modWelcome" style="color:#bae6fd;font-weight:700;margin:4px 0 18px">Girmek istediğiniz modülü seçin</div>
       <div style="display:grid;gap:12px;text-align:left">
-        <button type="button" onclick="pickModule('kurs')" class="mod-card" style="--c:#f59e0b"><span class="mod-ic"><i class="fa-solid fa-book-open-reader"></i></span><span><b>Kurs &amp; Otomasyon Modülü</b><small>Ödev Modülü</small></span></button>
-        <button type="button" onclick="pickModule('etut')" class="mod-card" style="--c:#10b981"><span class="mod-ic"><i class="fa-solid fa-chalkboard-user"></i></span><span><b>Sanal Etüt Modülü</b><small>Sanal sınıf, masalar, çalışma takibi ve analizler</small></span></button>
+        <button type="button" id="modKursCard" onclick="pickModule('kurs')" class="mod-card" style="--c:#f59e0b"><span class="mod-ic"><i class="fa-solid fa-book-open-reader"></i></span><span><b>Kurs &amp; Otomasyon Modülü</b><small>Ödev Modülü</small></span></button>
+        <button type="button" id="modEtutCard" onclick="pickModule('etut')" class="mod-card" style="--c:#10b981"><span class="mod-ic"><i class="fa-solid fa-chalkboard-user"></i></span><span><b>Sanal Etüt Modülü</b><small>Sanal sınıf, masalar, çalışma takibi ve analizler</small></span></button>
+        <button type="button" id="modAccCard" onclick="pickModule('acc')" class="mod-card" style="--c:#0ea5e9;display:none"><span class="mod-ic"><i class="fa-solid fa-calculator"></i></span><span><b>Muhasebe Modülü</b><small>Sözleşmeler, tahsilat, makbuz, gelir-gider ve raporlar</small></span></button>
         <button type="button" id="modQsCard" onclick="pickModule('qs')" class="mod-card" style="--c:#6366f1"><span class="mod-ic"><i class="fa-solid fa-circle-question"></i></span><span><b>Soru Çözüm Modülü</b><small id="modQsSub">Öğretmen ile soru çözüm sırası ve istatistikleri</small></span></button>
       </div>
     </div>
@@ -2301,6 +2306,34 @@
     </div>
   </div>
 
+  <!-- MUHASEBE MODÜLÜ -->
+  <div id="accModule" class="hidden" style="position:fixed;inset:0;z-index:44;overflow:auto;background:#f1f5f9">
+    <div class="qs-top">
+      <button type="button" onclick="showModules()" class="qs-btn" style="background:#475569"><i class="fa-solid fa-arrow-left"></i> Modüller</button>
+      <b style="color:#0f172a;font-size:16px">Muhasebe Modülü</b>
+      <select id="accBranch" onchange="accRender()" class="qs-in" style="max-width:190px"></select>
+    </div>
+    <div id="accTabs" class="qs-tabs"></div>
+    <div id="accBody" style="max-width:1000px;margin:0 auto;padding:12px"></div>
+  </div>
+
+  <!-- SINIF YÖNETİMİ -->
+  <div id="clsMgrModal" class="hidden" style="position:fixed;inset:0;z-index:55;background:rgba(15,23,42,.75);padding:12px;overflow:auto">
+    <div style="max-width:760px;margin:0 auto;background:#f1f5f9;border-radius:20px;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:16px;color:#0f172a"><i class="fa-solid fa-people-roof" style="color:#059669"></i> Sınıf Yönetimi</b><button type="button" onclick="document.getElementById('clsMgrModal').classList.add('hidden')" class="qs-btn" style="background:#475569">Kapat</button></div>
+      <input id="cmSearch" class="qs-in" placeholder="Öğrenci ara (ad veya kullanıcı adı)..." oninput="cmRender()">
+      <div id="cmBody" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- KULLANICI YETKİLENDİRME -->
+  <div id="permModal" class="hidden" style="position:fixed;inset:0;z-index:55;background:rgba(15,23,42,.75);padding:12px;overflow:auto">
+    <div style="max-width:760px;margin:0 auto;background:#f1f5f9;border-radius:20px;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:16px;color:#0f172a"><i class="fa-solid fa-user-shield" style="color:#0284c7"></i> Kullanıcı Yetkilendirme</b><button type="button" onclick="document.getElementById('permModal').classList.add('hidden')" class="qs-btn" style="background:#475569">Kapat</button></div>
+      <div id="permBody"></div>
+    </div>
+  </div>
+
   <!-- MODAL: ÖDEV MODÜLÜ -->
   <div id="hwModuleModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl text-slate-800">
@@ -2319,6 +2352,10 @@
       <div class="grid grid-cols-2 gap-2 mb-4">
         <button type="button" onclick="openTeacherAdminModal()" class="p-3 rounded-xl bg-purple-600/20 border border-purple-500/40 hover:bg-purple-600/30 text-left"><i class="fa-solid fa-chalkboard-user text-purple-300 text-base"></i><div class="font-bold mt-1 text-white">Öğretmen Yönetimi</div><div class="text-[10px] text-slate-400">Öğretmen ekle, sınıf koçu ata</div></button>
         <button type="button" onclick="openAdminModal()" class="p-3 rounded-xl bg-indigo-600/20 border border-indigo-500/40 hover:bg-indigo-600/30 text-left"><i class="fa-solid fa-user-gear text-indigo-300 text-base"></i><div class="font-bold mt-1 text-white">Öğrenci Yönetimi</div><div class="text-[10px] text-slate-400">Öğrenci, şube ve Excel işlemleri</div></button>
+      </div>
+      <div id="stgMainAdminBox" style="display:none" class="grid grid-cols-2 gap-2 mb-3">
+        <button type="button" onclick="openClsMgr()" class="p-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 text-left"><i class="fa-solid fa-people-roof text-emerald-300 text-base"></i><div class="font-bold mt-1 text-white">Sınıf Yönetimi</div><div class="text-[10px] text-slate-400">Öğrencileri sınıflara taşı, masaları dağıt</div></button>
+        <button type="button" onclick="openPermMgr()" class="p-3 rounded-xl bg-sky-600/20 border border-sky-500/40 hover:bg-sky-600/30 text-left"><i class="fa-solid fa-user-shield text-sky-300 text-base"></i><div class="font-bold mt-1 text-white">Kullanıcı Yetkilendirme</div><div class="text-[10px] text-slate-400">Hangi grup hangi modülü görsün</div></button>
       </div>
       <button type="button" onclick="openPwdManager()" class="w-full mb-4 p-3 rounded-xl bg-amber-600/20 border border-amber-500/40 hover:bg-amber-600/30 text-left"><i class="fa-solid fa-key text-amber-300 text-base"></i><div class="font-bold mt-1 text-white">Şifre Yönetimi</div><div class="text-[10px] text-slate-400">Öğrenci, öğretmen ve veli refakat şifrelerini değiştir / yeniden tanımla</div></button>
       <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-3 space-y-2">
@@ -2809,6 +2846,7 @@
             <option value="Branş Denemesi">Branş Denemesi</option>
             <option value="Genel Deneme">Genel Deneme</option>
             <option value="Hata Kitapçığı Çözümü" class="text-rose-400 font-bold">📕 Hata Kitapçığı Çözümü</option>
+            <option value="Yanlış Soru Tekrarı" class="text-orange-400 font-bold">📝 Yanlış Soru Tekrarı</option>
             <option value="Video Çözüm İzleme" id="optVideoCozumDesk" class="hidden text-amber-300 font-bold">🎬 Video Çözüm İzleme</option>
           </select>
         </div>
@@ -13001,7 +13039,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=28', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=29', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13553,6 +13591,418 @@
     if (!confirm('Veli PIN sıfırlansın mı? Veli, ortak kod (2027) ile yeniden PIN belirleyecek.')) return;
     localStorage.removeItem('parent_pin_' + un.toLowerCase()); alert('Veli PIN sıfırlandı.'); pwdRender();
   }
+  </script>
+
+  <script>
+  // ===== v12: yetkilendirme, şifre kalıcılığı, sınıf yönetimi, soru çözüm filtreleri =====
+  var $ = function(id) { return document.getElementById(id); };
+  function isMainAdmin() { return !!(currentUser && String(currentUser.username).toLowerCase() === 'admin'); }
+  var fmt = function(n) { return Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺'; };
+
+  // -- window.usersData her zaman güncel liste olsun (giriş eski listeye bakıyordu) --
+  try { Object.defineProperty(window, 'usersData', { get: function(){ return usersData; }, set: function(v){ usersData = v; }, configurable: true }); } catch(e) {}
+
+  // -- Şifre değişiklikleri güncellemede / eski listede geri dönmesin --
+  var pwOv = {}; try { pwOv = JSON.parse(localStorage.getItem('bkm_pw_overrides_v1')) || {}; } catch(e) {}
+  function applyPwOv() {
+    Object.keys(pwOv).forEach(function(k) { var o = pwOv[k]; if (!o || !o.password) return;
+      var u = usersData.find(function(x){ return x && x.username && tpKey(x.username) === k; }); if (u) u.password = o.password; });
+  }
+  function setPwOv(username, password) {
+    var k = tpKey(username), o = { password: password, ts: Date.now() }; pwOv[k] = o;
+    try { localStorage.setItem('bkm_pw_overrides_v1', JSON.stringify(pwOv)); } catch(e) {}
+    try { if (fbDb && isCloudReady) fbDb.ref('passwordOverrides/' + k).set(o); } catch(e) {}
+  }
+  applyPwOv();
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) {
+    fbDb.ref('passwordOverrides').on('value', function(sn) {
+      var v = sn.val() || {}; Object.keys(v).forEach(function(k){ if (!pwOv[k] || (v[k].ts || 0) >= (pwOv[k].ts || 0)) pwOv[k] = v[k]; });
+      try { localStorage.setItem('bkm_pw_overrides_v1', JSON.stringify(pwOv)); } catch(e) {}
+      applyPwOv();
+    });
+    fbDb.ref('usersData').on('value', function() { applyPwOv(); });
+  }
+  var _hcp = handleChangePassword;
+  handleChangePassword = function(e) { var before = currentUser && currentUser.password; var r = _hcp.apply(this, arguments); try { if (currentUser && currentUser.password !== before) setPwOv(currentUser.username, currentUser.password); } catch(x) {} return r; };
+  var _pwdSave = pwdSave;
+  pwdSave = function(btn) { var un = decodeURIComponent(btn.dataset.u), val = btn.previousElementSibling.value.trim(); var r = _pwdSave.apply(this, arguments); try { var u = usersData.find(function(x){ return x.username === un; }); if (u && u.password === val) setPwOv(un, val); } catch(x) {} return r; };
+  // Öğrenci cihazları kullanıcı listesinin tamamını buluta yazmaz (eski veriyle ezmesin)
+  var _scnU = syncCloudNode;
+  syncCloudNode = function(name, data) { if (name === 'usersData' && currentUser && currentUser.role === 'student') return; return _scnU.apply(this, arguments); };
+
+  // -- Yetki grupları ve modül izinleri --
+  var AUTH_GROUPS = [['mudur', 'Müdür'], ['rehber', 'Rehber Öğretmen'], ['ogretmen', 'Öğretmen'], ['ogrenci', 'Öğrenci'], ['veli', 'Veli']];
+  var MODS = [['kurs', 'Kurs & Otomasyon'], ['etut', 'Sanal Etüt'], ['qs', 'Soru Çözüm'], ['acc', 'Muhasebe']];
+  var rolePerms = { mudur: { kurs: 1, etut: 1, qs: 1, acc: 1 }, rehber: { kurs: 1, etut: 1, qs: 1 }, ogretmen: { kurs: 1, etut: 1 }, ogrenci: { kurs: 1, etut: 1 }, veli: {} };
+  try { var rp = JSON.parse(localStorage.getItem('bkm_role_perms_v1')); if (rp) rolePerms = rp; } catch(e) {}
+  if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) fbDb.ref('rolePerms').on('value', function(sn) { if (sn.exists()) { rolePerms = sn.val(); try { localStorage.setItem('bkm_role_perms_v1', JSON.stringify(rolePerms)); } catch(e) {} } });
+  function userGroup(u) {
+    if (u.authGroup) return u.authGroup;
+    if (u.role === 'student') return 'ogrenci';
+    return (u.role === 'admin' || isUserAdminOrCounselor(u)) ? 'rehber' : 'ogretmen';
+  }
+  function canModule(m) { if (!currentUser) return false; if (isMainAdmin()) return true; var p = rolePerms[userGroup(currentUser)] || {}; return !!p[m]; }
+  function scopeBranches() {
+    if (!currentUser) return [];
+    if (isMainAdmin() || !currentUser.branch || currentUser.branch === 'Tümü') return BRANCHES.slice();
+    var b = [currentUser.branch]; (currentUser.branches || []).forEach(function(x){ if (b.indexOf(x) < 0) b.push(x); }); return b;
+  }
+
+  // -- Modül seçimi (izinlere göre) --
+  function showModules() {
+    sessionStorage.removeItem('bkm_module'); hideAllModules(); document.body.classList.remove('mod-etut');
+    [['kurs', 'modKursCard'], ['etut', 'modEtutCard'], ['acc', 'modAccCard'], ['qs', 'modQsCard']].forEach(function(p){ var el = $(p[1]); if (el) { el.style.display = canModule(p[0]) ? '' : 'none'; el.classList.remove('locked'); } });
+    $('modQsSub').innerText = 'Öğretmen ile soru çözüm sırası ve istatistikleri';
+    $('modWelcome').innerText = (currentUser ? 'Hoş geldiniz, ' + currentUser.name + ' — ' : '') + 'girmek istediğiniz modülü seçin';
+    $('moduleGate').classList.remove('hidden');
+  }
+  function pickModule(m) {
+    if (!currentUser || !canModule(m)) return;
+    sessionStorage.setItem('bkm_module', m); hideAllModules();
+    document.body.classList.toggle('mod-etut', m === 'etut');
+    if (m === 'kurs') {
+      var st = currentUser.role === 'student', card = function(fn, ic, col, t, d){ return '<button type="button" class="qs-card" style="text-align:left" onclick="' + fn + '"><b><i class="fa-solid ' + ic + '" style="color:' + col + '"></i> ' + t + '</b><div style="color:#64748b;font-size:12px">' + d + '</div></button>'; };
+      $('kursBody').innerHTML = st
+        ? card('openStudentHomeworkModal()', 'fa-book-open-reader', '#4f46e5', 'Ödevlerim', 'Verilen ödevleri gör ve tamamla') + card('openStudentBooksModal()', 'fa-book', '#0f766e', 'Kitaplarım', 'Kitap listeni yönet')
+        : card('openCoachHomeworkModal()', 'fa-paper-plane', '#d97706', 'Ödevlendirme', 'Öğrenci / sınıflara ödev tanımla') + card('openCoachHomeworkCheckModal()', 'fa-clipboard-check', '#0f766e', 'Ödev Kontrol', 'Verilen ödevleri incele ve onayla') + card('openStudentBooksModal()', 'fa-book', '#4f46e5', 'Öğrenci Kitapları', 'Öğrencilerin kitap listelerini yönet');
+      $('kursPanel').classList.remove('hidden');
+    } else if (m === 'qs') {
+      qsInit(); var sc = scopeBranches();
+      $('qsBranch').innerHTML = (sc.length > 1 ? '<option value="Tümü">Tüm Şubeler</option>' : '') + sc.map(function(b){ return '<option>' + b + '</option>'; }).join('');
+      $('qsModule').classList.remove('hidden'); qsRender();
+    } else if (m === 'acc') { accInit(); $('accModule').classList.remove('hidden'); accRender(); }
+  }
+  var _hideAll = hideAllModules;
+  hideAllModules = function() { _hideAll(); ['accModule'].forEach(function(id){ $(id).classList.add('hidden'); }); };
+  var _uai12 = updateAuthUI;
+  updateAuthUI = function() {
+    var r = _uai12.apply(this, arguments);
+    try {
+      document.body.classList.toggle('hide-books-btn', !!(currentUser && currentUser.role !== 'student'));
+      var bx = $('stgMainAdminBox'); if (bx) bx.style.display = isMainAdmin() ? 'grid' : 'none';
+    } catch(e) {}
+    return r;
+  };
+
+  // -- Yanlış Soru Tekrarı: tek konulu özel ders --
+  var _hdsc = handleDeskSubjectChange;
+  handleDeskSubjectChange = function(subject) {
+    var r = _hdsc.apply(this, arguments);
+    if (subject === 'Yanlış Soru Tekrarı') {
+      var t = $('studyTopicSelect');
+      if (t) { t.innerHTML = '<option value="Yanlış Soru Tekrarı">Yanlış Soru Tekrarı (Cumartesi akşamı)</option>'; t.value = 'Yanlış Soru Tekrarı'; }
+    }
+    return r;
+  };
+
+  // -- Kullanıcı yetkilendirme ekranı --
+  function openPermMgr() { if (!isMainAdmin()) return; $('permModal').classList.remove('hidden'); permRender(); }
+  function permRender() {
+    var head = '<tr><th>Grup</th>' + MODS.map(function(m){ return '<th>' + m[1] + '</th>'; }).join('') + '</tr>';
+    var rows = AUTH_GROUPS.map(function(g) { var p = rolePerms[g[0]] || {};
+      return '<tr><td><b>' + g[1] + '</b></td>' + MODS.map(function(m){ return '<td style="text-align:center"><input type="checkbox" class="pmChk" data-g="' + g[0] + '" data-m="' + m[0] + '"' + (p[m[0]] ? ' checked' : '') + '></td>'; }).join('') + '</tr>'; }).join('');
+    var staff = usersData.filter(function(u){ return u && (u.role === 'coach' || u.role === 'admin') && String(u.username).toLowerCase() !== 'admin'; });
+    var srows = staff.map(function(u, i) {
+      var g = userGroup(u), opts = AUTH_GROUPS.slice(0, 3).map(function(x){ return '<option value="' + x[0] + '"' + (g === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('');
+      var bo = ['Tümü'].concat(BRANCHES).map(function(b){ return '<option value="' + b + '"' + ((u.branch || 'Tümü') === b ? ' selected' : '') + '>' + (b === 'Tümü' ? 'Her İki Şube (Ortak)' : b) + '</option>'; }).join('');
+      return '<div class="qs-card" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><b style="flex:1;min-width:140px">' + u.name + '</b><select class="qs-in" style="width:150px" id="pg_' + i + '">' + opts + '</select><select class="qs-in" style="width:170px" id="pb_' + i + '">' + bo + '</select><button class="qs-btn" data-u="' + encodeURIComponent(u.username) + '" data-i="' + i + '" onclick="permSaveUser(this)">Kaydet</button></div>';
+    }).join('');
+    $('permBody').innerHTML = '<div class="qs-card"><b>Hangi grup hangi modülü görsün?</b><div style="overflow-x:auto;margin-top:8px"><table class="qs-tbl"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div><div style="margin-top:8px"><button class="qs-btn" onclick="permSave()">Yetkileri Kaydet</button></div><div style="color:#64748b;font-size:12px;margin-top:6px">Müdür ve rehber/öğretmenler yalnızca tanımlı oldukları şubenin verilerini görür. Ana admin her şeyi görür.</div></div>' +
+      '<div class="qs-card"><b>Personel: grup ve şube ataması</b><div style="color:#64748b;font-size:12px">Ortak öğretmenler için "Her İki Şube" seçin.</div></div>' + srows;
+  }
+  function permSave() {
+    var p = {}; AUTH_GROUPS.forEach(function(g){ p[g[0]] = {}; });
+    document.querySelectorAll('.pmChk').forEach(function(c){ if (c.checked) p[c.dataset.g][c.dataset.m] = 1; });
+    rolePerms = p; try { localStorage.setItem('bkm_role_perms_v1', JSON.stringify(p)); } catch(e) {}
+    try { if (fbDb && isCloudReady) fbDb.ref('rolePerms').set(p); } catch(e) {}
+    alert('Yetkiler kaydedildi.');
+  }
+  function permSaveUser(btn) {
+    var un = decodeURIComponent(btn.dataset.u), i = btn.dataset.i, u = usersData.find(function(x){ return x.username === un; }); if (!u) return;
+    u.authGroup = $('pg_' + i).value; u.branch = $('pb_' + i).value; saveData(); alert(u.name + ' için grup ve şube kaydedildi.');
+  }
+
+  // -- Sınıf yönetimi (yalnızca ana admin) --
+  var cmDraft = null, cmBr = null, cmCls = null;
+  function cmInit() { cmDraft = {}; usersData.forEach(function(u){ if (u && u.role === 'student') cmDraft[u.username] = { b: u.branch, c: u.class }; }); cmBr = cmBr || BRANCHES[0]; cmCls = cmCls || CLASSES[0]; }
+  function openClsMgr() { if (!isMainAdmin()) return; cmInit(); $('cmSearch').value = ''; $('clsMgrModal').classList.remove('hidden'); cmRender(); }
+  function cmCount(b, c) { return Object.keys(cmDraft).filter(function(k){ return cmDraft[k].b === b && cmDraft[k].c === c; }).length; }
+  function cmNameOf(un) { var u = usersData.find(function(x){ return x.username === un; }); return u ? u.name : un; }
+  function cmRender() {
+    if (!cmDraft) return;
+    var q = $('cmSearch').value.trim().toLowerCase(), enc = encodeURIComponent;
+    var brChips = BRANCHES.map(function(b){ return '<span class="qs-chip' + (cmBr === b ? ' on' : '') + '" onclick="cmBr=\'' + b + '\';cmRender()">' + b + '</span>'; }).join('');
+    var clsChips = CLASSES.map(function(c){ var n = cmCount(cmBr, c); return '<span class="qs-chip' + (cmCls === c ? ' on' : '') + '" style="' + (n > 15 ? 'background:#fecaca;color:#991b1b' : '') + '" onclick="cmCls=\'' + c + '\';cmRender()">' + c + ' (' + n + ')</span>'; }).join('');
+    var search = '';
+    if (q.length >= 2) {
+      var res = Object.keys(cmDraft).filter(function(k){ return cmNameOf(k).toLowerCase().indexOf(q) > -1 || k.toLowerCase().indexOf(q) > -1; }).slice(0, 8);
+      search = '<div class="qs-card"><b>Arama sonucu</b>' + res.map(function(k){ var d = cmDraft[k], here = d.b === cmBr && d.c === cmCls;
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #e2e8f0"><span>' + cmNameOf(k) + ' <span style="color:#64748b;font-size:12px">(' + String(d.b).split(' ')[0] + ' ' + d.c + ')</span></span>' + (here ? '<i style="color:#64748b;font-size:12px">bu sınıfta</i>' : '<button class="qs-btn" data-u="' + enc(k) + '" onclick="cmMove(this.dataset.u,cmBr+\'|\'+cmCls)">Bu sınıfa ekle</button>') + '</div>'; }).join('') + (res.length ? '' : '<div style="color:#64748b">Bulunamadı.</div>') + '</div>';
+    }
+    var opts = function(sel) { return BRANCHES.map(function(b){ return '<optgroup label="' + b + '">' + CLASSES.map(function(c){ var v = b + '|' + c; return '<option value="' + v + '"' + (v === sel ? ' selected' : '') + '>' + b.split(' ')[0] + ' ' + c + '</option>'; }).join('') + '</optgroup>'; }).join(''); };
+    var list = Object.keys(cmDraft).filter(function(k){ return cmDraft[k].b === cmBr && cmDraft[k].c === cmCls; }).sort(function(a, b){ return cmNameOf(a).localeCompare(cmNameOf(b), 'tr'); });
+    var rows = list.map(function(k, i) { return '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #e2e8f0"><span>' + (i + 1) + '. ' + cmNameOf(k) + '</span><select class="qs-in" style="width:150px" data-u="' + enc(k) + '" onchange="cmMove(this.dataset.u,this.value)">' + opts(cmBr + '|' + cmCls) + '</select></div>'; }).join('');
+    var over = list.length > 15 ? '<span style="color:#b91c1c;font-weight:700"> (kontenjan 15, kaydetmeden önce düzeltin)</span>' : '';
+    $('cmBody').innerHTML = '<div>' + brChips + '</div><div style="margin-top:6px">' + clsChips + '</div>' + search +
+      '<div class="qs-card"><b>' + cmBr + ' · ' + cmCls + ' — ' + list.length + ' öğrenci' + over + '</b>' + (rows || '<div style="color:#64748b;margin-top:6px">Bu sınıfta öğrenci yok.</div>') + '</div>' +
+      '<div style="display:flex;gap:8px"><button class="qs-btn" style="background:#059669;padding:12px 16px" onclick="cmSaveAll()">Sınıfları Kaydet</button><button class="qs-btn" style="background:#64748b" onclick="cmInit();cmRender()">Değişiklikleri Geri Al</button></div>';
+  }
+  function cmMove(un, target) { var p = target.split('|'); cmDraft[decodeURIComponent(un)] = { b: p[0], c: p[1] }; cmRender(); }
+  function blankDesk(i) { return { deskNumber: i, studentName: '', username: '', status: 'empty', subject: '', topic: '', questions: 0, secondsStudied: 0, sessionsCompleted: 0, dayKey: todayKey() }; }
+  function cmSaveAll() {
+    var bad = []; BRANCHES.forEach(function(b){ CLASSES.forEach(function(c){ var n = cmCount(b, c); if (n > 15) bad.push(b.split(' ')[0] + ' ' + c + ' (' + n + ')'); }); });
+    if (bad.length) { alert('Şu sınıflar 15 kontenjanı aşıyor, önce düzeltin:\n' + bad.join('\n')); return; }
+    if (!confirm('Sınıf değişiklikleri kaydedilsin ve masalar yeniden dağıtılsın mı?')) return;
+    usersData.forEach(function(u){ if (u && u.role === 'student' && cmDraft[u.username]) { u.branch = cmDraft[u.username].b; u.class = cmDraft[u.username].c; } });
+    BRANCHES.forEach(function(b) { if (!branchesData[b]) branchesData[b] = {}; CLASSES.forEach(function(c) {
+      var old = branchesData[b][c] || [], arr = []; for (var i = 1; i <= 15; i++) arr.push(blankDesk(i));
+      var studs = usersData.filter(function(u){ return u && u.role === 'student' && u.branch === b && u.class === c; }).sort(function(x, y){ return String(x.name).localeCompare(String(y.name), 'tr'); }), rest = [];
+      studs.forEach(function(st) { var od = old.find(function(d){ return d && d.username === st.username; });
+        if (od && od.deskNumber >= 1 && od.deskNumber <= 15 && !arr[od.deskNumber - 1].studentName) { arr[od.deskNumber - 1] = od; st.deskIndex = od.deskNumber; } else rest.push(st); });
+      rest.forEach(function(st) { var idx = arr.findIndex(function(d){ return !d.studentName; }); if (idx < 0) return;
+        var d = blankDesk(idx + 1); d.studentName = st.name; d.username = st.username; d.status = 'offline'; arr[idx] = d; st.deskIndex = idx + 1; });
+      branchesData[b][c] = arr; }); });
+    saveData(); try { renderDesks(); } catch(e) {}
+    $('clsMgrModal').classList.add('hidden'); alert('✅ Sınıflar kaydedildi, öğrenciler masalara dağıtıldı.');
+  }
+
+  // -- Soru çözüm istatistikleri: şube / sınıf / öğrenci / ders filtreleri --
+  var qsFClass = 'Tümü', qsFStudent = 'Tümü', qsFSubj = 'Tümü';
+  qsInBranch = function(it) { var b = qsBr(), sc = scopeBranches(); return b === 'Tümü' ? sc.indexOf(it.branch) > -1 : it.branch === b; };
+  qsStatsHtml = function() {
+    var P = [['today', 'Bugün'], ['yesterday', 'Dün'], ['week', 'Bu Hafta'], ['month', 'Bu Ay'], ['all', 'Toplam']];
+    var chips = P.map(function(p){ return '<span class="qs-chip' + (qsPeriod === p[0] ? ' on' : '') + '" onclick="qsPeriod=\'' + p[0] + '\';qsRender()">' + p[1] + '</span>'; }).join('');
+    var done = Object.values(qsItems).filter(function(it){ return it.status === 'done' && qsInBranch(it) && qsPeriodMatch(it.doneDate); });
+    var stuList = {}; done.forEach(function(it){ if (qsFClass === 'Tümü' || it.class === qsFClass) stuList[it.student] = it.name; });
+    var sel = function(id, val, opts, ch) { return '<select class="qs-in" style="width:auto;display:inline-block" onchange="' + ch + '">' + opts.map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select> '; };
+    var filters = sel('', qsFClass, [['Tümü', 'Tüm Sınıflar']].concat(CLASSES.map(function(c){ return [c, c]; })), "qsFClass=this.value;qsFStudent='Tümü';qsRender()") +
+      sel('', qsFStudent, [['Tümü', 'Tüm Öğrenciler']].concat(Object.keys(stuList).map(function(k){ return [k, stuList[k]]; })), 'qsFStudent=this.value;qsRender()') +
+      sel('', qsFSubj, [['Tümü', 'Tüm Dersler']].concat(QS_SUBJ.map(function(x){ return [x, x]; })), 'qsFSubj=this.value;qsRender()');
+    done = done.filter(function(it){ return (qsFClass === 'Tümü' || it.class === qsFClass) && (qsFStudent === 'Tümü' || it.student === qsFStudent) && (qsFSubj === 'Tümü' || it.subject === qsFSubj); });
+    var by = {}, tot = 0, subTot = {};
+    done.forEach(function(it) { var r = by[it.student] || (by[it.student] = { name: it.name, cls: it.class, br: it.branch, q: 0, n: 0, s: {} });
+      r.q += it.count || 0; r.n++; r.s[it.subject] = (r.s[it.subject] || 0) + (it.count || 0); tot += it.count || 0; subTot[it.subject] = (subTot[it.subject] || 0) + (it.count || 0); });
+    var rows = Object.values(by).sort(function(a, b){ return b.q - a.q; }).map(function(r) {
+      return '<tr><td><b>' + r.name + '</b></td><td>' + r.cls + '</td><td>' + String(r.br).split(' ')[0] + '</td>' + QS_SUBJ.map(function(k){ return '<td>' + (r.s[k] || 0) + '</td>'; }).join('') + '<td style="font-weight:800;color:#4338ca">' + r.q + '</td><td>' + r.n + '</td></tr>'; }).join('');
+    var sumRow = '<tr style="background:#eef2ff;font-weight:800"><td colspan="3">Genel Toplam</td>' + QS_SUBJ.map(function(k){ return '<td>' + (subTot[k] || 0) + '</td>'; }).join('') + '<td>' + tot + '</td><td>' + done.length + '</td></tr>';
+    return '<div style="margin-bottom:8px">' + chips + '</div><div class="qs-card">' + filters + '</div>' +
+      '<div class="qs-card" style="overflow-x:auto"><table class="qs-tbl"><thead><tr><th>Öğrenci</th><th>Sınıf</th><th>Şube</th>' + QS_SUBJ.map(function(k){ return '<th>' + k.split('/')[0] + '</th>'; }).join('') + '<th>Toplam</th><th>Oturum</th></tr></thead><tbody>' + (rows ? rows + sumRow : '<tr><td colspan="10" style="text-align:center;color:#64748b;padding:18px">Bu filtrelerde kayıt yok.</td></tr>') + '</tbody></table></div>';
+  };
+  updateAuthUI();
+  </script>
+
+  <script>
+  // ===== v13: MUHASEBE MODÜLÜ =====
+  var ACC = { contracts: {}, payments: {}, expenses: {}, templates: {} }, accTab = 'dash', accInited = false, accRepMonthsFrom = '';
+  try { var _a = JSON.parse(localStorage.getItem('bkm_acc_v1')); if (_a) ACC = Object.assign(ACC, _a); } catch(e) {}
+  var SMS_TPL = localStorage.getItem('bkm_sms_tpl') || 'Sayın {{VELI_ADI}}, {{OGRENCI_ADI}} adlı öğrencinizin {{VADE}} tarihli {{TUTAR}} tutarındaki kurs ücreti taksiti gecikmiştir. Bilgilerinize sunarız. BKM Akademi';
+  function accSaveLocal() { try { localStorage.setItem('bkm_acc_v1', JSON.stringify(ACC)); } catch(e) {} }
+  function accPut(coll, obj, noRender) { ACC[coll][obj.id] = obj; accSaveLocal(); try { if (fbDb && isCloudReady) fbDb.ref('acc_' + coll + '/' + obj.id).set(JSON.parse(JSON.stringify(obj))); } catch(e) {} if (!noRender) accRender(); }
+  function accDel(coll, id) { delete ACC[coll][id]; accSaveLocal(); try { if (fbDb && isCloudReady) fbDb.ref('acc_' + coll + '/' + id).remove(); } catch(e) {} }
+  function accId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+  function accInit() {
+    if (accInited) return; accInited = true;
+    if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) ['contracts', 'payments', 'expenses', 'templates'].forEach(function(c) {
+      fbDb.ref('acc_' + c).on('value', function(sn) { ACC[c] = sn.val() || {}; accSaveLocal(); accRender(); }); });
+  }
+  function accSel() { return $('accBranch').value; }
+  function accBranches() { var v = accSel(), sc = scopeBranches(); return v === 'Tümü' ? sc : [v]; }
+  function accIn(b) { return accBranches().indexOf(b) > -1; }
+  function addMonths(ds, n) { var p = ds.split('-').map(Number), d = new Date(p[0], p[1] - 1 + n, 1), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); d.setDate(Math.min(p[2], dim)); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function trDate(ds) { if (!ds) return ''; var p = String(ds).split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : ds; }
+  function stuContracts() { return Object.values(ACC.contracts).filter(function(c){ return c.type === 'student' && accIn(c.branch); }); }
+  function cPaid(c) { return Object.values(ACC.payments).filter(function(p){ return p.contract === c.id && p.kind === 'tuition'; }).reduce(function(a, p){ return a + (+p.amount || 0); }, 0); }
+  function cSchedule(c) { var paid = cPaid(c), t = todayKey(); return (c.installments || []).map(function(i) { var take = Math.min(paid, +i.amount); paid -= take; var rest = Math.round((i.amount - take) * 100) / 100; return { n: i.n, due: i.due, amount: +i.amount, paid: take, rest: rest, late: rest > 0.009 && i.due < t }; }); }
+  function accOverdue() { var out = []; stuContracts().forEach(function(c){ cSchedule(c).forEach(function(i){ if (i.late) out.push({ c: c, i: i, days: Math.floor((new Date(todayKey()) - new Date(i.due)) / 86400000) }); }); }); return out.sort(function(a, b){ return b.days - a.days; }); }
+
+  var ACC_TABS = [['dash', 'Özet'], ['stu', 'Öğrenci Sözleşmeleri'], ['tea', 'Öğretmen Sözleşmeleri'], ['cash', 'Gelir / Gider'], ['late', 'Geciken / SMS'], ['rep', 'Raporlar'], ['tpl', 'Şablonlar']];
+  function accRender() {
+    var box = $('accBody'); if (!box || $('accModule').classList.contains('hidden')) return;
+    var sc = scopeBranches(), cur = accSel(), bs = $('accBranch');
+    if (!bs.options.length || bs.dataset.n !== String(sc.length)) { bs.innerHTML = (sc.length > 1 ? '<option value="Tümü">Tüm Şubeler (Toplam)</option>' : '') + sc.map(function(b){ return '<option>' + b + '</option>'; }).join(''); bs.dataset.n = sc.length; if (cur) bs.value = cur; }
+    $('accTabs').innerHTML = ACC_TABS.map(function(t){ return '<button type="button" class="' + (accTab === t[0] ? 'on' : '') + '" onclick="accTab=\'' + t[0] + '\';accRender()">' + t[1] + '</button>'; }).join('');
+    box.innerHTML = ({ dash: accDash, stu: accStu, tea: accTea, cash: accCash, late: accLate, rep: accRep, tpl: accTpl })[accTab]();
+  }
+  function accTotals(brs) {
+    var cs = Object.values(ACC.contracts).filter(function(c){ return c.type === 'student' && brs.indexOf(c.branch) > -1; }), ids = {}; cs.forEach(function(c){ ids[c.id] = 1; });
+    var exp = cs.reduce(function(a, c){ return a + (+c.total || 0); }, 0), pays = Object.values(ACC.payments).filter(function(p){ return brs.indexOf(p.branch) > -1; });
+    var inc = pays.reduce(function(a, p){ return a + (+p.amount || 0); }, 0), tuition = pays.filter(function(p){ return p.kind === 'tuition'; }).reduce(function(a, p){ return a + (+p.amount || 0); }, 0);
+    var out = Object.values(ACC.expenses).filter(function(e){ return brs.indexOf(e.branch) > -1; }).reduce(function(a, e){ return a + (+e.amount || 0); }, 0);
+    var late = 0; cs.forEach(function(c){ cSchedule(c).forEach(function(i){ if (i.late) late += i.rest; }); });
+    return { exp: exp, tuition: tuition, rest: exp - tuition, inc: inc, out: out, net: inc - out, late: late, n: cs.length };
+  }
+  function accDash() {
+    var brs = accBranches(), rows = brs.map(function(b){ return [b, accTotals([b])]; }); if (brs.length > 1) rows.push(['TOPLAM', accTotals(brs)]);
+    return '<div class="qs-card" style="overflow-x:auto"><table class="qs-tbl"><thead><tr><th>Şube</th><th>Sözleşme</th><th>Beklenen Tahsilat</th><th>Tahsil Edilen</th><th>Kalan</th><th>Toplam Gelir</th><th>Toplam Gider</th><th>Net</th><th>Geciken</th></tr></thead><tbody>' +
+      rows.map(function(r){ var t = r[1]; return '<tr' + (r[0] === 'TOPLAM' ? ' style="background:#eef2ff;font-weight:800"' : '') + '><td>' + r[0] + '</td><td>' + t.n + '</td><td>' + fmt(t.exp) + '</td><td>' + fmt(t.tuition) + '</td><td>' + fmt(t.rest) + '</td><td style="color:#047857">' + fmt(t.inc) + '</td><td style="color:#b91c1c">' + fmt(t.out) + '</td><td style="font-weight:800;color:' + (t.net < 0 ? '#b91c1c' : '#047857') + '">' + fmt(t.net) + '</td><td style="color:#b91c1c">' + fmt(t.late) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+
+  // ---- Öğrenci sözleşmeleri ----
+  function accStu() {
+    var sc = scopeBranches(), bo = sc.map(function(b){ return '<option>' + b + '</option>'; }).join('');
+    var form = '<div class="qs-card"><b>Yeni öğrenci sözleşmesi</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:8px">' +
+      '<select id="acBranch" class="qs-in" onchange="accFillStu()">' + bo + '</select><select id="acClass" class="qs-in" onchange="accFillStu()">' + CLASSES.map(function(c){ return '<option>' + c + '</option>'; }).join('') + '</select><select id="acStudent" class="qs-in"></select>' +
+      '<input id="acParent" class="qs-in" placeholder="Veli adı soyadı"><input id="acPhone" class="qs-in" placeholder="Veli telefonu (5xx...)"><input id="acTotal" type="number" class="qs-in" placeholder="Toplam ücret (₺)">' +
+      '<input id="acDown" type="number" class="qs-in" placeholder="Peşinat (₺)"><input id="acCount" type="number" class="qs-in" placeholder="Taksit sayısı"><label style="font-size:11px;color:#64748b">İlk taksit tarihi<input id="acFirst" type="date" class="qs-in"></label>' +
+      '<label style="font-size:11px;color:#64748b">Sözleşme tarihi<input id="acDate" type="date" class="qs-in" value="' + todayKey() + '"></label><input id="acNote" class="qs-in" placeholder="Not"></div>' +
+      '<div style="margin-top:8px"><button class="qs-btn" onclick="accSaveContract()">Sözleşmeyi Kaydet</button></div></div>';
+    var list = stuContracts().sort(function(a, b){ return String(b.date).localeCompare(String(a.date)); }).map(function(c) {
+      var paid = cPaid(c), rest = c.total - paid;
+      var pays = Object.values(ACC.payments).filter(function(p){ return p.contract === c.id; }).sort(function(a, b){ return a.date.localeCompare(b.date); });
+      var sch = cSchedule(c).map(function(i){ return '<span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:700;background:' + (i.rest <= 0.009 ? '#d1fae5;color:#065f46' : i.late ? '#fee2e2;color:#991b1b' : '#e2e8f0;color:#334155') + '">' + (i.n === 0 ? 'Peşinat' : i.n + '.') + ' ' + trDate(i.due) + ' · ' + fmt(i.amount) + '</span>'; }).join('');
+      return '<div class="qs-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>' + c.name + '</b> <span style="color:#64748b;font-size:12px">' + c.class + ' · ' + String(c.branch).split(' ')[0] + ' · Veli: ' + (c.parent || '-') + ' ' + (c.phone || '') + '</span></div><div style="font-size:13px">Toplam <b>' + fmt(c.total) + '</b> · Ödenen <b style="color:#047857">' + fmt(paid) + '</b> · Kalan <b style="color:#b91c1c">' + fmt(rest) + '</b></div></div><div style="margin-top:6px">' + sch + '</div>' +
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input id="pa_' + c.id + '" type="number" class="qs-in" style="width:120px" placeholder="Tutar ₺"><select id="pm_' + c.id + '" class="qs-in" style="width:110px"><option>Nakit</option><option>Havale/EFT</option><option>Kredi Kartı</option><option>Çek/Senet</option></select><button class="qs-btn" style="background:#059669" onclick="accPay(\'' + c.id + '\')">Tahsilat Al + Makbuz</button><button class="qs-btn" style="background:#0284c7" onclick="accPrintContract(\'' + c.id + '\')">Sözleşmeyi Yazdır</button><button class="qs-btn" style="background:#e11d48" onclick="accDelContract(\'' + c.id + '\')">Sil</button></div>' +
+        (pays.length ? '<div style="margin-top:6px;font-size:12px;color:#475569">Ödemeler: ' + pays.map(function(p){ return trDate(p.date) + ' ' + fmt(p.amount) + ' <a href="#" onclick="accReceipt(\'' + p.id + '\');return false" style="color:#4338ca">[makbuz]</a>'; }).join(' · ') + '</div>' : '') + '</div>';
+    }).join('');
+    setTimeout(accFillStu, 0);
+    return form + (list || '<div class="qs-card" style="text-align:center;color:#64748b">Henüz sözleşme yok.</div>');
+  }
+  function accFillStu() { var b = $('acBranch'), c = $('acClass'), st = $('acStudent'); if (!b || !st) return; st.innerHTML = usersData.filter(function(u){ return u && u.role === 'student' && u.branch === b.value && u.class === c.value; }).map(function(u){ return '<option value="' + u.username + '">' + u.name + '</option>'; }).join('') || '<option value="">(Bu sınıfta öğrenci yok)</option>'; }
+  function accSaveContract() {
+    var un = $('acStudent').value, u = usersData.find(function(x){ return x.username === un; }), total = +$('acTotal').value, down = +$('acDown').value || 0, cnt = parseInt($('acCount').value, 10) || 0, first = $('acFirst').value, date = $('acDate').value || todayKey();
+    if (!u || !(total > 0)) { alert('Öğrenci ve toplam ücret zorunludur.'); return; }
+    if (down > total) { alert('Peşinat toplam ücretten büyük olamaz.'); return; }
+    var rest = Math.round((total - down) * 100) / 100, ins = [];
+    if (rest > 0 && (!cnt || !first)) { alert('Kalan tutar için taksit sayısı ve ilk taksit tarihi girin.'); return; }
+    if (down > 0) ins.push({ n: 0, due: date, amount: down });
+    var each = cnt ? Math.floor(rest / cnt * 100) / 100 : 0;
+    for (var i = 0; i < cnt; i++) ins.push({ n: i + 1, due: addMonths(first, i), amount: i === cnt - 1 ? Math.round((rest - each * (cnt - 1)) * 100) / 100 : each });
+    var c = { id: accId('c'), type: 'student', branch: $('acBranch').value, student: un, name: u.name, class: u.class, parent: $('acParent').value.trim(), phone: $('acPhone').value.trim(), total: total, down: down, count: cnt, date: date, note: $('acNote').value.trim(), installments: ins };
+    accPut('contracts', c, true);
+    if (down > 0) { var p = { id: accId('p'), contract: c.id, branch: c.branch, date: date, amount: down, method: 'Nakit', kind: 'tuition', note: 'Peşinat' }; accPut('payments', p, true); accRender(); if (confirm('Peşinat için makbuz yazdırılsın mı?')) accReceipt(p.id); }
+    else accRender();
+    if (confirm('Sözleşme kaydedildi. Şimdi yazdırılsın mı?')) accPrintContract(c.id);
+  }
+  function accPay(cid) {
+    var c = ACC.contracts[cid], amt = +$('pa_' + cid).value; if (!c || !(amt > 0)) { alert('Geçerli bir tutar girin.'); return; }
+    var p = { id: accId('p'), contract: cid, branch: c.branch, date: todayKey(), amount: amt, method: $('pm_' + cid).value, kind: 'tuition', note: '' };
+    accPut('payments', p); accReceipt(p.id);
+  }
+  function accDelContract(cid) { if (!confirm('Sözleşme ve bağlı ödemeler silinsin mi? (Geri alınamaz)')) return; Object.values(ACC.payments).forEach(function(p){ if (p.contract === cid) accDel('payments', p.id); }); accDel('contracts', cid); accRender(); }
+
+  // ---- Yazdırma (makbuz / sözleşme) ----
+  function accPrintHtml(title, body) {
+    var w = window.open('', '_blank'); if (!w) { alert('Açılır pencere engellendi. Tarayıcı ayarlarından izin verin.'); return; }
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + title + '</title><style>body{font-family:Arial,sans-serif;color:#111;padding:28px;max-width:780px;margin:0 auto;font-size:14px;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #888;padding:6px 8px;text-align:left}.h{display:flex;align-items:center;gap:14px;border-bottom:3px solid #1d4ed8;padding-bottom:10px;margin-bottom:14px}.h img{width:80px;height:80px}.sig{display:flex;justify-content:space-between;margin-top:50px}@media print{button{display:none}}</style></head><body>' + body + '<button onclick="print()" style="margin-top:20px;padding:8px 16px">Yazdır</button></body></html>');
+    w.document.close(); setTimeout(function(){ try { w.focus(); w.print(); } catch(e) {} }, 500);
+  }
+  function accLogo() { return new URL('./icon-512.png', location.href).href; }
+  function accReceipt(pid) {
+    var p = ACC.payments[pid]; if (!p) return; var c = ACC.contracts[p.contract] || {}, tot = c.total || 0, paid = c.id ? cPaid(c) : 0, no = String(pid).slice(-6).toUpperCase();
+    accPrintHtml('Makbuz ' + no, '<div class="h"><img src="' + accLogo() + '"><div><div style="font-size:22px;font-weight:800;color:#1d4ed8">BKM AKADEMİ</div><div>' + (c.branch || p.branch || '') + ' — TAHSİLAT MAKBUZU</div></div><div style="margin-left:auto;text-align:right">Makbuz No: <b>' + no + '</b><br>Tarih: ' + trDate(p.date) + '</div></div>' +
+      '<table><tr><td>Öğrenci</td><td><b>' + (c.name || '-') + '</b> (' + (c.class || '') + ')</td></tr><tr><td>Veli</td><td>' + (c.parent || '-') + '</td></tr><tr><td>Ödeme Yöntemi</td><td>' + (p.method || '') + '</td></tr><tr><td>Bu Ödeme</td><td><b style="font-size:16px">' + fmt(p.amount) + '</b></td></tr><tr><td>Bugüne Kadar Toplam Ödenen</td><td>' + fmt(paid) + '</td></tr><tr><td>Toplam Sözleşme Bedeli</td><td>' + fmt(tot) + '</td></tr><tr><td>Kalan Borç</td><td><b>' + fmt(tot - paid) + '</b></td></tr></table>' +
+      '<div class="sig"><div>Teslim Eden (Veli)<br><br>.................</div><div>Teslim Alan (Kurum)<br><br>.................</div></div>');
+  }
+  var DEF_TPL = {
+    student: '<h2 style="text-align:center">ÖĞRENCİ KURS SÖZLEŞMESİ</h2><p>Tarih: {{TARIH}}</p><p><b>Kurum:</b> BKM Akademi — {{SUBE}}</p><p><b>Öğrenci:</b> {{OGRENCI_ADI}} ({{SINIF}})</p><p><b>Veli:</b> {{VELI_ADI}} — Tel: {{VELI_TELEFON}}</p><p>Toplam kurs ücreti <b>{{TOPLAM_UCRET}}</b>, peşinat <b>{{PESINAT}}</b> olup kalan tutar aşağıdaki ödeme planına göre ödenecektir.</p>{{TAKSIT_TABLOSU}}<p>Madde 1: Kurum, öğrenciye eğitim hizmetini sunmayı; veli ise ücreti vadesinde ödemeyi kabul eder.</p><p>Madde 2: Gecikmeli ödemelerde kurum veliyi bilgilendirir.</p><p>(Bu metin örnektir; Şablonlar sekmesinden kendi Word sözleşmenizi yükleyebilirsiniz.)</p><div style="display:flex;justify-content:space-between;margin-top:50px"><div>Veli<br><br>.................</div><div>Kurum Yetkilisi<br><br>.................</div></div>',
+    teacher: '<h2 style="text-align:center">ÖĞRETMEN HİZMET SÖZLEŞMESİ</h2><p>Tarih: {{TARIH}}</p><p><b>Kurum:</b> BKM Akademi — {{SUBE}}</p><p><b>Öğretmen:</b> {{OGRETMEN_ADI}}</p><p>Ücret: <b>{{UCRET}}</b> ({{UCRET_TURU}}). Başlangıç: {{BASLANGIC}} — Bitiş: {{BITIS}}.</p><p>Notlar: {{NOT}}</p><p>(Bu metin örnektir; Şablonlar sekmesinden kendi Word sözleşmenizi yükleyebilirsiniz.)</p><div style="display:flex;justify-content:space-between;margin-top:50px"><div>Öğretmen<br><br>.................</div><div>Kurum Yetkilisi<br><br>.................</div></div>'
+  };
+  function accFill(html, map) { Object.keys(map).forEach(function(k){ html = html.split('{{' + k + '}}').join(map[k]); }); return html; }
+  function accPrintContract(cid) {
+    var c = ACC.contracts[cid]; if (!c) return; var t = (ACC.templates[c.type] && ACC.templates[c.type].html) || DEF_TPL[c.type];
+    var tbl = '<table><tr><th>Taksit</th><th>Vade</th><th>Tutar</th></tr>' + (c.installments || []).map(function(i){ return '<tr><td>' + (i.n === 0 ? 'Peşinat' : i.n) + '</td><td>' + trDate(i.due) + '</td><td>' + fmt(i.amount) + '</td></tr>'; }).join('') + '</table>';
+    var map = c.type === 'student'
+      ? { TARIH: trDate(c.date), SUBE: c.branch, OGRENCI_ADI: c.name, SINIF: c.class, VELI_ADI: c.parent || '', VELI_TELEFON: c.phone || '', TOPLAM_UCRET: fmt(c.total), PESINAT: fmt(c.down || 0), TAKSIT_SAYISI: c.count || 0, TAKSIT_TABLOSU: tbl, NOT: c.note || '' }
+      : { TARIH: trDate(c.date), SUBE: c.branch, OGRETMEN_ADI: c.name, UCRET: fmt(c.amount), UCRET_TURU: c.payType || '', BASLANGIC: trDate(c.start), BITIS: trDate(c.end), NOT: c.note || '' };
+    accPrintHtml('Sözleşme', '<div class="h"><img src="' + accLogo() + '"><div style="font-size:22px;font-weight:800;color:#1d4ed8">BKM AKADEMİ</div></div>' + accFill(t, map));
+  }
+
+  // ---- Öğretmen sözleşmeleri ----
+  function accTea() {
+    var sc = scopeBranches(), bo = sc.map(function(b){ return '<option>' + b + '</option>'; }).join(''), staff = usersData.filter(function(u){ return u && (u.role === 'coach' || u.role === 'admin') && String(u.username).toLowerCase() !== 'admin'; });
+    var form = '<div class="qs-card"><b>Yeni öğretmen sözleşmesi</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:8px"><select id="atBranch" class="qs-in">' + bo + '</select>' +
+      '<input id="atName" class="qs-in" list="atStaff" placeholder="Öğretmen adı"><datalist id="atStaff">' + staff.map(function(u){ return '<option value="' + u.name + '">'; }).join('') + '</datalist>' +
+      '<select id="atType" class="qs-in"><option>Aylık maaş</option><option>Saatlik ücret</option><option>Ders başı ücret</option></select><input id="atAmount" type="number" class="qs-in" placeholder="Ücret (₺)">' +
+      '<label style="font-size:11px;color:#64748b">Başlangıç<input id="atStart" type="date" class="qs-in" value="' + todayKey() + '"></label><label style="font-size:11px;color:#64748b">Bitiş<input id="atEnd" type="date" class="qs-in"></label><input id="atNote" class="qs-in" placeholder="Not"></div><div style="margin-top:8px"><button class="qs-btn" onclick="accSaveTeacher()">Sözleşmeyi Kaydet</button></div></div>';
+    var list = Object.values(ACC.contracts).filter(function(c){ return c.type === 'teacher' && accIn(c.branch); }).map(function(c) {
+      var paid = Object.values(ACC.expenses).filter(function(e){ return e.contract === c.id; }).reduce(function(a, e){ return a + (+e.amount || 0); }, 0);
+      return '<div class="qs-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>' + c.name + '</b> <span style="color:#64748b;font-size:12px">' + String(c.branch).split(' ')[0] + ' · ' + c.payType + ' ' + fmt(c.amount) + ' · ' + trDate(c.start) + ' – ' + (trDate(c.end) || 'süresiz') + '</span></div><div style="font-size:13px">Bugüne kadar ödenen: <b>' + fmt(paid) + '</b></div></div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><input id="tp_' + c.id + '" type="number" class="qs-in" style="width:120px" placeholder="Ödenecek ₺" value="' + (c.payType === 'Aylık maaş' ? c.amount : '') + '"><button class="qs-btn" style="background:#059669" onclick="accPayTeacher(\'' + c.id + '\')">Maaş / Ücret Öde (Gider)</button><button class="qs-btn" style="background:#0284c7" onclick="accPrintContract(\'' + c.id + '\')">Sözleşmeyi Yazdır</button><button class="qs-btn" style="background:#e11d48" onclick="if(confirm(\'Silinsin mi?\')){accDel(\'contracts\',\'' + c.id + '\');accRender()}">Sil</button></div></div>'; }).join('');
+    return form + (list || '<div class="qs-card" style="text-align:center;color:#64748b">Henüz öğretmen sözleşmesi yok.</div>');
+  }
+  function accSaveTeacher() {
+    var name = $('atName').value.trim(), amt = +$('atAmount').value; if (!name || !(amt > 0)) { alert('Öğretmen adı ve ücret zorunludur.'); return; }
+    var c = { id: accId('c'), type: 'teacher', branch: $('atBranch').value, name: name, payType: $('atType').value, amount: amt, start: $('atStart').value, end: $('atEnd').value, date: todayKey(), note: $('atNote').value.trim() };
+    accPut('contracts', c); if (confirm('Sözleşme kaydedildi. Yazdırılsın mı?')) accPrintContract(c.id);
+  }
+  function accPayTeacher(cid) {
+    var c = ACC.contracts[cid], amt = +$('tp_' + cid).value; if (!c || !(amt > 0)) { alert('Geçerli bir tutar girin.'); return; }
+    accPut('expenses', { id: accId('e'), contract: cid, branch: c.branch, date: todayKey(), category: 'Maaş / Öğretmen Ücreti', amount: amt, note: c.name });
+  }
+
+  // ---- Gelir / Gider ----
+  var EXP_CATS = ['Kira', 'Maaş / Öğretmen Ücreti', 'Fatura (elektrik, su, doğalgaz, internet)', 'Kırtasiye / Baskı', 'Temizlik', 'İkram / Yemek', 'Bakım - Onarım', 'Reklam', 'Vergi / Resmi', 'Diğer'];
+  function accCash() {
+    var sc = scopeBranches(), bo = sc.map(function(b){ return '<option>' + b + '</option>'; }).join('');
+    var f = function(id, title, inner, fn) { return '<div class="qs-card"><b>' + title + '</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:8px"><select id="' + id + 'B" class="qs-in">' + bo + '</select>' + inner + '<input id="' + id + 'D" type="date" class="qs-in" value="' + todayKey() + '"><input id="' + id + 'A" type="number" class="qs-in" placeholder="Tutar ₺"><input id="' + id + 'N" class="qs-in" placeholder="Açıklama"></div><div style="margin-top:8px"><button class="qs-btn" onclick="' + fn + '">Kaydet</button></div></div>'; };
+    var inc = Object.values(ACC.payments).filter(function(p){ return accIn(p.branch); }).map(function(p){ var c = ACC.contracts[p.contract]; return { d: p.date, t: 'Gelir', b: p.branch, cat: p.kind === 'tuition' ? 'Öğrenci ücreti' + (c ? ' — ' + c.name : '') : (p.category || 'Diğer gelir'), a: +p.amount, id: p.id, coll: 'payments' }; });
+    var exp = Object.values(ACC.expenses).filter(function(e){ return accIn(e.branch); }).map(function(e){ return { d: e.date, t: 'Gider', b: e.branch, cat: e.category + (e.note ? ' — ' + e.note : ''), a: +e.amount, id: e.id, coll: 'expenses' }; });
+    var all = inc.concat(exp).sort(function(a, b){ return b.d.localeCompare(a.d); }).slice(0, 80);
+    return f('ci', 'Diğer gelir ekle (kayıt ücreti, kitap satışı vb.)', '<input id="ciC" class="qs-in" placeholder="Gelir türü">', 'accAddIncome()') + f('ce', 'Gider ekle', '<select id="ceC" class="qs-in">' + EXP_CATS.map(function(x){ return '<option>' + x + '</option>'; }).join('') + '</select>', 'accAddExpense()') +
+      '<div class="qs-card" style="overflow-x:auto"><b>Son hareketler (80)</b><table class="qs-tbl"><thead><tr><th>Tarih</th><th>Tür</th><th>Şube</th><th>Açıklama</th><th>Tutar</th><th></th></tr></thead><tbody>' + all.map(function(r){ return '<tr><td>' + trDate(r.d) + '</td><td style="color:' + (r.t === 'Gelir' ? '#047857' : '#b91c1c') + ';font-weight:700">' + r.t + '</td><td>' + String(r.b).split(' ')[0] + '</td><td>' + r.cat + '</td><td>' + fmt(r.a) + '</td><td><a href="#" style="color:#b91c1c" onclick="if(confirm(\'Silinsin mi?\')){accDel(\'' + r.coll + '\',\'' + r.id + '\');accRender()}return false">sil</a></td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  function accAddIncome() { var a = +$('ciA').value; if (!(a > 0)) { alert('Tutar girin.'); return; } accPut('payments', { id: accId('p'), contract: '', branch: $('ciB').value, date: $('ciD').value, amount: a, method: 'Nakit', kind: 'other', category: $('ciC').value.trim() || 'Diğer gelir', note: $('ciN').value.trim() }); }
+  function accAddExpense() { var a = +$('ceA').value; if (!(a > 0)) { alert('Tutar girin.'); return; } accPut('expenses', { id: accId('e'), contract: '', branch: $('ceB').value, date: $('ceD').value, category: $('ceC').value, amount: a, note: $('ceN').value.trim() }); }
+
+  // ---- Geciken ödemeler + SMS ----
+  function accLate() {
+    var od = accOverdue(), tot = od.reduce(function(a, o){ return a + o.i.rest; }, 0);
+    return '<div class="qs-card"><b>Geciken ödemeler: ' + od.length + ' taksit · ' + fmt(tot) + '</b><div style="margin-top:8px"><label style="font-size:12px;color:#64748b">SMS metni ({{VELI_ADI}}, {{OGRENCI_ADI}}, {{VADE}}, {{TUTAR}})</label><textarea id="smsTpl" class="qs-in" rows="3" onchange="SMS_TPL=this.value;localStorage.setItem(\'bkm_sms_tpl\',this.value)">' + SMS_TPL + '</textarea></div>' +
+      '<div style="color:#64748b;font-size:12px;margin-top:6px">SMS düğmesi telefonunuzun mesaj uygulamasını hazır metinle açar. Otomatik toplu gönderim için SMS sağlayıcısı (NetGSM, İleti Merkezi vb.) ve sunucu bağlantısı gerekir.</div><div style="margin-top:8px"><button class="qs-btn" style="background:#059669" onclick="accExportLate()">Excel Raporu</button></div></div>' +
+      '<div class="qs-card" style="overflow-x:auto"><table class="qs-tbl"><thead><tr><th>Öğrenci</th><th>Sınıf</th><th>Şube</th><th>Veli</th><th>Vade</th><th>Gecikme</th><th>Tutar</th><th></th></tr></thead><tbody>' + (od.map(function(o) {
+        var c = o.c, msg = accFill(SMS_TPL, { VELI_ADI: c.parent || 'Veli', OGRENCI_ADI: c.name, VADE: trDate(o.i.due), TUTAR: fmt(o.i.rest) }), ph = String(c.phone || '').replace(/\D/g, '');
+        var link = ph ? 'sms:' + ph + (/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(msg) : '';
+        return '<tr><td><b>' + c.name + '</b></td><td>' + c.class + '</td><td>' + String(c.branch).split(' ')[0] + '</td><td>' + (c.parent || '-') + '<br><span style="color:#64748b;font-size:12px">' + (c.phone || 'telefon yok') + '</span></td><td>' + trDate(o.i.due) + '</td><td style="color:#b91c1c;font-weight:700">' + o.days + ' gün</td><td>' + fmt(o.i.rest) + '</td><td>' + (link ? '<a class="qs-btn" href="' + link + '">SMS</a>' : '') + '</td></tr>'; }).join('') || '<tr><td colspan="8" style="text-align:center;color:#64748b;padding:18px">Geciken ödeme yok.</td></tr>') + '</tbody></table></div>';
+  }
+  function accXlsx(name, sheets) { var wb = XLSX.utils.book_new(); sheets.forEach(function(s){ XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s[1]), String(s[0]).slice(0, 31)); }); XLSX.writeFile(wb, name + '.xlsx'); }
+  function accExportLate() {
+    var rows = [['Şube', 'Sınıf', 'Öğrenci', 'Veli', 'Telefon', 'Vade', 'Gecikme (gün)', 'Geciken Tutar']]; accOverdue().forEach(function(o){ rows.push([o.c.branch, o.c.class, o.c.name, o.c.parent || '', o.c.phone || '', trDate(o.i.due), o.days, o.i.rest]); });
+    accXlsx('Geciken_Odemeler_' + todayKey(), [['Geciken', rows]]);
+  }
+
+  // ---- Raporlar ----
+  function accRep() {
+    return '<div class="qs-card"><b>Excel raporları</b><div style="color:#64748b;font-size:12px;margin:4px 0 8px">Şube seçimine göre (üstteki liste): tek şube veya her şube ayrı sayfa + toplam.</div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="qs-btn" onclick="accExportMonthly()">Aylık Tahsilat Planı (5-6-7-8. sınıf)</button><button class="qs-btn" style="background:#e11d48" onclick="accExportLate()">Geciken Ödemeler</button><button class="qs-btn" style="background:#059669" onclick="accExportCash()">Gelir - Gider</button></div></div>' +
+      '<div class="qs-card"><b>Aylık tahsilat planı (önizleme)</b>' + accMonthlyHtml(accBranches()) + '</div>';
+  }
+  function accMonthly(brs) {
+    var cs = Object.values(ACC.contracts).filter(function(c){ return c.type === 'student' && brs.indexOf(c.branch) > -1; }), months = {}, grid = {};
+    var cell = function(m, g) { var k = m + '|' + g; return grid[k] || (grid[k] = { e: 0, p: 0 }); };
+    cs.forEach(function(c) { var g = parseInt(c.class, 10) || 0; (c.installments || []).forEach(function(i){ var m = String(i.due).slice(0, 7); months[m] = 1; cell(m, g).e += +i.amount; }); });
+    Object.values(ACC.payments).forEach(function(p) { if (p.kind !== 'tuition') return; var c = ACC.contracts[p.contract]; if (!c || brs.indexOf(c.branch) < 0) return; var m = String(p.date).slice(0, 7); months[m] = 1; cell(m, parseInt(c.class, 10) || 0).p += +p.amount; });
+    var ms = Object.keys(months).sort(), G = [5, 6, 7, 8], cum = {}, rows = [];
+    ms.forEach(function(m) { var row = [m], te = 0, tp = 0;
+      G.forEach(function(g) { var c = cell(m, g); cum[g] = (cum[g] || 0) + c.e - c.p; row.push(c.e, c.p, cum[g]); te += c.e; tp += c.p; });
+      cum.T = (cum.T || 0) + te - tp; row.push(te, tp, cum.T); rows.push(row); });
+    var tot = ['TOPLAM']; for (var j = 1; j <= 15; j++) { var sum = 0; if (j % 3 === 0) { sum = rows.length ? rows[rows.length - 1][j] : 0; } else rows.forEach(function(r){ sum += r[j]; }); tot.push(sum); } rows.push(tot);
+    var head = ['Ay']; G.concat(['Toplam']).forEach(function(g){ var n = g === 'Toplam' ? 'Toplam' : g + '. Sınıf'; head.push(n + ' Beklenen', n + ' Gelen', n + ' Kalan (kümülatif)'); });
+    return [head].concat(rows);
+  }
+  function accMonthlyHtml(brs) {
+    var a = accMonthly(brs); if (a.length < 2) return '<div style="color:#64748b">Veri yok.</div>';
+    return '<div style="overflow-x:auto"><table class="qs-tbl"><thead><tr>' + a[0].map(function(h){ return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + a.slice(1).map(function(r){ return '<tr>' + r.map(function(v, i){ return '<td>' + (i === 0 ? v : fmt(v)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  }
+  function accExportMonthly() { var brs = accBranches(), sh = brs.map(function(b){ return [b.split(' ')[0], accMonthly([b])]; }); if (brs.length > 1) sh.push(['TOPLAM', accMonthly(brs)]); accXlsx('Aylik_Tahsilat_Plani_' + todayKey(), sh); }
+  function accExportCash() {
+    var brs = accBranches(), mk = function(bl) { var rows = [['Tarih', 'Şube', 'Tür', 'Açıklama', 'Gelir', 'Gider']];
+      Object.values(ACC.payments).filter(function(p){ return bl.indexOf(p.branch) > -1; }).forEach(function(p){ var c = ACC.contracts[p.contract]; rows.push([trDate(p.date), p.branch, 'Gelir', p.kind === 'tuition' ? 'Öğrenci ücreti — ' + (c ? c.name : '') : (p.category || ''), +p.amount, '']); });
+      Object.values(ACC.expenses).filter(function(e){ return bl.indexOf(e.branch) > -1; }).forEach(function(e){ rows.push([trDate(e.date), e.branch, 'Gider', e.category + (e.note ? ' — ' + e.note : ''), '', +e.amount]); });
+      var gi = 0, go = 0; rows.slice(1).forEach(function(r){ gi += +r[4] || 0; go += +r[5] || 0; }); rows.push(['', '', '', 'TOPLAM', gi, go], ['', '', '', 'NET', gi - go, '']); return rows; };
+    var sh = brs.map(function(b){ return [b.split(' ')[0], mk([b])]; }); if (brs.length > 1) sh.push(['TOPLAM', mk(brs)]); accXlsx('Gelir_Gider_' + todayKey(), sh);
+  }
+
+  // ---- Sözleşme şablonları (Word) ----
+  function accTpl() {
+    var one = function(type, title) { var t = ACC.templates[type]; return '<div class="qs-card"><b>' + title + '</b><div style="color:#64748b;font-size:12px;margin:4px 0">' + (t ? 'Yüklü şablon: ' + (t.name || '') : 'Şu an örnek (varsayılan) şablon kullanılıyor.') + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input type="file" accept=".docx" onchange="accUploadTpl(\'' + type + '\',this)" class="qs-in" style="width:auto"><button class="qs-btn" style="background:#64748b" onclick="accTplPreview(\'' + type + '\')">Önizle</button>' + (t ? '<button class="qs-btn" style="background:#e11d48" onclick="accDel(\'templates\',\'' + type + '\');accRender()">Varsayılana dön</button>' : '') + '</div></div>'; };
+    return one('student', 'Öğrenci sözleşmesi şablonu') + one('teacher', 'Öğretmen sözleşmesi şablonu') +
+      '<div class="qs-card"><b>Word dosyasına yazabileceğiniz alanlar</b><div style="font-size:12px;color:#475569;margin-top:4px;line-height:1.7"><b>Öğrenci:</b> {{TARIH}} {{SUBE}} {{OGRENCI_ADI}} {{SINIF}} {{VELI_ADI}} {{VELI_TELEFON}} {{TOPLAM_UCRET}} {{PESINAT}} {{TAKSIT_SAYISI}} {{TAKSIT_TABLOSU}} {{NOT}}<br><b>Öğretmen:</b> {{TARIH}} {{SUBE}} {{OGRETMEN_ADI}} {{UCRET}} {{UCRET_TURU}} {{BASLANGIC}} {{BITIS}} {{NOT}}<br>Word belgenizde bu alanları çift süslü parantezle aynen yazın; yazdırırken otomatik doldurulur.</div></div>';
+  }
+  function accUploadTpl(type, inp) {
+    var f = inp.files && inp.files[0]; if (!f) return; if (typeof mammoth === 'undefined') { alert('Word okuyucu yüklenemedi (internet bağlantısı).'); return; }
+    var rd = new FileReader(); rd.onload = function() { mammoth.convertToHtml({ arrayBuffer: rd.result }).then(function(r) { accPut('templates', { id: type, name: f.name, html: r.value }); alert('Şablon yüklendi: ' + f.name); }, function(e){ alert('Dosya okunamadı: ' + e); }); };
+    rd.readAsArrayBuffer(f);
+  }
+  function accTplPreview(type) { var t = (ACC.templates[type] && ACC.templates[type].html) || DEF_TPL[type]; accPrintHtml('Şablon önizleme', '<div class="h"><img src="' + accLogo() + '"><div style="font-size:22px;font-weight:800;color:#1d4ed8">BKM AKADEMİ</div></div>' + t); }
   </script>
 
 
