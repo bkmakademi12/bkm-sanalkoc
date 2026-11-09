@@ -8117,7 +8117,7 @@
       const cls = currentUser.class || currentClass;
       const deskNum = currentUser.deskIndex;
 
-      const desk = branchesData[br]?.[cls]?.find(d => d.deskNumber === deskNum);
+      const desk = (typeof myDesk === 'function' && myDesk()) || branchesData[br]?.[cls]?.find(d => d.deskNumber === deskNum);
       if (!desk || desk.status !== 'active') return;
 
       // Veli refakat modu açıksa serbest
@@ -8137,7 +8137,7 @@
       const cls = currentUser.class || currentClass;
       const deskNum = currentUser.deskIndex;
 
-      const desk = branchesData[br]?.[cls]?.find(d => d.deskNumber === deskNum);
+      const desk = (typeof myDesk === 'function' && myDesk()) || branchesData[br]?.[cls]?.find(d => d.deskNumber === deskNum);
       if (!desk || desk.status !== 'active') return;
 
       if (desk.parentSupervised) return;
@@ -8185,7 +8185,7 @@
 
       const br = currentUser.branch || currentBranch;
       const cls = currentUser.class || currentClass;
-      const desk = branchesData[br]?.[cls]?.find(d => d.deskNumber === currentUser.deskIndex);
+      const desk = (typeof myDesk === 'function' && myDesk()) || branchesData[br]?.[cls]?.find(d => d.deskNumber === currentUser.deskIndex);
       if (desk && desk.status === 'active') {
         const now = Date.now();
         desk.lastActiveTimestamp = now;
@@ -13068,7 +13068,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=41', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=42', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
