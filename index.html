@@ -195,7 +195,7 @@
     .desk-unit-3d {
       position: relative;
       width: 100%;
-      min-height: 195px;
+      min-height: 225px;
       transform-style: preserve-3d !important;
       transform: translateZ(0);
       cursor: pointer !important;
@@ -213,7 +213,7 @@
       top: 42px;
       left: 0;
       width: 100%;
-      min-height: 138px;
+      min-height: 168px;
       background: #ffffff;
       border: 2.5px solid #cbd5e1;
       border-radius: 14px;
@@ -308,7 +308,7 @@
     .desk-unit-3d {
       position: relative;
       width: 100%;
-      min-height: 195px;
+      min-height: 225px;
       transform-style: preserve-3d;
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
@@ -352,7 +352,7 @@
       top: 42px;
       left: 0;
       width: 100%;
-      min-height: 138px;
+      min-height: 168px;
       background: #ffffff;
       border: 2.5px solid #cbd5e1;
       border-radius: 14px;
@@ -857,7 +857,7 @@
             var grid = document.currentScript.parentElement;
             for (var i = 1; i <= 15; i++) {
               grid.innerHTML += `
-                <div class="desk-card rounded-xl p-3 flex flex-col justify-between min-h-[135px] cursor-pointer transition select-none bg-slate-50 border border-slate-200 hover:border-blue-400 opacity-80" onclick="openLoginModal()">
+                <div class="desk-card rounded-xl p-3 flex flex-col justify-between min-h-[160px] cursor-pointer transition select-none bg-slate-50 border border-slate-200 hover:border-blue-400 opacity-80" onclick="openLoginModal()">
                   <div>
                     <div class="flex items-center justify-between mb-1.5">
                       <span class="text-[11px] font-bold text-slate-400">Sıra #${i}</span>
@@ -2398,7 +2398,17 @@
       <div class="rounded-xl border border-rose-500/40 bg-rose-950/20 p-3 space-y-2">
         <div class="font-bold text-rose-300"><i class="fa-solid fa-trash-can mr-1.5"></i>Veri Silme (Tercihli)</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-          <label class="flex items-center gap-2"><input type="checkbox" id="stgDelDesk"> Masa verileri: süre, etüt sayısı, çalışılan konu ve soru (geçmiş dahil). Kitap, fotoğraf, rehberlik görüşmesi ve raporlar silinmez</label>
+          <label class="flex items-center gap-2 sm:col-span-2"><input type="checkbox" id="stgDelDesk" onchange="document.getElementById('stgDeskOpts').style.display=this.checked?'block':'none'"> <b>Masa verileri</b> (kapsamı aşağıdan seçin). Kitap, fotoğraf ve rehberlik görüşmesi silinmez</label>
+          <div id="stgDeskOpts" style="display:none" class="sm:col-span-2 ml-5 p-2 rounded-lg bg-slate-800/70 border border-slate-700 space-y-1.5">
+            <div class="font-bold text-slate-300">Kapsam</div>
+            <label class="flex items-center gap-2"><input type="radio" name="stgScope" value="today" checked> Günlük: yalnız bugün</label>
+            <label class="flex items-center gap-2"><input type="radio" name="stgScope" value="past"> Geçmişe dönük: bugünden önceki günler (bugünün verisi kalır)</label>
+            <label class="flex items-center gap-2"><input type="radio" name="stgScope" value="both"> Tümü: bugün + geçmiş</label>
+            <div class="font-bold text-slate-300 pt-1">Bu kapsamda silinecekler</div>
+            <div class="text-slate-400">Masa istatistikleri (süre, etüt, ders/konu, soru): bugün kapsamdaysa sıfırlanır</div>
+            <label class="flex items-center gap-2"><input type="checkbox" id="stgDelHist" checked> Çalışma analizi geçmişi</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="stgDelRepScope"> Öğrenci gün sonu raporları (Sınıf Analiz Paneli ve Konu Filtreleme bu raporlardan beslenir). İşaretlemezseniz yalnız masadan otomatik oluşan raporlar silinir</label>
+          </div>
           <label class="flex items-center gap-2"><input type="checkbox" id="stgDelReports"> Gün sonu raporları</label>
           <label class="flex items-center gap-2"><input type="checkbox" id="stgDelHw"> Ödevler</label>
           <label class="flex items-center gap-2"><input type="checkbox" id="stgDelBooks"> Öğrenci kitapları</label>
@@ -8044,7 +8054,7 @@
           oldDeskObj.status = 'empty';
           oldDeskObj.subject = '';
           oldDeskObj.topic = '';
-          oldDeskObj.questions = 0;
+          oldDeskObj.questions = 0; oldDeskObj.qBanked = 0; oldDeskObj.qLog = {}; oldDeskObj.sessSecs0 = 0; oldDeskObj.sessQ0 = 0;
         }
       }
 
@@ -8090,6 +8100,17 @@
     // ==========================================
     // 3. ODAK TAKİBİ & ANTİ-CHEAT (PAGE VISIBILITY API)
     // ==========================================
+    function deskQ(d) { return (d.qBanked || 0) + (d.questions || 0); }
+    function deskSessMin(d) { return Math.floor(Math.max(0, (d.secondsStudied || 0) - (d.sessSecs0 || 0)) / 60); }
+    function deskTotMin(d) { return Math.floor((d.secondsStudied || 0) / 60); }
+    function deskSessQ(d) { return Math.max(0, (d.qBanked || 0) - (d.sessQ0 || 0)) + (d.questions || 0); }
+    function deskFooterHTML(d, bord, qCls, tCls, is3d) {
+      return '<div class="dk-wrap ' + (is3d ? 'pt-1' : 'mt-2 pt-1.5') + ' border-t ' + bord + ' text-[10px] font-bold" data-n="' + d.deskNumber + '" style="display:grid;grid-template-columns:14px 1fr 1fr;column-gap:6px;row-gap:1px;align-items:center;text-align:right;font-variant-numeric:tabular-nums;line-height:1.3">' +
+        '<span></span><span style="font-size:8px;font-weight:700;opacity:.6;letter-spacing:.04em">BU ETÜT</span><span style="font-size:8px;font-weight:700;opacity:.6;letter-spacing:.04em">BUGÜN</span>' +
+        '<span class="' + tCls + '" style="text-align:left"><i class="fa-regular fa-clock"></i></span><span class="' + tCls + ' dk-s">' + deskSessMin(d) + ' dk</span><span class="' + tCls + ' dk-t">' + deskTotMin(d) + ' dk</span>' +
+        '<span class="' + qCls + '" style="text-align:left"><i class="fa-solid fa-pen-nib"></i></span><span class="' + qCls + ' dk-q">' + deskSessQ(d) + ' soru</span><span class="' + qCls + ' dk-qt">' + deskQ(d) + ' soru</span></div>';
+    }
+
     // Not: todayKey ilk betikte de tanımlı olmalı; aksi halde açılışta updateAuthUI hata verip sonraki başlatmaları (odak takibi, bulut dinleyicileri) durduruyordu
     function todayKey() { try { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' }); } catch(e) { return new Date().toISOString().slice(0, 10); } }
     let backgroundTimeout = null;
@@ -8228,7 +8249,7 @@
             if (branchesData[br][cls]) {
               branchesData[br][cls].forEach(desk => {
                 desk.secondsStudied = 0; desk.accBase = 0; desk.accSince = null; desk.loggedSecs = 0;
-                desk.questions = 0;
+                desk.questions = 0; desk.qBanked = 0; desk.qLog = {}; desk.sessSecs0 = 0; desk.sessQ0 = 0;
                 desk.sessionsCompleted = 0;
                 desk.topicTimeLog = {};
                 desk.lastActiveTimestamp = null;
@@ -8810,12 +8831,7 @@
                 `}
               </div>
 
-              ${desk.studentName ? `
-                <div class="pt-1 border-t ${footerBorderClass} flex items-center justify-between text-[10px] font-bold">
-                  <span class="${footerQColorClass}"><i class="fa-solid fa-pen-nib mr-1"></i>${desk.questions || 0} Soru</span>
-                  <span class="${footerTColorClass}"><i class="fa-regular fa-clock mr-1"></i>${Math.floor((desk.secondsStudied || 0) / 60)} dk</span>
-                </div>
-              ` : ''}
+              ${desk.studentName ? deskFooterHTML(desk, footerBorderClass, footerQColorClass, footerTColorClass, true) : ''}
             </div>
 
             <!-- Masa Ayakları -->
@@ -8828,7 +8844,7 @@
             <div class="desk-ground-shadow"></div>
           `;
         } else {
-          div.className = `desk-card relative rounded-xl p-3 flex flex-col justify-between min-h-[135px] cursor-pointer transition select-none ${cardStyleClass}`;
+          div.className = `desk-card relative rounded-xl p-3 flex flex-col justify-between min-h-[160px] cursor-pointer transition select-none ${cardStyleClass}`;
           div.innerHTML = `
             ${desk.parentSupervised ? '<div class="absolute -top-2.5 -right-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-xl border-2 border-white z-20 animate-bounce" title="🛡️ Veli Refakatinde"><i class="fa-solid fa-user-shield text-xs"></i></div>' : ''}
             <div>
@@ -8859,12 +8875,7 @@
               </div>
             </div>
 
-            ${desk.studentName ? `
-              <div class="mt-2.5 pt-1.5 border-t ${footerBorderClass} flex items-center justify-between text-[10px]">
-                <span class="${footerQColorClass}"><i class="fa-solid fa-pen-nib mr-1"></i>${desk.questions || 0} Soru</span>
-                <span class="${footerTColorClass}"><i class="fa-regular fa-clock mr-1"></i>${Math.floor((desk.secondsStudied || 0) / 60)} dk</span>
-              </div>
-            ` : ''}
+            ${desk.studentName ? deskFooterHTML(desk, footerBorderClass, footerQColorClass, footerTColorClass, false) : ''}
           `;
         }
 
@@ -8958,7 +8969,7 @@
         let sTotal = 0;
 
         if (currentLeaderboardFilter === 'today') {
-          qTotal += (st.questions || 0);
+          qTotal += (typeof deskQ === 'function' ? deskQ(st) : (st.questions || 0));
           sTotal += (st.secondsStudied || 0);
         }
 
@@ -9224,7 +9235,13 @@
         desk.topic = newTopic;
       }
       desk.book = newBook;
-      desk.questions = newQ;
+      // Girilen soru sayısı, az önce çalışılan ders/konu için kaydedilir ve sayaç sıfırlanır
+      if (newQ > 0) {
+        desk.qLog = desk.qLog || {};
+        desk.qLog[currentKey] = (desk.qLog[currentKey] || 0) + newQ;
+        desk.qBanked = (desk.qBanked || 0) + newQ;
+      }
+      desk.questions = 0;
 
       if (newSub === 'Video Çözüm İzleme') {
         recordStudentVideoSolutionWatch(desk.username || currentUser.username, currentBranch, currentClass);
@@ -11086,6 +11103,7 @@
           n.targetUsername && 
           (cleanUserStr(n.targetUsername) === currentClean || (n.targetUsername === 'all_coaches' && notifForMyClass(n))) && 
           n.senderUsername !== currentUser.username &&
+          !(n.hiddenBy && n.hiddenBy.indexOf(currentUser.username) > -1) &&
           !n.read
         );
       }
@@ -11412,7 +11430,7 @@
           oldDeskObj.status = 'empty';
           oldDeskObj.subject = '';
           oldDeskObj.topic = '';
-          oldDeskObj.questions = 0;
+          oldDeskObj.questions = 0; oldDeskObj.qBanked = 0; oldDeskObj.qLog = {}; oldDeskObj.sessSecs0 = 0; oldDeskObj.sessQ0 = 0;
           oldDeskObj.secondsStudied = 0; oldDeskObj.accBase = 0; oldDeskObj.accSince = null; oldDeskObj.loggedSecs = 0; oldDeskObj.topicTimeLog = {};
         }
       }
@@ -12626,6 +12644,12 @@
               if (topic !== 'Tümü' && low(lt).indexOf(low(topic)) < 0) return;
               mins += Math.floor(dk.topicTimeLog[key] / 60);
             });
+            Object.keys(dk.qLog || {}).forEach(function(key) {
+              var p2 = key.split('|'), ls2 = p2[0], lt2 = p2[1] || '';
+              if (sub !== 'Tümü' && ls2 !== sub) return;
+              if (topic !== 'Tümü' && low(lt2).indexOf(low(topic)) < 0) return;
+              if ((dk.qLog[key] || 0) > 0) rows.push({ date: 'Bugün (Canlı Masa)', name: dk.studentName, br: bn, cls: cn, sub: ls2, topic: lt2 || 'Genel Etüt', book: 'Masa Çalışması', type: 'Kayıtlı Soru', dur: '-', k: '-', y: '-', q: dk.qLog[key], net: '-' });
+            });
           });
         });
       });
@@ -12721,7 +12745,7 @@
   function stgSentinel(node) { try { if (fbDb && isCloudReady) fbDb.ref(node).set({ __empty: true }); } catch(e) {} }
   function stgResetDesks() {
     BRANCHES.forEach(function(br) { if (!branchesData[br]) return; CLASSES.forEach(function(cls) { (branchesData[br][cls] || []).forEach(function(d) {
-      d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null; d.accBase = 0; d.accSince = null; d.loggedSecs = 0; d.lastActionTs = 0; d.idleGuard = false; d.subject = ''; d.topic = ''; d.book = ''; d.parentSupervised = false;
+      d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null; d.accBase = 0; d.accSince = null; d.loggedSecs = 0; d.lastActionTs = 0; d.idleGuard = false; d.qBanked = 0; d.qLog = {}; d.sessSecs0 = 0; d.sessQ0 = 0; d.subject = ''; d.topic = ''; d.book = ''; d.parentSupervised = false;
       d.status = (d.studentName && d.studentName.trim()) ? 'offline' : 'empty'; }); }); });
     try { localStorage.setItem('bkm_branches_data_v14', JSON.stringify(branchesData)); } catch(e) {}
     syncCloudNode('branchesData', branchesData);
@@ -12732,7 +12756,7 @@
     if (document.getElementById('stgDelPass').value !== stgAdminPass()) { alert('Şifre hatalı! İşlem iptal edildi.'); return; }
     var all = g('stgDelAll');
     if (!all && !['stgDelDesk','stgDelReports','stgDelHw','stgDelBooks','stgDelNotif','stgDelSched','stgDelPhotos'].some(g)) { alert('Silinecek veri seçmediniz.'); return; }
-    if (!confirm(all ? 'DİKKAT: Öğrenciler dahil TÜM veriler silinecek. Bu işlem geri alınamaz!\n\nDevam edilsin mi?' : 'Seçili veriler kalıcı olarak silinecek. Devam edilsin mi?')) return; stgPre();
+    if (!confirm(all ? 'DİKKAT: Öğrenciler dahil TÜM veriler silinecek. Bu işlem geri alınamaz!\n\nDevam edilsin mi?' : stgConfirmText())) return; stgPre();
     var ls = function(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
     if (all) {
       usersData = usersData.filter(function(u){ return u.role !== 'student'; });
@@ -12741,15 +12765,17 @@
       ls('bkm_users_data_v14', usersData); syncCloudNode('usersData', usersData); syncCloudNode('branchesData', branchesData); ls('bkm_branches_data_v14', branchesData);
       Object.keys(localStorage).filter(function(k){ return k.indexOf('parent_pin_') === 0; }).forEach(function(k){ localStorage.removeItem(k); });
       try { localStorage.setItem('bkm_no_seed_v14', '1'); syncCloudNode('noSeed', true); } catch(e) {}
-    } else if (g('stgDelDesk')) stgResetDesks();
+    } else if (g('stgDelDesk') && stgScope() !== 'past') stgResetDesks();
     if (all || g('stgDelReports')) { dailyReports = []; ls('bkm_daily_reports_v14', []); stgSentinel('dailyReports'); }
     if (all || g('stgDelHw')) { homeworkData = []; ls('bkm_homework_data_v14', []); stgSentinel('homeworkData'); }
     if (all || g('stgDelBooks')) { studentBooks = []; ls('bkm_student_books_v14', []); stgSentinel('studentBooks'); }
     if (all || g('stgDelNotif')) { notifications = []; ls('bkm_notifications_v14', []); stgSentinel('notifications'); }
     if (all || g('stgDelSched')) { customSchedules = []; ls('bkm_custom_schedules_v14', []); stgSentinel('customSchedules'); }
     if (all || g('stgDelPhotos')) { studentPhotos = {}; savePhotosLocal(); try { if (fbDb && isCloudReady) fbDb.ref('studentPhotos').remove(); } catch(e) {} }
-    alert('✅ Seçilen veriler silindi. Sayfa yenileniyor.');
-    setTimeout(function(){ location.reload(); }, 1200);
+    Promise.resolve().then(function(){ return stgDeleteHistory(all); }).catch(function(e){ console.warn(e); }).then(function(){
+      alert('✅ Seçilen veriler silindi. Sayfa yenileniyor.');
+      setTimeout(function(){ location.reload(); }, 1200);
+    });
   }
 
   // Giriş yapılmadan öğrenci adı / fotoğraf / liderlik görünmesin
@@ -12915,7 +12941,7 @@
       try { if (typeof recalcDesk === 'function') { recalcDesk(d, Date.now()); archiveDesk(d, d.dayKey, true); } } catch(e) {}
       try { autoReportFromDesk(d, br, cls); } catch(e) { console.warn(e); }
       d.dayKey = t; ch = true;
-      d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null; d.accBase = 0; d.accSince = null; d.loggedSecs = 0; d.lastActionTs = 0; d.idleGuard = false;
+      d.secondsStudied = 0; d.questions = 0; d.sessionsCompleted = 0; d.topicTimeLog = {}; d.lastActiveTimestamp = null; d.accBase = 0; d.accSince = null; d.loggedSecs = 0; d.lastActionTs = 0; d.idleGuard = false; d.qBanked = 0; d.qLog = {}; d.sessSecs0 = 0; d.sessQ0 = 0;
       d.subject = ''; d.topic = ''; d.book = ''; d.parentSupervised = false;
       d.status = (d.studentName && String(d.studentName).trim()) ? 'offline' : 'empty';
     }); }); });
@@ -13071,7 +13097,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=47', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=56', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13385,7 +13411,9 @@
     var id = 'auto_' + d.dayKey + '_' + d.username;
     if (dailyReports.some(function(r){ return r.id === id || (r.username && r.username.toLowerCase() === String(d.username).toLowerCase() && r.date === d.dayKey); })) return;
     var subj = {};
-    if (d.questions > 0 && d.subject) subj[d.subject] = { d: d.questions, y: 0, b: 0, kazanim: { d: d.questions, y: 0, b: 0 }, yeniNesil: { d: 0, y: 0, b: 0 }, entries: [] };
+    var _ql = {}; Object.keys(d.qLog || {}).forEach(function(k) { var sj = k.split('|')[0]; _ql[sj] = (_ql[sj] || 0) + (d.qLog[k] || 0); });
+    if (d.questions > 0 && d.subject) _ql[d.subject] = (_ql[d.subject] || 0) + d.questions;
+    Object.keys(_ql).forEach(function(sj) { if (_ql[sj] > 0) subj[sj] = { d: _ql[sj], y: 0, b: 0, kazanim: { d: _ql[sj], y: 0, b: 0 }, yeniNesil: { d: 0, y: 0, b: 0 }, entries: [] }; });
     dailyReports.unshift({ id: id, auto: true, date: d.dayKey, branch: br, class: cls, deskIndex: d.deskNumber, studentName: d.studentName, username: d.username,
       sessionCount: Math.max(sess, 1), subjects: subj, bookEntries: [], bookReading: { title: '', minutes: 0, pages: 0 },
       topics: d.subject ? (d.subject + (d.topic ? ': ' + d.topic : '')) : '', coachNote: '', deskSeconds: secs, updatedAt: new Date().toISOString() });
@@ -13399,7 +13427,7 @@
       var secs = desk.secondsStudied || 0, mins = Math.floor(secs / 60), sess = Math.max(desk.sessionsCompleted || 0, Math.round(secs / 2400));
       var inp = document.getElementById('repSessionCount'), par = inp && inp.parentNode, info = document.getElementById('repDeskInfo');
       if (par && !info) { info = document.createElement('div'); info.id = 'repDeskInfo'; info.style.cssText = 'grid-column:1/-1;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12px;font-weight:600'; par.parentNode.insertBefore(info, par); }
-      if (info) info.innerHTML = '<b>Masa verileriniz (otomatik):</b> ' + sess + ' etüt · ' + mins + ' dk · ' + (desk.questions || 0) + ' soru<br><span style="font-weight:500">Aşağıya yalnızca masada olmayan ekstra çalışmalarınızı yazın. Rapora yazdıklarınız masada görünmez ve masa verisiyle toplanmaz.</span>';
+      if (info) info.innerHTML = '<b>Masa verileriniz (otomatik):</b> ' + sess + ' etüt · ' + mins + ' dk · ' + (typeof deskQ === 'function' ? deskQ(desk) : (desk.questions || 0)) + ' soru<br><span style="font-weight:500">Aşağıya yalnızca masada olmayan ekstra çalışmalarınızı yazın. Rapora yazdıklarınız masada görünmez ve masa verisiyle toplanmaz.</span>';
       if (inp) { var fromDesk = sess > 0 && !activeEditingDailyReportId; if (fromDesk) inp.value = Math.min(15, Math.max(sess, 1)); inp.readOnly = fromDesk; }
     } catch(e) { console.warn(e); }
     return r;
@@ -13531,12 +13559,12 @@
   function stgPre() {
     var g = function(id){ return document.getElementById(id).checked; }, all = g('stgDelAll');
     if (all || g('stgDelDesk')) {
-      // Geçmiş masa verisi de silinir: otomatik (masa kaynaklı) raporlar ve video izleme kayıtları
-      dailyReports = (dailyReports || []).filter(function(r){ return !(r && r.auto); });
+      var _sc = all ? 'both' : stgScope();
+      dailyReports = (dailyReports || []).filter(function(r){ return all ? !(r && r.auto) : !stgReportMatch(r); });
       try { localStorage.setItem('bkm_daily_reports_v14', JSON.stringify(dailyReports)); } catch(e) {}
       syncCloudNode('dailyReports', dailyReports);
-      ['bkm_video_watch_logs_v14', 'bkm_video_notified_weeks_v14'].forEach(function(k){ localStorage.removeItem(k); });
-      stgResetDesks();
+      if (_sc !== 'today') ['bkm_video_watch_logs_v14', 'bkm_video_notified_weeks_v14'].forEach(function(k){ localStorage.removeItem(k); });
+      if (all || _sc !== 'past') stgResetDesks();
     }
     if (all || g('stgDelBooks')) { bkById = {}; bkDeleted = {}; bkLegacy = []; lastBkJson = {}; try { if (fbDb && isCloudReady) fbDb.ref().update({ booksById: null, booksDeleted: null }); } catch(e) {} }
     if (all || g('stgDelReports')) {
@@ -14491,6 +14519,7 @@
     }
   }
   function schBellTick() {
+    return; // program zili kapalı
     if (!schBellCfg.on || !currentUser || currentUser.role !== 'student') return;
     var today = todayKey(), res;
     try { res = getEffectiveSchedule(today, getGradeLevel(currentUser.class), currentUser.class, currentUser.username); } catch(e) { return; }
@@ -14506,8 +14535,7 @@
     });
     if (changed) { Object.keys(schFired).forEach(function(k){ if (k.indexOf(today) !== 0) delete schFired[k]; }); try { localStorage.setItem('bkm_sch_bell_fired_v1', JSON.stringify(schFired)); } catch(e) {} }
   }
-  setInterval(schBellTick, 15000);
-  document.addEventListener('visibilitychange', function(){ if (!document.hidden) schBellTick(); });
+  // Program zili kaldırıldı (öğrencinin dikkatini dağıtıyordu). Yalnız süreli etüt zili ve 50 dk işlemsizlik uyarısı kalır.
 
   function schBellSave() { try { localStorage.setItem('bkm_sch_bell_v1', JSON.stringify(schBellCfg)); } catch(e) {} schBellBtnUpdate(); }
   function schBellCardHtml() {
@@ -14516,11 +14544,11 @@
       '<div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label style="font-size:13px">Önceden uyar: <select class="qs-in" style="width:auto;display:inline-block" onchange="schBellCfg.lead=+this.value;schBellSave()">' + [[0, 'Uyarma'], [2, '2 dk önce'], [5, '5 dk önce'], [10, '10 dk önce']].map(function(o){ return '<option value="' + o[0] + '"' + (schBellCfg.lead === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label><button class="qs-btn" style="background:#64748b" onclick="schRing(\'🔔 Deneme\',\'Program zili çalışıyor.\')">Zili dene</button></div></div>';
   }
   var _schRender = schRender;
-  schRender = function() { _schRender.apply(this, arguments); var box = $('stuSchBody'); if (box && !box.querySelector('[data-bell]')) { box.insertAdjacentHTML('afterbegin', schBellCardHtml().replace('<div class="qs-card">', '<div class="qs-card" data-bell="1">')); } };
+  schRender = function() { _schRender.apply(this, arguments); var box = $('stuSchBody'); if (false && box && !box.querySelector('[data-bell]')) { box.insertAdjacentHTML('afterbegin', schBellCardHtml().replace('<div class="qs-card">', '<div class="qs-card" data-bell="1">')); } };
 
   function schBellBtnUpdate() {
     var b = $('btnSchBell'); if (!b) { var a = $('btnStuSchEdit'); if (!a) return; b = document.createElement('button'); b.id = 'btnSchBell'; b.type = 'button'; b.className = 'px-2.5 py-1.5 text-white text-xs font-bold rounded-lg shadow items-center gap-1.5'; b.onclick = function(e) { e.stopPropagation(); schBellCfg.on = !schBellCfg.on; schBellSave(); if (schBellCfg.on) schRing('🔔 Program zili açık', 'Saat dilimleri başlarken uyarılacaksın.'); }; a.parentNode.insertBefore(b, a); }
-    b.style.display = (currentUser && currentUser.role === 'student') ? 'inline-flex' : 'none';
+    b.style.display = 'none';
     b.style.background = schBellCfg.on ? '#059669' : '#64748b';
     b.innerHTML = '<i class="fa-solid ' + (schBellCfg.on ? 'fa-bell' : 'fa-bell-slash') + '"></i> ' + (schBellCfg.on ? 'Zil açık' : 'Zil kapalı');
   }
@@ -14550,7 +14578,7 @@
 
   <script>
   // ===== v23: süre sayacı düzeltmesi, kayıt koruması, dürtme, 50 dk işlemsizlik, koç fotoğrafı, çalışma analizi =====
-  var MAXRUN = 6 * 3600, IDLE_MS = 50 * 60000, WARN_MS = 45 * 60000;
+  var MAXRUN = 6 * 3600, IDLE_MS = 60 * 60000, WARN_MS = 58 * 60000;
   function v23el(id) { return document.getElementById(id); }
   function v23esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function v23allDesks(fn) {
@@ -14595,7 +14623,8 @@
     } else if (d.accSince) {
       deskBankAt(d, now); ch = true;
     }
-    var run = (d.status === 'active' && d.accSince) ? Math.max(0, Math.min((now - d.accSince) / 1000, MAXRUN)) : 0;
+    var endT = now; if (d.status === 'active' && d.accSince && d.lastActionTs) endT = Math.min(now, Math.max(d.accSince, d.lastActionTs + IDLE_MS));
+    var run = (d.status === 'active' && d.accSince) ? Math.max(0, Math.min((endT - d.accSince) / 1000, MAXRUN)) : 0;
     var secs = Math.floor((d.accBase || 0) + run);
     if (d.secondsStudied !== secs) { d.secondsStudied = secs; ch = true; }
     return ch;
@@ -14604,6 +14633,7 @@
     var now = Date.now();
     deskBankAt(desk, now);
     if (status === 'active') {
+      if (desk.status !== 'break') { desk.sessSecs0 = Math.floor(desk.secondsStudied || 0); desk.sessQ0 = desk.qBanked || 0; }
       desk.accSince = now; desk.lastActionTs = now;
       desk.idleGuard = !!(currentUser && currentUser.role === 'student');
     } else { desk.idleGuard = false; }
@@ -14655,7 +14685,7 @@
   function archiveDesk(d, day, force) {
     try {
       if (!fbDb || !isCloudReady || !d || !d.username || !day) return;
-      var arr = topicMapToArr(topicMap(d)), key = day + '|' + d.username, js = JSON.stringify(arr);
+      var arr = deskArr(d), key = day + '|' + d.username, js = JSON.stringify(arr);
       if (!force && deskArchived[key] === js) return;
       deskArchived[key] = js;
       var r = fbDb.ref('deskLog/' + tpKey(d.username) + '/' + day);
@@ -14680,11 +14710,11 @@
     if (idleWarnShown) { idleWarnShown = false; hidePresence(); }
     if (now - lastActWrite < 60000) return;
     var d = myDesk();
-    if (d && d.status === 'active' && d.idleGuard) { lastActWrite = now; d.lastActionTs = now; try { saveData(); } catch (e) {} }
+    if (d && d.status === 'active') { lastActWrite = now; d.lastActionTs = now; try { saveData(); } catch (e) {} }
   }
   ['pointerdown', 'touchstart', 'mousedown', 'keydown', 'wheel'].forEach(function(ev) { document.addEventListener(ev, noteAct, { passive: true, capture: true }); });
   function autoEndDesk(d, fromStudent) {
-    var end = Math.min(Date.now(), d.lastActionTs || Date.now());
+    var end = Math.min(Date.now(), (d.lastActionTs || Date.now()) + IDLE_MS);
     deskBankAt(d, end);
     d.status = 'offline'; d.parentSupervised = false; d.lastActiveTimestamp = null; d.idleGuard = false; d.accSince = null;
     try { releaseScreenWakeLock(); } catch (e) {}
@@ -14692,7 +14722,7 @@
       try {
         var now = new Date();
         notifications.unshift({ id: 'notif_' + Date.now(), targetUsername: 'all_coaches', senderUsername: currentUser.username, senderName: currentUser.name, senderRole: 'student', branch: currentUser.branch, class: currentUser.class,
-          message: 'ℹ️ ' + currentUser.name + ' (' + currentUser.branch + ' ' + currentUser.class + ' Sıra #' + d.deskNumber + ') 50 dakika masada işlem yapmadığı için etüdü otomatik sonlandırıldı.', read: false, date: now.toISOString() });
+          message: 'ℹ️ ' + currentUser.name + ' (' + currentUser.branch + ' ' + currentUser.class + ' Sıra #' + d.deskNumber + ') 60 dakika masada işlem yapmadığı için etüdü otomatik sonlandırıldı.', read: false, date: now.toISOString() });
         localStorage.setItem('bkm_notifications_v14', JSON.stringify(notifications));
         if (typeof syncCloudNode === 'function') syncCloudNode('notifications', notifications);
       } catch (e) {}
@@ -14706,23 +14736,28 @@
       var now = Date.now();
       if (currentUser.role === 'student') {
         var d = myDesk();
-        if (!d || d.status !== 'active' || !d.idleGuard) { if (idleWarnShown) { idleWarnShown = false; hidePresence(); } return; }
+        if (!d || d.status !== 'active') { if (idleWarnShown) { idleWarnShown = false; hidePresence(); } return; }
         var idle = now - lastAct;
         if (idle >= IDLE_MS) {
           d.lastActionTs = Math.max(lastAct, d.lastActionTs || 0);
           idleWarnShown = false; autoEndDesk(d, true);
-          showPresence('Etüt sonlandırıldı', '50 dakikadır masada işlem yapılmadığı için etüdünüz otomatik olarak sonlandırıldı. Yeniden çalışmak için Çalışıyor düğmesine basın.', 'Tamam', null, false);
+          showPresence('Etüt sonlandırıldı', '60 dakikadır masada işlem yapılmadığı için etüdünüz otomatik olarak sonlandırıldı. Yeniden çalışmak için Çalışıyor düğmesine basın.', 'Tamam', null, true);
         } else if (idle >= WARN_MS && !idleWarnShown) {
           idleWarnShown = true;
-          showPresence('Masada mısın?', 'Uzun süredir işlem yapılmadı. Etüdün ' + Math.max(1, Math.ceil((IDLE_MS - idle) / 60000)) + ' dakika içinde otomatik sonlanacak.', 'Buradayım', function() { noteAct(); }, true);
+          showPresence('Masada mısın?', 'Herhangi bir işlem yapmazsanız etütünüz 2 dakika sonra sonlandırılacaktır.', 'Buradayım', function() { noteAct(); }, true);
         }
       } else if (currentUser.role === 'coach' || currentUser.role === 'admin') {
+        var seen = false;
         v23allDesks(function(d) {
-          if (d.status === 'active' && d.idleGuard && d.lastActionTs && now - d.lastActionTs > IDLE_MS + 120000) autoEndDesk(d, false);
+          if (d.status !== 'active' || !d.username) return;
+          if (!d.lastActionTs) { d.lastActionTs = now; seen = true; }
+          else if (now - d.lastActionTs > IDLE_MS + 90000) autoEndDesk(d, false);
         });
+        if (seen) { try { saveData(); } catch (e) {} }
       }
     } catch (e) { console.warn(e); }
   }, 15000);
+  setTimeout(function() { try { if (currentUser && (currentUser.role === 'coach' || currentUser.role === 'admin')) { var _n = Date.now(); v23allDesks(function(d) { if (d.status === 'active' && d.username && d.lastActionTs && _n - d.lastActionTs > IDLE_MS + 90000) autoEndDesk(d, false); }); } } catch (e) {} }, 5000);
 
   // ---------- 5) DÜRTME: "Masada mısın?" ----------
   var pokeUser = null, pokeRef = null, pokeStaffOn = false, pokeTimers = {}, pokeAudio = null, pokeLoop = null, presenceOk = null, curPokeId = null;
@@ -14948,14 +14983,15 @@
   function anAggregate() {
     var days = {}, u = anState.user; Object.keys(anState.arch || {}).forEach(function(k) { days[k] = anState.arch[k]; });
     var uNm = (usersData.find(function(x) { return x && x.username === u; }) || {}).name;
-    v23allDesks(function(d) { if (u && ((d.username && String(d.username).toLowerCase() === String(u).toLowerCase()) || (!d.username && d.studentName && sameName(d.studentName, uNm)))) days[d.dayKey || todayKey()] = topicMapToArr(topicMap(d)); });
+    v23allDesks(function(d) { if (u && ((d.username && String(d.username).toLowerCase() === String(u).toLowerCase()) || (!d.username && d.studentName && sameName(d.studentName, uNm)))) days[d.dayKey || todayKey()] = deskArr(d); });
     var rg = anRange(anState.period), subs = {};
     Object.keys(days).forEach(function(day) {
       if (day < rg[0] || day > rg[1]) return;
+      var dsc = anDayScale(days[day]);
       days[day].forEach(function(e) {
-        var s = e[0] || 'Genel', t = e[1] || 'Genel Konu', sec = +e[2] || 0; if (sec <= 0) return;
-        var o = subs[s] || (subs[s] = { total: 0, topics: {} });
-        o.total += sec; o.topics[t] = (o.topics[t] || 0) + sec;
+        var s = e[0] || 'Genel', t = e[1] || 'Genel Konu', sec = Math.floor((+e[2] || 0) * dsc), q = +e[3] || 0; if (sec <= 0 && q <= 0) return;
+        var o = subs[s] || (subs[s] = { total: 0, topics: {}, q: 0, tq: {} });
+        o.total += sec; o.topics[t] = (o.topics[t] || 0) + sec; o.q += q; o.tq[t] = (o.tq[t] || 0) + q;
       });
     });
     return subs;
@@ -15016,12 +15052,12 @@
     }
     if (anState.sub) {
       var so = subs[anState.sub];
-      items = Object.keys(so.topics).map(function(k) { return { label: k, sec: so.topics[k] }; }).sort(function(a, b) { return b.sec - a.sec; });
+      items = Object.keys(so.topics).map(function(k) { return { label: k, sec: so.topics[k], q: (so.tq || {})[k] || 0 }; }).sort(function(a, b) { return b.sec - a.sec; });
       total = so.total;
       head = '<button type="button" onclick="anBack()" class="mb-2 text-[11px] font-black text-indigo-700"><i class="fa-solid fa-arrow-left mr-1"></i>Tüm Dersler</button>' +
         '<div class="text-sm font-black text-slate-900 mb-2">' + v23esc(anState.sub) + ' — konu dağılımı</div>';
     } else {
-      items = Object.keys(subs).map(function(k) { return { label: k, sec: subs[k].total }; }).sort(function(a, b) { return b.sec - a.sec; });
+      items = Object.keys(subs).map(function(k) { return { label: k, sec: subs[k].total, q: subs[k].q || 0 }; }).sort(function(a, b) { return b.sec - a.sec; });
       total = items.reduce(function(a, b) { return a + b.sec; }, 0);
       head = '<div class="text-sm font-black text-slate-900 mb-2">Ders bazında çalışma süresi <span class="text-[10px] font-semibold text-slate-500">(ayrıntı için derse dokunun)</span></div>';
     }
@@ -15224,6 +15260,286 @@
     return anOwnClass({ branch: n.branch, class: n.class });
   }
   try { updateNotificationBadge(); } catch (e) {}
+  </script>
+
+  <script>
+  // v29: bildirimlerde yanıt/silme/hazır mesaj, masa kartı (etüt+toplam süre, anlık+toplam soru), titreme düzeltmesi, 50 dk kuralı sağlamlaştırma, soru sıfırlama
+  function updateDeskTimersInPlace() {
+    var grid = v23el('desksGrid'); if (!grid) return;
+    var desks = (branchesData[currentBranch] || {})[currentClass] || [];
+    Array.prototype.forEach.call(grid.querySelectorAll('.dk-wrap'), function(w) {
+      var n = +w.getAttribute('data-n'), d = desks.find(function(x) { return x && x.deskNumber === n; }); if (!d) return;
+      [['.dk-q', deskSessQ(d) + ' soru'], ['.dk-qt', deskQ(d) + ' soru'], ['.dk-s', deskSessMin(d) + ' dk'], ['.dk-t', deskTotMin(d) + ' dk']].forEach(function(p) {
+        var e = w.querySelector(p[0]); if (e && e.textContent !== p[1]) e.textContent = p[1];
+      });
+    });
+  }
+  function deskSig() {
+    var desks = (branchesData[currentBranch] || {})[currentClass] || [];
+    var ph = 0; try { Object.keys(studentPhotos).forEach(function(k) { ph += (studentPhotos[k] || '').length; }); } catch (e) {}
+    var parts = [currentBranch, currentClass, (typeof currentClassroomView !== 'undefined' ? currentClassroomView : ''), currentUser ? currentUser.username + '|' + currentUser.role : '-', todayKey(), ph];
+    desks.forEach(function(d) { if (d) parts.push([d.deskNumber, d.studentName, d.username, d.status, d.subject, d.topic, d.parentSupervised ? 1 : 0, d.targetStudyMinutes, d.targetBreakMinutes].join('~')); });
+    return parts.join('^');
+  }
+  var _rdSig29 = renderDesks, lastDeskSig = '';
+  renderDesks = function() {
+    var grid = v23el('desksGrid'), sig = '';
+    try { sig = deskSig(); } catch (e) { sig = ''; }
+    if (sig && sig === lastDeskSig && grid && grid.children.length > 0 && grid.querySelector('.dk-wrap, .desk-card, .desk-unit-3d')) { try { updateDeskTimersInPlace(); } catch (e) {} return; }
+    lastDeskSig = sig;
+    return _rdSig29.apply(this, arguments);
+  };
+
+  // Soru girişi: ders/konu değişirse sayı 0'dan başlar, önceki ders için kaydedilir
+  function qHintInit() {
+    var inp = v23el('studyQuestions'); if (!inp || v23el('studyQHint')) return;
+    var h = document.createElement('div'); h.id = 'studyQHint'; h.className = 'text-[10px] text-amber-600 font-semibold mt-1';
+    inp.parentNode.appendChild(h);
+    function upd() {
+      var d = (typeof curDesk === 'function') ? curDesk() : null; if (!d) return;
+      h.textContent = 'Kaydedince bu sayı az önce çalıştığın "' + (d.subject || 'Genel') + '" dersine eklenir ve kutu sıfırlanır.';
+    }
+    setTimeout(upd, 0);
+    ['studySubject', 'studyTopic'].forEach(function(id) { var e = v23el(id); if (e) e.addEventListener('change', function() { setTimeout(upd, 60); }); });
+  }
+  try { qHintInit(); } catch (e) {}
+  // her açılışta ipucunu temizle
+  try { var _dam29 = v23el('deskActionModal'); if (_dam29) new MutationObserver(function() { var h = v23el('studyQHint'), d = (typeof curDesk === 'function') ? curDesk() : null; if (h && d) h.textContent = 'Kaydedince bu sayı az önce çalıştığın "' + (d.subject || 'Genel') + '" dersine eklenir ve kutu sıfırlanır.'; }).observe(_dam29, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+
+  // Arşiv/analiz: [ders, konu, süre, soru]
+  function deskArr(d) {
+    var tm = topicMap(d), qm = {}, ql = d.qLog || {};
+    Object.keys(ql).forEach(function(k) { if (ql[k] > 0) qm[k] = ql[k]; });
+    if ((d.questions || 0) > 0) { var k2 = (d.subject || 'Genel') + '|' + (d.topic || 'Genel Konu'); qm[k2] = (qm[k2] || 0) + d.questions; }
+    var keys = {}; Object.keys(tm).forEach(function(k) { keys[k] = 1; }); Object.keys(qm).forEach(function(k) { keys[k] = 1; });
+    return Object.keys(keys).map(function(k) { var p = k.split('|'); return [p[0], p[1] || '', tm[k] || 0, qm[k] || 0]; });
+  }
+  function anTable(items, total, drillable) {
+    var qt = items.reduce(function(a, b) { return a + (b.q || 0); }, 0);
+    return '<table class="w-full text-xs"><thead><tr class="text-left text-slate-500 border-b border-slate-200"><th class="py-1.5">' + (anState.sub ? 'Konu' : 'Ders') + '</th><th class="py-1.5 text-right">Süre</th><th class="py-1.5 text-right">Soru</th><th class="py-1.5 text-right w-10">Oran</th></tr></thead><tbody>' +
+      items.map(function(it) {
+        return '<tr class="border-b border-slate-100' + (drillable ? ' cursor-pointer hover:bg-indigo-50' : '') + '"' + (drillable ? ' onclick="anDrill(' + v23esc(JSON.stringify(it.label)) + ')"' : '') + '>' +
+          '<td class="py-2 font-bold text-slate-800">' + v23esc(it.label) + (drillable ? ' <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>' : '') + '</td>' +
+          '<td class="py-2 text-right font-black text-slate-800">' + fmtDur(it.sec) + '</td><td class="py-2 text-right text-slate-700">' + (it.q || 0) + '</td><td class="py-2 text-right text-slate-500">%' + Math.round(it.sec / total * 100) + '</td></tr>';
+      }).join('') +
+      '<tr><td class="pt-2 font-black text-slate-900">Toplam</td><td class="pt-2 text-right font-black text-slate-900">' + fmtDur(total) + '</td><td class="pt-2 text-right font-black text-slate-900">' + qt + '</td><td></td></tr></tbody></table>';
+  }
+
+  // ---------- Bildirimler: yanıtla, hazır mesaj, sil ----------
+  var QUICK_STAFF = ['Masadan neden ayrıldın?', 'Lütfen hemen masana dön.', 'Mola süren bitti, masaya dön lütfen.', 'Bir sorun mu var? Yazar mısın?'];
+  var QUICK_STUDENT = ['Tuvalete gittim, hemen dönüyorum.', 'Su içmeye gittim.', 'Teknik bir sorun yaşadım.', 'Mola vermiştim, döndüm.', 'Anladım hocam, teşekkürler.'];
+  function notifIsHidden(n) { return !!(n.hiddenBy && currentUser && n.hiddenBy.indexOf(currentUser.username) > -1); }
+  function myNotifList() {
+    var clean = cleanUserStr(currentUser.username);
+    if (currentUser.role === 'student') return notifications.filter(function(n) { return n.targetUsername && cleanUserStr(n.targetUsername) === clean && !notifIsHidden(n); });
+    return notifications.filter(function(n) {
+      return n.targetUsername && (cleanUserStr(n.targetUsername) === clean || (n.targetUsername === 'all_coaches' && notifForMyClass(n))) && n.senderUsername !== currentUser.username && !notifIsHidden(n);
+    });
+  }
+  function notifSave() {
+    try { localStorage.setItem('bkm_notifications_v14', JSON.stringify(notifications)); } catch (e) {}
+    try { saveData(); } catch (e) {}
+    try { if (typeof syncCloudNode === 'function') syncCloudNode('notifications', notifications); } catch (e) {}
+    try { checkStudentNotifications(); } catch (e) {}
+  }
+  function notifTime(n) { var t = new Date(n.timestamp || n.date || Date.now()); return t.toLocaleDateString('tr-TR') + ' ' + t.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); }
+  function notifReplyBox(n) {
+    var chips = (currentUser.role === 'student' ? QUICK_STUDENT : QUICK_STAFF).map(function(q) {
+      return '<button type="button" class="nr-chip px-2 py-1 rounded-full bg-slate-700 hover:bg-amber-600 text-white text-[10px]" data-q="' + v23esc(q) + '">' + v23esc(q) + '</button>';
+    }).join('');
+    return '<div class="nr-box mt-2 pt-2 border-t border-slate-700" data-id="' + v23esc(n.id) + '"><div class="flex flex-wrap gap-1 mb-1.5">' + chips + '</div>' +
+      '<div class="flex gap-1.5"><textarea rows="2" class="nr-text flex-1 bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-[11px] text-white" placeholder="Mesajınızı yazın..."></textarea>' +
+      '<button type="button" class="nr-send px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold"><i class="fa-solid fa-paper-plane"></i></button></div></div>';
+  }
+  function sendNotifReply(id, text) {
+    text = String(text || '').trim(); if (!text) return;
+    var n = notifications.find(function(x) { return x.id === id; }); if (!n || !n.senderUsername) return;
+    var tgt = usersData.find(function(u) { return u && u.username === n.senderUsername; });
+    var isSt = currentUser.role === 'student';
+    notifications.unshift({
+      id: 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+      targetUsername: n.senderUsername, targetName: tgt ? tgt.name : n.senderName,
+      senderUsername: currentUser.username,
+      senderName: isSt ? (currentUser.name + ' (' + currentUser.branch + ' ' + currentUser.class + ' #' + currentUser.deskIndex + ')') : currentUser.name,
+      senderRole: currentUser.role, message: text, timestamp: new Date().toISOString(), read: false
+    });
+    n.read = true; notifSave(); bkmToast('✉️ Mesajınız gönderildi.'); openNotificationsModal();
+  }
+  function deleteNotif(id) {
+    var i = notifications.findIndex(function(x) { return x.id === id; }); if (i < 0) return;
+    var n = notifications[i];
+    if (n.targetUsername === 'all_coaches') { n.hiddenBy = (n.hiddenBy || []).concat([currentUser.username]); } else { notifications.splice(i, 1); }
+    notifSave(); openNotificationsModal();
+  }
+  function deleteAllNotifs() {
+    var list = myNotifList(); if (!list.length) return;
+    if (!confirm(list.length + ' bildirim silinecek. Emin misiniz?')) return;
+    list.forEach(function(n) {
+      if (n.targetUsername === 'all_coaches') n.hiddenBy = (n.hiddenBy || []).concat([currentUser.username]);
+      else { var i = notifications.indexOf(n); if (i > -1) notifications.splice(i, 1); }
+    });
+    notifSave(); openNotificationsModal();
+  }
+  openNotificationsModal = function() {
+    if (!currentUser) return;
+    var list = v23el('notifListContainer'); list.innerHTML = '';
+    var my = myNotifList();
+    if (!my.length) list.innerHTML = '<div class="p-6 text-center text-slate-500 text-xs">Henüz bir bildirim veya mesajınız bulunmuyor.</div>';
+    my.forEach(function(n) {
+      var leave = (n.targetUsername === 'all_coaches' && n.senderRole === 'student');
+      var item = document.createElement('div');
+      item.className = 'p-3 rounded-xl border text-xs transition ' + (n.read ? 'bg-slate-800/50 border-slate-700/60 text-slate-300' : 'bg-amber-950/30 border-amber-500/50 text-white font-medium shadow');
+      item.innerHTML = '<div class="flex items-center justify-between mb-1"><span class="font-bold text-amber-400"><i class="fa-solid ' + (leave ? 'fa-person-walking-arrow-right' : 'fa-bullhorn') + ' mr-1"></i>' + v23esc(n.senderName) + '</span><span class="text-[10px] text-slate-400">' + notifTime(n) + '</span></div>' +
+        '<div class="text-[11px] mb-2 leading-relaxed">"' + v23esc(n.message) + '"</div>' +
+        '<div class="flex justify-end gap-2">' +
+        (!n.read ? '<button type="button" class="nb-read text-[10px] px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/50 text-emerald-300 rounded font-bold">Okudum</button>' : '') +
+        (!leave && n.senderUsername ? '<button type="button" class="nb-reply text-[10px] px-2 py-0.5 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/50 text-blue-200 rounded font-bold"><i class="fa-solid fa-reply mr-1"></i>Yanıtla</button>' : '') +
+        '<button type="button" class="nb-del text-[10px] px-2 py-0.5 bg-rose-600/30 hover:bg-rose-600/60 border border-rose-500/50 text-rose-200 rounded font-bold"><i class="fa-solid fa-trash mr-1"></i>Sil</button></div>' +
+        (leave ? notifReplyBox(n) : '');
+      var rd = item.querySelector('.nb-read'); if (rd) rd.onclick = function() { n.read = true; notifSave(); openNotificationsModal(); };
+      var rp = item.querySelector('.nb-reply'); if (rp) rp.onclick = function() { if (!item.querySelector('.nr-box')) { item.insertAdjacentHTML('beforeend', notifReplyBox(n)); wireReply(item, n); } };
+      item.querySelector('.nb-del').onclick = function() { deleteNotif(n.id); };
+      if (leave) wireReply(item, n);
+      list.appendChild(item);
+    });
+    v23el('notificationsModal').classList.remove('hidden');
+  };
+  function wireReply(item, n) {
+    var box = item.querySelector('.nr-box'); if (!box) return;
+    var ta = box.querySelector('.nr-text');
+    Array.prototype.forEach.call(box.querySelectorAll('.nr-chip'), function(c) { c.onclick = function() { ta.value = c.getAttribute('data-q'); ta.focus(); }; });
+    box.querySelector('.nr-send').onclick = function() { sendNotifReply(n.id, ta.value); };
+  }
+  (function() {
+    var foot = document.querySelector('#notificationsModal .mt-3'); if (!foot || v23el('notifDelAllBtn')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'notifDelAllBtn'; b.className = 'text-xs text-rose-400 hover:text-rose-300 font-semibold'; b.innerHTML = '<i class="fa-solid fa-trash mr-1"></i>Tümünü Sil';
+    b.onclick = deleteAllNotifs; foot.insertBefore(b, foot.lastElementChild);
+  })();
+  </script>
+
+  <script>
+  // v30: konu süresi kaydı toplam çalışma süresini aşamaz (eski sürüm sekmeleri şişirilmiş değer yazabiliyor)
+  function logGuard(d) {
+    var lg = d.topicTimeLog; if (!lg) return false;
+    var keys = Object.keys(lg), sum = 0; keys.forEach(function(k) { sum += Math.max(0, +lg[k] || 0); });
+    var secs = d.secondsStudied || 0;
+    if (sum <= secs + 60) {
+      if ((d.loggedSecs || 0) > secs) { d.loggedSecs = Math.floor(Math.min(sum, secs)); return true; }
+      return false;
+    }
+    var f = secs > 0 ? secs / sum : 0, ns = 0;
+    keys.forEach(function(k) { lg[k] = Math.floor(Math.max(0, +lg[k] || 0) * f); ns += lg[k]; });
+    d.loggedSecs = Math.min(Math.floor(secs), ns); return true;
+  }
+  var _rc30 = recalcDesk;
+  recalcDesk = function(d, now) { var ch = _rc30.apply(this, arguments); try { if (logGuard(d)) ch = true; } catch (e) {} return ch; };
+  topicMap = function(d) {
+    var log = d.topicTimeLog || {}, m = {}, sum = 0, secs = d.secondsStudied || 0;
+    Object.keys(log).forEach(function(k) { sum += Math.max(0, +log[k] || 0); });
+    var f = (sum > secs + 60) ? (secs > 0 ? secs / sum : 0) : 1, used = 0;
+    Object.keys(log).forEach(function(k) { var v = Math.floor(Math.max(0, +log[k] || 0) * f); if (v > 0) { m[k] = v; used += v; } });
+    var cur = Math.max(0, secs - Math.max(used, Math.min(d.loggedSecs || 0, secs)));
+    if (cur > 0) { var k2 = (d.subject || 'Genel') + '|' + (d.topic || 'Genel Konu'); m[k2] = (m[k2] || 0) + cur; }
+    return m;
+  };
+  function anDayScale(arr) {
+    var sum = 0; (arr || []).forEach(function(e) { sum += Math.max(0, +e[2] || 0); });
+    return sum > 14 * 3600 ? (14 * 3600) / sum : 1;
+  }
+  </script>
+
+  <script>
+  // v31: masa verisi silme: günlük / geçmişe dönük kapsam; analiz geçmişi ve raporlar bu kapsama uyar
+  function stgScope() { var r = document.querySelector('input[name="stgScope"]:checked'); return r ? r.value : 'today'; }
+  function stgScopeLabel(sc) { return sc === 'both' ? 'bugün + geçmiş (tümü)' : (sc === 'past' ? 'geçmişe dönük (bugünden önceki günler)' : 'yalnız bugün'); }
+  function stgReportMatch(r) {
+    if (!r) return false;
+    var sc = stgScope(), t = todayKey(), d = r.date || '';
+    var inScope = sc === 'both' || (sc === 'today' ? d === t : (d && d < t));
+    if (!inScope) return false;
+    var el = document.getElementById('stgDelRepScope');
+    return (el && el.checked) || !!r.auto;
+  }
+  function stgConfirmText() {
+    var g = function(id) { var e = document.getElementById(id); return e && e.checked; };
+    var t = 'Seçili veriler kalıcı olarak silinecek.';
+    if (g('stgDelDesk')) {
+      t += '\n\nMasa verileri kapsamı: ' + stgScopeLabel(stgScope());
+      if (g('stgDelHist')) t += '\n- Çalışma analizi geçmişi';
+      if (g('stgDelRepScope')) t += '\n- Öğrenci gün sonu raporları (Sınıf Analiz Paneli ve Konu Filtreleme dahil)';
+      else t += '\n- Masadan otomatik oluşan raporlar';
+    }
+    return t + '\n\nDevam edilsin mi?';
+  }
+  function stgDeleteHistory(all) {
+    var deskSel = document.getElementById('stgDelDesk').checked, hist = document.getElementById('stgDelHist');
+    if (!(all || (deskSel && hist && hist.checked))) return null;
+    if (!fbDb || !isCloudReady) return null;
+    var sc = all ? 'both' : stgScope(), t = todayKey();
+    try { anState.cache = {}; deskArchived = {}; } catch (e) {}
+    if (sc === 'both') return fbDb.ref('deskLog').remove();
+    return fbDb.ref('deskLog').once('value').then(function(sn) {
+      var up = {}, n = 0;
+      sn.forEach(function(u) { u.forEach(function(dd) { var day = dd.key; if ((sc === 'today' && day === t) || (sc === 'past' && day < t)) { up['deskLog/' + u.key + '/' + day] = null; n++; } }); });
+      return n ? fbDb.ref().update(up) : null;
+    });
+  }
+  </script>
+
+  <script>
+  // v32: öğrenci mesajı - Sınıf koçu + adminler otomatik seçili, öğrenci iptal edebilir / başkalarını ekleyebilir
+  var _osm32 = openSendMessageModal;
+  openSendMessageModal = function() {
+    var r = _osm32.apply(this, arguments);
+    try {
+      if (currentUser && currentUser.role === 'student') {
+        var sel = document.getElementById('msgTargetCoachSelect'); if (!sel) return r;
+        sel.style.display = 'none';
+        var box = document.getElementById('msgTargetChecks');
+        if (!box) { box = document.createElement('div'); box.id = 'msgTargetChecks'; box.className = 'space-y-1 max-h-48 overflow-y-auto'; sel.parentNode.appendChild(box); }
+        var rc = resolveClassCoach(currentUser.branch, currentUser.class), cu = rc && rc.user ? rc.user.username : null;
+        var list = Array.prototype.map.call(sel.options, function(o) { return { u: o.value, t: o.text }; });
+        var u2 = function(x) { return usersData.find(function(y) { return y.username === x; }) || {}; };
+        list.sort(function(a, b) {
+          var pa = a.u === cu ? 0 : (u2(a.u).role === 'admin' ? 1 : 2), pb = b.u === cu ? 0 : (u2(b.u).role === 'admin' ? 1 : 2);
+          return pa - pb;
+        });
+        box.innerHTML = '';
+        list.forEach(function(x) {
+          var auto = x.u === cu || u2(x.u).role === 'admin';
+          var lb = document.createElement('label');
+          lb.className = 'flex items-center gap-2 text-xs font-bold text-blue-900 bg-white border border-blue-200 rounded-lg px-2 py-1.5 cursor-pointer';
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'msg-target-cb'; cb.value = x.u; cb.checked = auto;
+          var sp = document.createElement('span'); sp.textContent = (x.u === cu ? '⭐ Sınıf koçum: ' : (u2(x.u).role === 'admin' ? '🛡️ Admin: ' : '')) + x.t;
+          lb.appendChild(cb); lb.appendChild(sp); box.appendChild(lb);
+        });
+      }
+    } catch (e) { console.warn(e); }
+    return r;
+  };
+  var _hsc32 = handleSendCustomMessage;
+  handleSendCustomMessage = function() {
+    if (!currentUser || currentUser.role !== 'student') return _hsc32.apply(this, arguments);
+    var text = (document.getElementById('msgTextInput').value || '').trim();
+    if (!text) { alert('Lütfen göndermek istediğiniz mesajı yazınız.'); return; }
+    var picked = Array.prototype.map.call(document.querySelectorAll('#msgTargetChecks .msg-target-cb:checked'), function(c) { return c.value; });
+    if (!picked.length) { alert('Lütfen en az bir alıcı seçiniz.'); return; }
+    var now = new Date(), names = [];
+    picked.forEach(function(un, k) {
+      var o = usersData.find(function(u) { return u.username === un; });
+      names.push(o ? o.name : un);
+      notifications.unshift({
+        id: 'notif_' + Date.now() + '_' + k + Math.random().toString(36).substr(2, 4),
+        targetUsername: un, targetName: o ? o.name : un,
+        senderUsername: currentUser.username,
+        senderName: currentUser.name + ' (' + currentUser.branch + ' ' + currentUser.class + ' #' + currentUser.deskIndex + ')',
+        senderRole: 'student', message: text, timestamp: now.toISOString(), read: false
+      });
+    });
+    saveData();
+    alert('Mesajınız şu kişilere iletildi: ' + names.join(', '));
+    closeSendMessageModal();
+  };
   </script>
 
 </body>
