@@ -8090,6 +8090,8 @@
     // ==========================================
     // 3. ODAK TAKİBİ & ANTİ-CHEAT (PAGE VISIBILITY API)
     // ==========================================
+    // Not: todayKey ilk betikte de tanımlı olmalı; aksi halde açılışta updateAuthUI hata verip sonraki başlatmaları (odak takibi, bulut dinleyicileri) durduruyordu
+    function todayKey() { try { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' }); } catch(e) { return new Date().toISOString().slice(0, 10); } }
     let backgroundTimeout = null;
 
     function initFocusAndAntiCheat() {
@@ -13068,7 +13070,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=42', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=44', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -14751,6 +14753,7 @@
     if (alarm) {
       beep(); try { navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {}
       pokeLoop = setInterval(function() { beep(); try { navigator.vibrate && navigator.vibrate([250, 120, 250]); } catch (e) {} }, 4000);
+      if (!window.__ttl) { window.__ttl = document.title; var f = 0; window.__ttlT = setInterval(function() { document.title = (f++ % 2) ? '🔔 MASADA MISIN?' : '⚠️ Buradayım de!'; }, 800); }
       try {
         if (document.hidden && window.Notification && Notification.permission === 'granted' && navigator.serviceWorker) {
           navigator.serviceWorker.ready.then(function(r) { r.showNotification(title, { body: text, tag: 'bkm-poke', requireInteraction: true }); });
@@ -14761,6 +14764,7 @@
   function hidePresence() {
     var m = v23el('presenceModal'); if (m) m.style.display = 'none';
     if (pokeLoop) { clearInterval(pokeLoop); pokeLoop = null; }
+    if (window.__ttlT) { clearInterval(window.__ttlT); window.__ttlT = null; document.title = window.__ttl; window.__ttl = null; }
   }
   function pokeKey(u) { return 'pokes/' + tpKey(u); }
   function pokeStudent(username, name) {
@@ -14772,7 +14776,7 @@
     fbDb.ref(pokeKey(username)).set(o).then(function() {
       bkmToast('🔔 ' + (name || username) + ' dürtüldü, yanıt bekleniyor...');
       pokeTimers[id] = setTimeout(function() { bkmToast('⚠️ ' + (name || username) + ' 2 dakikadır yanıt vermedi.', 8000); }, 120000);
-    }).catch(function() { bkmToast('Dürtme gönderilemedi.'); });
+    }).catch(function(err) { bkmToast(String(err && err.code).indexOf('PERMISSION') > -1 ? 'Dürtme gönderilemedi: Firebase kuralları "pokes" düğümüne yazmaya izin vermiyor.' : 'Dürtme gönderilemedi.', 9000); });
   }
   function pokeWire() {
     if (!fbDb || !isCloudReady) return;
@@ -15132,6 +15136,34 @@
   var _ucd25 = updateCoachDeskDisplay;
   updateCoachDeskDisplay = function() { var r = _ucd25.apply(this, arguments); try { ensureCoachPhotoUI(); } catch(e) {} return r; };
   try { ensureCoachPhotoUI(); } catch(e) {}
+  </script>
+
+  <script>
+  // v26: masada kullanıcı adı boşsa (toplu/tekli atamada olabiliyor) öğrenci yazamıyor ve koç değişiklikleri görmüyordu
+  function sameName(a, b) { return String(a || '').trim().toLocaleLowerCase('tr') === String(b || '').trim().toLocaleLowerCase('tr'); }
+  var _cwd26 = canWriteDesk;
+  canWriteDesk = function(d) {
+    if (_cwd26(d)) return true;
+    return !!(currentUser && currentUser.role === 'student' && d && !d.username && d.studentName && sameName(d.studentName, currentUser.name));
+  };
+  var _md26 = myDesk;
+  myDesk = function() {
+    var r = _md26.apply(this, arguments); if (r || !currentUser || currentUser.role !== 'student') return r;
+    var f = null; v23allDesks(function(d) { if (!f && !d.username && d.studentName && sameName(d.studentName, currentUser.name)) f = d; }); return f;
+  };
+  function healDeskUsernames() {
+    var ch = false;
+    try {
+      v23allDesks(function(d, br, cls) {
+        if (d.username || !d.studentName) return;
+        var u = usersData.find(function(x) { return x && x.role === 'student' && sameName(x.name, d.studentName) && x.branch === br && x.class === cls; })
+             || usersData.find(function(x) { return x && x.role === 'student' && sameName(x.name, d.studentName); });
+        if (u && canWriteDesk(d)) { d.username = u.username; ch = true; }
+      });
+      if (ch) { saveData(); renderDesks(); }
+    } catch (e) { console.warn(e); }
+  }
+  setInterval(healDeskUsernames, 10000); setTimeout(healDeskUsernames, 3000);
   </script>
 
 </body>
