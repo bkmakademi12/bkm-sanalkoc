@@ -13070,11 +13070,11 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=44', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=45', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
-            setInterval(function(){ reg.update(); }, 1800000);
+            setInterval(function(){ reg.update(); }, 300000);
             document.addEventListener('visibilitychange', function(){ if (!document.hidden) reg.update(); });
           })
           .catch((err) => console.log('SW kayıt hatası:', err));
@@ -14772,7 +14772,7 @@
     if (!username) { bkmToast('Bu masada kayıtlı öğrenci yok.'); return; }
     if (!fbDb || !isCloudReady) { bkmToast('Bulut bağlantısı yok, dürtme gönderilemedi.'); return; }
     var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    var o = { id: id, from: currentUser.username, fromName: currentUser.name || currentUser.username, name: name || username, ts: Date.now(), ack: 0 };
+    var o = { id: id, from: currentUser.username, fromName: currentUser.name || currentUser.username, name: name || username, ts: Date.now() + (fbOffset || 0), ack: 0 };
     fbDb.ref(pokeKey(username)).set(o).then(function() {
       bkmToast('🔔 ' + (name || username) + ' dürtüldü, yanıt bekleniyor...');
       pokeTimers[id] = setTimeout(function() { bkmToast('⚠️ ' + (name || username) + ' 2 dakikadır yanıt vermedi.', 8000); }, 120000);
@@ -14790,7 +14790,7 @@
           var v = sn.val();
           if (!v) { if (curPokeId) { curPokeId = null; hidePresence(); } return; }
           if (v.ack) { if (curPokeId === v.id) { curPokeId = null; hidePresence(); } return; }
-          if (Date.now() - (v.ts || 0) > 15 * 60000) return;
+          if (Date.now() + (fbOffset || 0) - (v.ts || 0) > 15 * 60000) return;
           if (curPokeId === v.id) return;
           curPokeId = v.id;
           showPresence('Masada mısın?', (v.fromName || 'Koçun') + ' seni kontrol ediyor. Masandaysan aşağıdaki düğmeye dokun.', 'Buradayım', function() {
