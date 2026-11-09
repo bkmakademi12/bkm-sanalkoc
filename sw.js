@@ -1,5 +1,5 @@
 // BKM Sanal Koç - Service Worker (ağ öncelikli: dosya güncellenince uygulama da güncellenir)
-const CACHE = 'bkm-sanal-koc-v34';
+const CACHE = 'bkm-sanal-koc-v41';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -26,7 +26,9 @@ self.addEventListener('fetch', (e) => {
         if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
         return res;
       })
-      .catch(() => caches.match(req).then((m) => m || caches.match('./index.html')))
+      .catch(() => caches.match(req).then((m) => m || caches.match('./index.html')).then((m) => m || new Response(
+        '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>Bağlantı kurulamadı</h2><p>İnternet bağlantınızı kontrol edin. Sorun sürerse Wi-Fi yerine mobil veri deneyin.</p><button onclick="location.reload()" style="padding:10px 18px;font-size:16px">Tekrar Dene</button></body>',
+        { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } })))
   );
 });
 
