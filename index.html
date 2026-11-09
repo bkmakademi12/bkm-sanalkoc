@@ -12603,10 +12603,10 @@
     rd.onload = function() {
       var im = new Image();
       im.onload = function() {
-        var S = 160, c = document.createElement('canvas'); c.width = c.height = S;
+        var S = 128, c = document.createElement('canvas'); c.width = c.height = S;
         var m = Math.min(im.width, im.height);
         c.getContext('2d').drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, S, S);
-        setStudentPhoto(d.username, c.toDataURL('image/jpeg', 0.8)); inp.value = '';
+        setStudentPhoto(d.username, c.toDataURL('image/jpeg', 0.72)); inp.value = '';
       };
       im.src = rd.result;
     };
@@ -13097,7 +13097,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=56', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=57', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -14892,10 +14892,10 @@
     rd.onload = function() {
       var im = new Image();
       im.onload = function() {
-        var S = 160, c = document.createElement('canvas'); c.width = c.height = S;
+        var S = 128, c = document.createElement('canvas'); c.width = c.height = S;
         var m = Math.min(im.width, im.height);
         c.getContext('2d').drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, S, S);
-        setStudentPhoto('coach_' + username, c.toDataURL('image/jpeg', 0.8)); inp.value = '';
+        setStudentPhoto('coach_' + username, c.toDataURL('image/jpeg', 0.72)); inp.value = '';
         renderCoachPhotoList(); updateCoachDeskDisplay();
       };
       im.src = rd.result;
@@ -15540,6 +15540,27 @@
     alert('Mesajınız şu kişilere iletildi: ' + names.join(', '));
     closeSendMessageModal();
   };
+  </script>
+
+  <script>
+  // v33: kayıtlı büyük fotoğrafları (>15 KB) admin oturumunda bir kez küçült
+  function shrinkOldPhotos() {
+    try {
+      if (!currentUser || currentUser.role !== 'admin' || !fbDb || !isCloudReady) return;
+      Object.keys(studentPhotos || {}).forEach(function(k) {
+        var u = studentPhotos[k]; if (typeof u !== 'string' || u.length < 20000) return;
+        var im = new Image();
+        im.onload = function() {
+          var S = 128, c = document.createElement('canvas'); c.width = c.height = S, m = Math.min(im.width, im.height);
+          c.getContext('2d').drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, S, S);
+          var n = c.toDataURL('image/jpeg', 0.72);
+          if (n.length < u.length) { studentPhotos[k] = n; try { fbDb.ref('studentPhotos/' + k).set(n); } catch (e) {} savePhotosLocal(); }
+        };
+        im.src = u;
+      });
+    } catch (e) { console.warn(e); }
+  }
+  setTimeout(shrinkOldPhotos, 20000);
   </script>
 
 </body>
