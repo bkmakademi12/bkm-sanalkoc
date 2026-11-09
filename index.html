@@ -8158,6 +8158,7 @@
         senderUsername: currentUser.username,
         senderName: currentUser.name,
         senderRole: 'student',
+        branch: br, class: cls,
         message: `⚠️ DİKKAT: ${currentUser.name} (${br} ${cls} Sıra #${deskNum}) saat ${timeStr}'de canlı etütten ayrıldı (${reason})! Masası otomatik olarak MOLADA durumuna alındı.`,
         read: false,
         date: now.toISOString()
@@ -11083,7 +11084,7 @@
         // Koç / Yönetici: Sadece öğrencilerden gelenleri alır (Kendi gönderdikleri ASLA düşmez)
         myNotifs = notifications.filter(n => 
           n.targetUsername && 
-          (cleanUserStr(n.targetUsername) === currentClean || n.targetUsername === 'all_coaches') && 
+          (cleanUserStr(n.targetUsername) === currentClean || (n.targetUsername === 'all_coaches' && notifForMyClass(n))) && 
           n.senderUsername !== currentUser.username &&
           !n.read
         );
@@ -13070,7 +13071,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=45', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=47', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -14690,7 +14691,7 @@
     if (fromStudent) {
       try {
         var now = new Date();
-        notifications.unshift({ id: 'notif_' + Date.now(), targetUsername: 'all_coaches', senderUsername: currentUser.username, senderName: currentUser.name, senderRole: 'student',
+        notifications.unshift({ id: 'notif_' + Date.now(), targetUsername: 'all_coaches', senderUsername: currentUser.username, senderName: currentUser.name, senderRole: 'student', branch: currentUser.branch, class: currentUser.class,
           message: 'ℹ️ ' + currentUser.name + ' (' + currentUser.branch + ' ' + currentUser.class + ' Sıra #' + d.deskNumber + ') 50 dakika masada işlem yapmadığı için etüdü otomatik sonlandırıldı.', read: false, date: now.toISOString() });
         localStorage.setItem('bkm_notifications_v14', JSON.stringify(notifications));
         if (typeof syncCloudNode === 'function') syncCloudNode('notifications', notifications);
@@ -14941,12 +14942,13 @@
           res[day] = a.map(function(e) { return Array.isArray(e) ? e : Object.values(e || {}); });
         });
         done();
-      }).catch(done);
+      }).catch(function(e) { anState.err = String((e && e.code) || e); done(); });
     } else done();
   }
   function anAggregate() {
     var days = {}, u = anState.user; Object.keys(anState.arch || {}).forEach(function(k) { days[k] = anState.arch[k]; });
-    v23allDesks(function(d) { if (d.username && u && String(d.username).toLowerCase() === String(u).toLowerCase()) days[d.dayKey || todayKey()] = topicMapToArr(topicMap(d)); });
+    var uNm = (usersData.find(function(x) { return x && x.username === u; }) || {}).name;
+    v23allDesks(function(d) { if (u && ((d.username && String(d.username).toLowerCase() === String(u).toLowerCase()) || (!d.username && d.studentName && sameName(d.studentName, uNm)))) days[d.dayKey || todayKey()] = topicMapToArr(topicMap(d)); });
     var rg = anRange(anState.period), subs = {};
     Object.keys(days).forEach(function(day) {
       if (day < rg[0] || day > rg[1]) return;
@@ -15023,7 +15025,7 @@
       total = items.reduce(function(a, b) { return a + b.sec; }, 0);
       head = '<div class="text-sm font-black text-slate-900 mb-2">Ders bazında çalışma süresi <span class="text-[10px] font-semibold text-slate-500">(ayrıntı için derse dokunun)</span></div>';
     }
-    if (!items.length || total <= 0) { body.innerHTML = head + '<div class="text-center text-slate-500 text-sm py-10">Bu dönemde masa çalışması kaydı yok.</div>'; return; }
+    if (!items.length || total <= 0) { body.innerHTML = head + '<div class="text-center text-slate-500 text-sm py-10">Bu dönemde masa çalışması kaydı yok.' + (anState.err ? '<div class="text-[10px] text-rose-500 mt-2">Geçmiş kayıtlar okunamadı (' + v23esc(anState.err) + '). Firebase kuralları "deskLog" düğümüne izin vermiyor olabilir.</div>' : '') + '</div>'; return; }
     body.innerHTML = head + (anState.view === 'chart' ? anDonut(items, total) : anTable(items, total, !anState.sub));
   }
   function anRefresh() {
@@ -15164,6 +15166,64 @@
     } catch (e) { console.warn(e); }
   }
   setInterval(healDeskUsernames, 10000); setTimeout(healDeskUsernames, 3000);
+  </script>
+
+  <script>
+  // v27: Çalışma Analizi: şube/sınıf seçimi, koç yalnız kendi sınıflarını görür (rehber ve admin hepsini)
+  anState.br = 'Tümü'; anState.cls = 'Tümü';
+  function anOwnClass(u) {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin' || userGroup(currentUser) === 'rehber') return true;
+    if (userClassesFor(currentUser, u.branch).indexOf(u.class) > -1) return true;
+    if (classCoaches[ccKey(u.branch, u.class)] === currentUser.username) return true;
+    var ac = currentUser.assignedClass;
+    return ac === 'Tümü' || (Array.isArray(currentUser.assignedClasses) && currentUser.assignedClasses.indexOf('Tümü') > -1);
+  }
+  function anAllowed() {
+    var br = scopeBranches();
+    return usersData.filter(function(u) { return u && u.role === 'student' && br.indexOf(u.branch) > -1 && anOwnClass(u); });
+  }
+  anStudents = function() {
+    return anAllowed().filter(function(u) { return (anState.br === 'Tümü' || u.branch === anState.br) && (anState.cls === 'Tümü' || u.class === anState.cls); })
+      .sort(function(a, b) { return String(a.class || '').localeCompare(String(b.class || '')) || String(a.name).localeCompare(String(b.name), 'tr'); });
+  };
+  function anOpts(list, cur) { return ['Tümü'].concat(list).map(function(x) { return '<option value="' + v23esc(x) + '"' + (x === cur ? ' selected' : '') + '>' + v23esc(x === 'Tümü' ? 'Tümü' : x) + '</option>'; }).join(''); }
+  var _anFill27 = anFillSelect;
+  anFillSelect = function() {
+    var all = anAllowed(), brs = [], cls = [];
+    all.forEach(function(u) { if (brs.indexOf(u.branch) < 0) brs.push(u.branch); if ((anState.br === 'Tümü' || u.branch === anState.br) && cls.indexOf(u.class) < 0) cls.push(u.class); });
+    cls.sort(); if (anState.br !== 'Tümü' && brs.indexOf(anState.br) < 0) anState.br = 'Tümü';
+    if (anState.cls !== 'Tümü' && cls.indexOf(anState.cls) < 0) anState.cls = 'Tümü';
+    var sb = v23el('anBr'), sc = v23el('anCls');
+    if (sb) { sb.innerHTML = anOpts(brs, anState.br); sb.style.display = brs.length > 1 ? '' : 'none'; }
+    if (sc) sc.innerHTML = anOpts(cls, anState.cls);
+    var q = (anState.search || '').toLocaleLowerCase('tr'), list = anStudents().filter(function(u) { return !q || String(u.name).toLocaleLowerCase('tr').indexOf(q) > -1; });
+    if (!list.some(function(u) { return u.username === anState.user; })) anState.user = list.length ? list[0].username : null;
+    var sel = v23el('anSelect');
+    if (sel) sel.innerHTML = list.map(function(u) { return '<option value="' + v23esc(u.username) + '"' + (u.username === anState.user ? ' selected' : '') + '>' + v23esc(u.name) + ' — ' + v23esc(u.class || '') + '</option>'; }).join('') || '<option value="">Öğrenci bulunamadı</option>';
+  };
+  function anSetBr(v) { anState.br = v; anState.cls = 'Tümü'; anFillSelect(); anState.sub = null; anRefresh(); }
+  function anSetCls(v) { anState.cls = v; anFillSelect(); anState.sub = null; anRefresh(); }
+  var _anBuild27 = anBuild;
+  anBuild = function() {
+    _anBuild27.apply(this, arguments);
+    var si = v23el('anSearch'); if (!si || v23el('anBr')) return;
+    var row = document.createElement('div'); row.className = 'flex gap-1.5 mb-1.5';
+    row.innerHTML = '<select id="anBr" class="flex-1 px-2 py-2 text-xs border border-slate-300 rounded-lg text-slate-800 bg-white" onchange="anSetBr(this.value)"></select>' +
+      '<select id="anCls" class="flex-1 px-2 py-2 text-xs border border-slate-300 rounded-lg text-slate-800 bg-white" onchange="anSetCls(this.value)"></select>';
+    si.parentNode.insertBefore(row, si);
+    var lab = document.createElement('div'); lab.className = 'text-[10px] font-bold text-slate-500 mb-1'; lab.textContent = 'Şube ve sınıf seçin, sonra öğrenciyi seçin'; row.parentNode.insertBefore(lab, row);
+  };
+  </script>
+
+  <script>
+  // v28: öğrenci bildirimleri yalnız ilgili sınıf koçuna, rehberlere ve adminlere gider
+  function notifForMyClass(n) {
+    if (!currentUser || !n.branch || !n.class) return true; // eski bildirimlerde sınıf bilgisi yok: eskisi gibi
+    if (scopeBranches().indexOf(n.branch) < 0) return false;
+    return anOwnClass({ branch: n.branch, class: n.class });
+  }
+  try { updateNotificationBadge(); } catch (e) {}
   </script>
 
 </body>
