@@ -8973,20 +8973,31 @@
           sTotal += (st.secondsStudied || 0);
         }
 
-        const stReps = filteredReports.filter(r => 
-          (r.username && st.username && r.username.toLowerCase() === st.username.toLowerCase()) ||
-          (r.studentName && st.studentName && r.studentName.toLowerCase() === st.studentName.toLowerCase()) ||
-          (r.deskIndex === st.deskNumber)
-        );
-
-        (currentLeaderboardFilter === 'today' ? [] : stReps).forEach(rep => {
-          sTotal += ((rep.sessionCount || 0) * 40 * 60) + (((rep.bookReading && rep.bookReading.minutes) || 0) * 60);
-          if (rep.subjects) {
-            Object.values(rep.subjects).forEach(sv => {
-              qTotal += ((sv.d || 0) + (sv.y || 0) + (sv.b || 0));
-            });
-          }
+        const stReps = filteredReports.filter(r => {
+          const hasId = !!(r.username || r.studentName);
+          if (!hasId) return r.deskIndex === st.deskNumber;
+          return (r.username && st.username && r.username.toLowerCase() === st.username.toLowerCase()) ||
+                 (r.studentName && st.studentName && r.studentName.toLowerCase() === st.studentName.toLowerCase());
         });
+
+        if (currentLeaderboardFilter !== 'today') {
+          // Gün başına tek değer: masa süresi (otomatik rapor) varsa o, yoksa elle raporun oturum x 40 dk; soru = en yüksek rapor
+          const byDay = {};
+          stReps.forEach(rep => { (byDay[rep.date] = byDay[rep.date] || []).push(rep); });
+          Object.keys(byDay).forEach(day => {
+            const list = byDay[day];
+            const auto = list.find(r => r.auto && r.deskSeconds);
+            let secs = 0, book = 0, qMax = 0;
+            list.forEach(rep => {
+              if (!rep.auto) { secs = Math.max(secs, (rep.sessionCount || 0) * 40 * 60); book = Math.max(book, ((rep.bookReading && rep.bookReading.minutes) || 0) * 60); }
+              let q = 0;
+              if (rep.subjects) Object.values(rep.subjects).forEach(sv => { q += ((sv.d || 0) + (sv.y || 0) + (sv.b || 0)); });
+              qMax = Math.max(qMax, q);
+            });
+            if (auto) secs = auto.deskSeconds;
+            sTotal += secs + book; qTotal += qMax;
+          });
+        }
 
         return {
           name: st.studentName,
@@ -13097,7 +13108,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=57', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=60', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -14633,7 +14644,7 @@
     var now = Date.now();
     deskBankAt(desk, now);
     if (status === 'active') {
-      if (desk.status !== 'break') { desk.sessSecs0 = Math.floor(desk.secondsStudied || 0); desk.sessQ0 = desk.qBanked || 0; }
+      if (desk.status !== 'active') { desk.sessSecs0 = Math.floor(desk.secondsStudied || 0); desk.sessQ0 = desk.qBanked || 0; }
       desk.accSince = now; desk.lastActionTs = now;
       desk.idleGuard = !!(currentUser && currentUser.role === 'student');
     } else { desk.idleGuard = false; }
@@ -15561,6 +15572,156 @@
     } catch (e) { console.warn(e); }
   }
   setTimeout(shrinkOldPhotos, 20000);
+  </script>
+
+  <script>
+  // v34: Liderlik (Dün/Hafta/Ay/Toplam) yalnızca masa kayıtlarından (deskLog arşivi + canlı masa) hesaplanır
+  var _ulb34 = updateLeaderboards, lb34Tok = 0;
+  updateLeaderboards = function() {
+    if (!currentUser || currentLeaderboardFilter === 'today') return _ulb34.apply(this, arguments);
+    var tok = ++lb34Tok, filter = currentLeaderboardFilter, cls = currentClass;
+    var desks = ((branchesData[currentBranch] || {})[currentClass] || []).filter(function(d) { return d.studentName; });
+    var nE = document.getElementById('topStudyName'), dE = document.getElementById('topStudyDuration'), qnE = document.getElementById('topQuestionName'), qcE = document.getElementById('topQuestionCount');
+    if (!desks.length) { nE.innerText = 'Henüz Çalışma Yok'; dE.innerText = '0 Dk'; qnE.innerText = 'Henüz Çalışma Yok'; qcE.innerText = '0 Soru'; return; }
+    var res = [], left = desks.length;
+    function finish() {
+      if (tok !== lb34Tok) return;
+      var ts = res.slice().sort(function(a, b) { return b.sec - a.sec; })[0], tq = res.slice().sort(function(a, b) { return b.q - a.q; })[0];
+      if (ts && ts.sec > 0) { var h = Math.floor(ts.sec / 3600), m = Math.floor((ts.sec % 3600) / 60); nE.innerText = ts.name + ' (' + cls + ')'; dE.innerText = (h > 0 ? h + ' Saat ' : '') + m + ' Dk'; }
+      else { nE.innerText = 'Henüz Çalışma Yok'; dE.innerText = '0 Dk'; }
+      if (tq && tq.q > 0) { qnE.innerText = tq.name + ' (' + cls + ')'; qcE.innerText = tq.q + ' Soru'; }
+      else { qnE.innerText = 'Henüz Çalışma Yok'; qcE.innerText = '0 Soru'; }
+    }
+    desks.forEach(function(st) {
+      var un = st.username || ((usersData.find(function(x) { return x && x.role === 'student' && sameName(x.name, st.studentName); }) || {}).username);
+      var add = function(arch) {
+        var days = {}; Object.keys(arch || {}).forEach(function(k) { days[k] = arch[k]; });
+        if (st.dayKey || true) days[st.dayKey || todayKey()] = deskArr(st);
+        var sec = 0, q = 0;
+        Object.keys(days).forEach(function(day) {
+          if (!isDateInFilter(day, filter)) return;
+          var dsc = anDayScale(days[day]);
+          days[day].forEach(function(e) { sec += Math.floor((+e[2] || 0) * dsc); q += +e[3] || 0; });
+        });
+        res.push({ name: st.studentName, sec: sec, q: q });
+        if (--left === 0) finish();
+      };
+      if (!un) add({}); else anLoad(un, add);
+    });
+  };
+  try { updateLeaderboards(); } catch (e) { console.warn(e); }
+  </script>
+
+  <script>
+  // v35: Koç/Admin masa verisi düzeltme (süre + soru: düzenle / sil; geçmiş günler dahil)
+  if (typeof saveBranchesData !== 'function') { window.saveBranchesData = function() { saveData(); }; }
+  var dvUser = null, dvDay = null, dvArch = {};
+  function dvEsc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function dvIsStaff() { return currentUser && (currentUser.role === 'coach' || currentUser.role === 'admin'); }
+  function dvMaterialize(d) {
+    var now = Date.now(); recalcDesk(d, now);
+    if (d.accSince) { deskBankAt(d, now); if (d.status === 'active') d.accSince = now; }
+    else d.secondsStudied = Math.floor(d.accBase || 0);
+    var tm = topicMap(d), sum = 0; Object.keys(tm).forEach(function(k) { sum += tm[k]; });
+    d.topicTimeLog = tm; d.loggedSecs = Math.floor(sum);
+    d.qLog = d.qLog || {};
+    if ((d.questions || 0) > 0) { var ck = (d.subject || 'Genel') + '|' + (d.topic || 'Genel Konu'); d.qLog[ck] = (d.qLog[ck] || 0) + d.questions; d.qBanked = (d.qBanked || 0) + d.questions; d.questions = 0; }
+  }
+  function dvApplyDesk(d, k, newMin, newQ) {
+    dvMaterialize(d);
+    var oldT = d.topicTimeLog[k] || 0, newT = Math.max(0, Math.round((+newMin || 0) * 60));
+    if (newT > 0) d.topicTimeLog[k] = newT; else delete d.topicTimeLog[k];
+    d.accBase = Math.max(0, (d.accBase || 0) + newT - oldT); d.secondsStudied = Math.floor(d.accBase);
+    var sum = 0; Object.keys(d.topicTimeLog).forEach(function(x) { sum += d.topicTimeLog[x]; }); d.loggedSecs = Math.floor(sum);
+    var oldQ = d.qLog[k] || 0, nq = Math.max(0, Math.round(+newQ || 0));
+    if (nq > 0) d.qLog[k] = nq; else delete d.qLog[k];
+    d.qBanked = Math.max(0, (d.qBanked || 0) + nq - oldQ);
+    d.sessQ0 = Math.min(d.sessQ0 || 0, d.qBanked); d.sessSecs0 = Math.min(d.sessSecs0 || 0, d.secondsStudied);
+    recalcDesk(d, Date.now()); saveData(); renderDesks();
+  }
+  function dvRowHTML(scope, e, i) {
+    var k = (e[0] || 'Genel') + '|' + (e[1] || '');
+    return '<div style="display:grid;grid-template-columns:1fr 62px 62px auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #e2e8f0">' +
+      '<div style="min-width:0"><div style="font-weight:800;font-size:12px;color:#0f172a">' + dvEsc(e[0]) + '</div><div style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + dvEsc(e[1]) + '</div></div>' +
+      '<input type="number" min="0" id="dvM_' + scope + i + '" value="' + Math.round((+e[2] || 0) / 60) + '" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:5px;font-size:12px;font-weight:700" title="dakika">' +
+      '<input type="number" min="0" id="dvQ_' + scope + i + '" value="' + (+e[3] || 0) + '" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:5px;font-size:12px;font-weight:700" title="soru">' +
+      '<span style="display:flex;gap:4px"><button type="button" onclick="dvSave(\'' + scope + '\',' + i + ')" style="background:#4f46e5;color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:800">Kaydet</button>' +
+      '<button type="button" onclick="dvDel(\'' + scope + '\',' + i + ')" style="background:#e11d48;color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:800">Sil</button></span></div>';
+  }
+  var dvRowsToday = [], dvRowsDay = [];
+  function dvRender() {
+    var box = document.getElementById('dvBody'); if (!box) return;
+    var d = curDesk(); if (!d) { box.innerHTML = ''; return; }
+    dvRowsToday = deskArr(d);
+    var h = '<div style="font-weight:900;font-size:13px;margin:4px 0">Bugünkü kayıtlar <span style="font-weight:600;font-size:10px;color:#64748b">(dk · soru)</span></div>';
+    h += dvRowsToday.length ? dvRowsToday.map(function(e, i) { return dvRowHTML('t', e, i); }).join('') : '<div style="color:#64748b;font-size:12px;padding:8px 0">Bugün için kayıt yok.</div>';
+    var days = Object.keys(dvArch || {}).filter(function(x) { return x !== (d.dayKey || todayKey()); }).sort().reverse();
+    h += '<div style="font-weight:900;font-size:13px;margin:14px 0 4px">Geçmiş günler</div>';
+    if (!days.length) h += '<div style="color:#64748b;font-size:12px">Geçmiş kayıt yok.</div>';
+    else {
+      if (!dvDay || days.indexOf(dvDay) < 0) dvDay = days[0];
+      h += '<select id="dvDaySel" onchange="dvDay=this.value;dvRender()" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px;font-size:12px;font-weight:700;margin-bottom:4px">' + days.map(function(x) { return '<option value="' + x + '"' + (x === dvDay ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>';
+      dvRowsDay = dvArch[dvDay] || [];
+      h += dvRowsDay.length ? dvRowsDay.map(function(e, i) { return dvRowHTML('g', e, i); }).join('') : '<div style="color:#64748b;font-size:12px;padding:8px 0">Bu günde kayıt yok.</div>';
+    }
+    box.innerHTML = h;
+  }
+  function dvSave(scope, i) {
+    var d = curDesk(); if (!d) return;
+    var m = +document.getElementById('dvM_' + scope + i).value || 0, q = +document.getElementById('dvQ_' + scope + i).value || 0;
+    if (scope === 't') { var e = dvRowsToday[i]; dvApplyDesk(d, (e[0] || 'Genel') + '|' + (e[1] || ''), m, q); dvRender(); bkmToast('✅ Kayıt güncellendi', 2500); }
+    else dvSaveArch(i, m, q, false);
+  }
+  function dvDel(scope, i) {
+    var d = curDesk(); if (!d) return;
+    if (!confirm('Bu kayıt silinsin mi? (süre ve soru sayısı toplamdan da düşer)')) return;
+    if (scope === 't') { var e = dvRowsToday[i]; dvApplyDesk(d, (e[0] || 'Genel') + '|' + (e[1] || ''), 0, 0); dvRender(); bkmToast('🗑️ Kayıt silindi', 2500); }
+    else dvSaveArch(i, 0, 0, true);
+  }
+  function dvSaveArch(i, m, q, del) {
+    var d = curDesk(); if (!d || !d.username || !dvDay) return;
+    var arr = (dvArch[dvDay] || []).map(function(e) { return e.slice(); });
+    if (del) arr.splice(i, 1); else { arr[i][2] = Math.max(0, Math.round(m * 60)); arr[i][3] = Math.max(0, Math.round(q)); }
+    arr = arr.filter(function(e) { return (+e[2] || 0) > 0 || (+e[3] || 0) > 0; });
+    try {
+      var ref = fbDb.ref('deskLog/' + tpKey(d.username) + '/' + dvDay);
+      (arr.length ? ref.set(arr) : ref.remove()).then(function() {
+        if (arr.length) dvArch[dvDay] = arr; else delete dvArch[dvDay];
+        delete anState.cache[d.username]; dvRender(); bkmToast('✅ Geçmiş kayıt güncellendi', 2500);
+      }).catch(function(e) { alert('Kaydedilemedi: ' + ((e && e.code) || e)); });
+    } catch (e) { alert('Bağlantı yok, kaydedilemedi.'); }
+  }
+  function dvOpen() {
+    var d = curDesk(); if (!d || !dvIsStaff()) return;
+    var ov = document.getElementById('dvOverlay');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'dvOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:96;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:12px';
+      ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.4)">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0"><div><div id="dvTitle" style="font-weight:900;font-size:14px;color:#0f172a"></div><div style="font-size:10px;color:#64748b">Yanlış girilen süre ve soru sayılarını düzeltin ya da silin</div></div>' +
+        '<button type="button" onclick="document.getElementById(\'dvOverlay\').style.display=\'none\'" style="width:32px;height:32px;border-radius:50%;background:#f1f5f9;font-weight:900">✕</button></div>' +
+        '<div id="dvBody" style="padding:8px 16px 16px;overflow-y:auto"></div></div>';
+      document.body.appendChild(ov);
+    }
+    ov.style.display = 'flex'; document.getElementById('dvTitle').textContent = 'Masa verisi düzelt — ' + (d.studentName || '');
+    dvDay = null; dvArch = {}; dvRender();
+    try { delete anState.cache[d.username]; anLoad(d.username, function(v) { dvArch = v || {}; dvRender(); }); } catch (e) {}
+  }
+  function dvBuildRow() {
+    var anchor = document.getElementById('deskPokeRow') || document.getElementById('deskPhotoPreview'); if (!anchor || document.getElementById('deskFixRow')) return;
+    var host = anchor.id === 'deskPokeRow' ? anchor : anchor.parentNode;
+    var r = document.createElement('div'); r.id = 'deskFixRow'; r.style.display = 'none';
+    r.className = 'flex items-center gap-3 bg-indigo-500/10 border border-indigo-400/40 rounded-xl p-2.5';
+    r.innerHTML = '<div class="flex-1 min-w-0"><div class="text-[11px] font-bold text-indigo-200">Masa verisi düzelt</div><div class="text-[10px] text-slate-400">Yanlış girilen süre / soru sayısını düzenle veya sil</div></div>' +
+      '<button type="button" class="px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-[11px] font-black" onclick="dvOpen()"><i class="fa-solid fa-pen-to-square mr-1"></i>Düzenle</button>';
+    host.insertAdjacentElement('afterend', r);
+  }
+  function dvUpdateRow() {
+    dvBuildRow(); var r = document.getElementById('deskFixRow'); if (!r) return;
+    var d = curDesk();
+    r.style.display = (dvIsStaff() && d && d.username) ? 'flex' : 'none';
+  }
+  try { var _dam35 = document.getElementById('deskActionModal'); if (_dam35) new MutationObserver(dvUpdateRow).observe(_dam35, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
   </script>
 
 </body>
