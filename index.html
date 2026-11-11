@@ -1285,6 +1285,7 @@
         <div class="font-bold text-slate-700 mb-2 flex items-center justify-between">
           <span class="flex items-center gap-1.5"><i class="fa-solid fa-filter text-emerald-600"></i> Öğrenci ve Sınıf Kitaplarını Filtreleyin:</span>
           <span class="text-[10px] text-slate-500 font-semibold" id="coachBookStatsDisplay"></span>
+          <button type="button" onclick="kbDownload()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-sm whitespace-nowrap"><i class="fa-solid fa-file-excel mr-1"></i>Excel İndir</button>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
           <div>
@@ -13108,7 +13109,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=61', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=66', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -14608,6 +14609,8 @@
   // ---------- 1) SÜRE SAYACI: tek kaynak (accBase + accSince), cihazlar kendi hesaplar, buluta saniyelik yazılmaz ----------
   function deskBankAt(d, ts) {
     if (d.accSince) {
+      // Boşta kalma sınırı: son işlemden IDLE_MS sonrası çalışma sayılmaz (veli refakat modu dahil)
+      ts = Math.min(ts, Math.max(d.accSince, (d.lastActionTs || d.accSince) + IDLE_MS));
       var run = Math.max(0, Math.min((ts - d.accSince) / 1000, MAXRUN));
       d.accBase = (d.accBase || 0) + run; d.accSince = null;
     }
@@ -14634,7 +14637,7 @@
     } else if (d.accSince) {
       deskBankAt(d, now); ch = true;
     }
-    var endT = now; if (d.status === 'active' && d.accSince && d.lastActionTs) endT = Math.min(now, Math.max(d.accSince, d.lastActionTs + IDLE_MS));
+    var endT = now; if (d.status === 'active' && d.accSince) endT = Math.min(now, Math.max(d.accSince, (d.lastActionTs || d.accSince) + IDLE_MS));
     var run = (d.status === 'active' && d.accSince) ? Math.max(0, Math.min((endT - d.accSince) / 1000, MAXRUN)) : 0;
     var secs = Math.floor((d.accBase || 0) + run);
     if (d.secondsStudied !== secs) { d.secondsStudied = secs; ch = true; }
@@ -15762,6 +15765,185 @@
     } catch (e) {}
     return ch;
   };
+  </script>
+
+  <script>
+  // v37: Liderlik > "Sınıf Listesi": yalnızca masa kayıtlarından öğrenci bazlı süre + soru listesi
+  var rkState = { period: 'today', cls: 'all', sort: 'sec', tok: 0, rows: [] };
+  var RK_PER = [['today', 'Bugün'], ['yesterday', 'Dün'], ['this_week', 'Bu Hafta'], ['this_month', 'Bu Ay'], ['all_time', 'Toplam']];
+  function rkEsc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function rkFmt(sec) { var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return (h > 0 ? h + ' sa ' : '') + m + ' dk'; }
+  function rkScopeDesks() {
+    var out = [];
+    if (!currentUser) return out;
+    var stu = currentUser.role === 'student';
+    BRANCHES.forEach(function(br) { CLASSES.forEach(function(cls) {
+      var a = (branchesData[br] || {})[cls]; if (!Array.isArray(a)) return;
+      var ok = stu ? (br === currentUser.branch && cls === currentUser.class) : (scopeBranches().indexOf(br) > -1 && anOwnClass({ branch: br, class: cls }));
+      if (!ok) return;
+      a.forEach(function(d) { if (d && d.studentName) out.push({ d: d, br: br, cls: cls }); });
+    }); });
+    return out;
+  }
+  function rkOpen() {
+    if (!currentUser) { alert('Lütfen giriş yapın.'); return; }
+    var ov = document.getElementById('rkOverlay');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'rkOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:96;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:10px';
+      ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.4)">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0"><div><div style="font-weight:900;font-size:15px;color:#0f172a">🏆 Sınıf Listesi</div><div style="font-size:10px;color:#64748b">Yalnızca masa kayıtlarına göre süre ve soru sayıları</div></div>' +
+        '<button type="button" onclick="document.getElementById(\'rkOverlay\').style.display=\'none\'" style="width:32px;height:32px;border-radius:50%;background:#f1f5f9;font-weight:900">✕</button></div>' +
+        '<div id="rkTop" style="padding:10px 16px 6px"></div><div id="rkBody" style="padding:0 16px 16px;overflow:auto"></div></div>';
+      document.body.appendChild(ov);
+    }
+    ov.style.display = 'flex'; rkState.cls = 'all'; rkLoad();
+  }
+  function rkSet(k, v) { rkState[k] = v; if (k === 'period') rkLoad(); else rkRender(); }
+  function rkLoad() {
+    var tok = ++rkState.tok, list = rkScopeDesks(), left = list.length, period = rkState.period;
+    var body = document.getElementById('rkBody'); rkTopRender();
+    if (!left) { rkState.rows = []; rkRender(); return; }
+    body.innerHTML = '<div style="text-align:center;color:#64748b;font-size:13px;padding:30px"><i class="fa-solid fa-spinner fa-spin"></i> Veriler yükleniyor...</div>';
+    var rows = [];
+    list.forEach(function(it) {
+      var st = it.d, un = st.username || ((usersData.find(function(x) { return x && x.role === 'student' && sameName(x.name, st.studentName); }) || {}).username);
+      var add = function(arch) {
+        var days = {}; Object.keys(arch || {}).forEach(function(k) { days[k] = arch[k]; });
+        days[st.dayKey || todayKey()] = deskArr(st);
+        var sec = 0, q = 0;
+        Object.keys(days).forEach(function(day) {
+          if (!isDateInFilter(day, period)) return;
+          var dsc = anDayScale(days[day]);
+          days[day].forEach(function(e) { sec += Math.floor((+e[2] || 0) * dsc); q += +e[3] || 0; });
+        });
+        rows.push({ name: st.studentName, cls: it.cls, br: it.br, sec: sec, q: q });
+        if (--left === 0 && tok === rkState.tok) { rkState.rows = rows; rkRender(); }
+      };
+      if (!un) add({}); else anLoad(un, add);
+    });
+  }
+  function rkTopRender() {
+    var top = document.getElementById('rkTop'); if (!top) return;
+    var h = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' + RK_PER.map(function(p) {
+      var on = rkState.period === p[0];
+      return '<button type="button" onclick="rkSet(\'period\',\'' + p[0] + '\')" style="padding:6px 12px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid ' + (on ? '#d97706' : '#cbd5e1') + ';background:' + (on ? '#d97706' : '#fff') + ';color:' + (on ? '#fff' : '#334155') + '">' + p[1] + '</button>';
+    }).join('') + '</div>';
+    top.innerHTML = h + '<div id="rkCtl"></div>';
+  }
+  function rkRender() {
+    var rows = rkState.rows.slice(), ctl = document.getElementById('rkCtl'), body = document.getElementById('rkBody'); if (!body) return;
+    var seen = {}, cl = []; rows.forEach(function(r) { var k = r.br + '|' + r.cls; if (!seen[k]) { seen[k] = 1; cl.push([k, r.cls + (scopeBranches().length > 1 ? ' · ' + r.br.split(' ')[0] : '')]); } });
+    cl.sort(function(a, b) { return a[1].localeCompare(b[1], 'tr'); });
+    if (ctl) ctl.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+      (cl.length > 1 ? '<select onchange="rkSet(\'cls\',this.value)" style="border:1px solid #cbd5e1;border-radius:8px;padding:6px;font-size:12px;font-weight:700"><option value="all">Tüm sınıflar</option>' + cl.map(function(c) { return '<option value="' + rkEsc(c[0]) + '"' + (rkState.cls === c[0] ? ' selected' : '') + '>' + rkEsc(c[1]) + '</option>'; }).join('') + '</select>' : '') +
+      '<select onchange="rkSet(\'sort\',this.value)" style="border:1px solid #cbd5e1;border-radius:8px;padding:6px;font-size:12px;font-weight:700"><option value="sec"' + (rkState.sort === 'sec' ? ' selected' : '') + '>Süreye göre</option><option value="q"' + (rkState.sort === 'q' ? ' selected' : '') + '>Soruya göre</option><option value="name"' + (rkState.sort === 'name' ? ' selected' : '') + '>İsme göre</option></select></div>';
+    if (rkState.cls !== 'all') rows = rows.filter(function(r) { return r.br + '|' + r.cls === rkState.cls; });
+    var by = rkState.sort;
+    rows.sort(function(a, b) { return by === 'name' ? String(a.name).localeCompare(String(b.name), 'tr') : by === 'q' ? (b.q - a.q || b.sec - a.sec) : (b.sec - a.sec || b.q - a.q); });
+    var ts = 0, tq = 0, act = 0; rows.forEach(function(r) { ts += r.sec; tq += r.q; if (r.sec > 0 || r.q > 0) act++; });
+    var h = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0">' +
+      '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:8px;text-align:center"><div style="font-size:10px;color:#92400e;font-weight:700">TOPLAM SÜRE</div><div style="font-size:16px;font-weight:900;color:#78350f">' + rkFmt(ts) + '</div></div>' +
+      '<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:12px;padding:8px;text-align:center"><div style="font-size:10px;color:#1e40af;font-weight:700">TOPLAM SORU</div><div style="font-size:16px;font-weight:900;color:#1e3a8a">' + tq + '</div></div>' +
+      '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:8px;text-align:center"><div style="font-size:10px;color:#166534;font-weight:700">ÇALIŞAN / ÖĞRENCİ</div><div style="font-size:16px;font-weight:900;color:#14532d">' + act + ' / ' + rows.length + '</div></div></div>';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:#64748b;border-bottom:1px solid #e2e8f0"><th style="padding:6px 4px;width:28px">#</th><th style="padding:6px 4px">Öğrenci</th><th style="padding:6px 4px">Sınıf</th><th style="padding:6px 4px;text-align:right">Süre</th><th style="padding:6px 4px;text-align:right">Soru</th></tr></thead><tbody>';
+    if (!rows.length) h += '<tr><td colspan="5" style="padding:20px;text-align:center;color:#64748b">Gösterilecek öğrenci yok.</td></tr>';
+    rows.forEach(function(r, i) {
+      var z = r.sec <= 0 && r.q <= 0;
+      h += '<tr style="border-bottom:1px solid #f1f5f9;' + (z ? 'color:#94a3b8' : '') + '"><td style="padding:7px 4px;font-weight:800">' + (i + 1) + '</td><td style="padding:7px 4px;font-weight:800">' + rkEsc(r.name) + '</td><td style="padding:7px 4px">' + rkEsc(r.cls) + '</td><td style="padding:7px 4px;text-align:right;font-weight:800">' + rkFmt(r.sec) + '</td><td style="padding:7px 4px;text-align:right;font-weight:800">' + r.q + '</td></tr>';
+    });
+    h += '<tr style="border-top:2px solid #0f172a"><td></td><td style="padding:8px 4px;font-weight:900">Toplam</td><td></td><td style="padding:8px 4px;text-align:right;font-weight:900">' + rkFmt(ts) + '</td><td style="padding:8px 4px;text-align:right;font-weight:900">' + tq + '</td></tr></tbody></table>';
+    body.innerHTML = h;
+  }
+  (function() {
+    var b = document.getElementById('lbBtn_all_time'); if (!b || document.getElementById('lbListBtn')) return;
+    var n = document.createElement('button'); n.type = 'button'; n.id = 'lbListBtn'; n.onclick = rkOpen;
+    n.className = 'px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-800 text-white hover:bg-slate-700 shadow-sm';
+    n.innerHTML = '<i class="fa-solid fa-list-ol mr-1"></i>Sınıf Listesi'; b.insertAdjacentElement('afterend', n);
+  })();
+  </script>
+
+  <script>
+  // v38: Koç / rehber / admin: öğrenci kitaplarını sınıf veya öğrenci seçerek Excel olarak indir
+  function kbIsStaff() { return currentUser && currentUser.role !== 'student'; }
+  function kbEsc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function kbStudents() {
+    var out = [], seen = {};
+    usersData.forEach(function(u) {
+      if (!u || u.role !== 'student' || !u.branch || !u.class) return;
+      if (scopeBranches().indexOf(u.branch) < 0 || !anOwnClass({ branch: u.branch, class: u.class })) return;
+      seen[String(u.username).toLowerCase()] = 1; out.push(u);
+    });
+    return out.sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'tr'); });
+  }
+  function kbRows(branch, cls, user) {
+    var rows = [];
+    var sts = kbStudents().filter(function(u) { return (!branch || u.branch === branch) && (!cls || u.class === cls) && (!user || String(u.username).toLowerCase() === String(user).toLowerCase()); });
+    sts.sort(function(a, b) { return a.branch.localeCompare(b.branch, 'tr') || a.class.localeCompare(b.class, 'tr') || String(a.name).localeCompare(String(b.name), 'tr'); });
+    var src = { kurs: 'Kurs', bireysel: 'Öğrenci' };
+    sts.forEach(function(u) {
+      var bs = (studentBooks || []).filter(function(b) { return b && ((b.username && String(b.username).toLowerCase() === String(u.username).toLowerCase()) || (!b.username && b.studentName && sameName(b.studentName, u.name))); });
+      bs.sort(function(a, b) { return String(a.subject || '').localeCompare(String(b.subject || ''), 'tr') || String(a.title || '').localeCompare(String(b.title || ''), 'tr'); });
+      if (!bs.length) rows.push({ 'Şube': u.branch, 'Sınıf': u.class, 'Öğrenci': u.name, 'Ders': '', 'Tür': '', 'Kitap Adı': '(kayıtlı kitap yok)', 'Ekleyen': '', 'Eklenme Tarihi': '' });
+      bs.forEach(function(b) {
+        var dt = ''; try { if (b.createdAt) dt = new Date(b.createdAt).toLocaleDateString('tr-TR'); } catch (e) {}
+        rows.push({ 'Şube': u.branch, 'Sınıf': u.class, 'Öğrenci': u.name, 'Ders': b.subject || '', 'Tür': b.type || '', 'Kitap Adı': b.title || '', 'Ekleyen': src[b.source] || b.source || '', 'Eklenme Tarihi': dt });
+      });
+    });
+    return rows;
+  }
+  function kbDownload() {
+    var g = function(id) { var e = document.getElementById(id); return e ? e.value : 'Tümü'; };
+    var br = g('coachBookBranchSelect'), cls = g('coachBookClassSelect'), us = g('coachSelectStudentForBooks'), sj = g('coachSelectSubjectForBooks'), sr = g('coachSelectSourceForBooks');
+    var rows = kbRows(br === 'Tümü' ? '' : br, cls === 'Tümü' ? '' : cls, us === 'Tümü' ? '' : us);
+    var srcName = { kurs: 'Kurs', bireysel: 'Öğrenci' };
+    if (sj && sj !== 'Tümü') rows = rows.filter(function(r) { return r['Ders'] === sj; });
+    if (sr && sr !== 'Tümü') rows = rows.filter(function(r) { return r['Ekleyen'] === srcName[sr]; });
+    if (!rows.length) { alert('İndirilecek kayıt bulunamadı.'); return; }
+    if (typeof XLSX === 'undefined') { alert('Excel bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.'); return; }
+    var ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 28 }, { wch: 18 }, { wch: 16 }, { wch: 40 }, { wch: 10 }, { wch: 14 }];
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Kitaplar');
+    var nm = us !== 'Tümü' ? ((usersData.find(function(u) { return u.username === us; }) || {}).name || 'ogrenci') : (cls !== 'Tümü' ? cls : 'Tum_Siniflar');
+    var tr = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'Ç': 'C', 'Ğ': 'G', 'İ': 'I', 'Ö': 'O', 'Ş': 'S', 'Ü': 'U' };
+    nm = String(nm).replace(/[çğıöşüÇĞİÖŞÜ]/g, function(c) { return tr[c]; }).replace(/[^A-Za-z0-9\-]+/g, '_');
+    XLSX.writeFile(wb, 'BKM_Kitaplar_' + nm + '_' + todayKey() + '.xlsx');
+  }
+  </script>
+
+  <style>
+    #desksGrid, #smartBoard3DContainer { transition: opacity .25s ease; }
+    body.bkm-wait #desksGrid, body.bkm-wait #smartBoard3DContainer { opacity: 0; }
+  </style>
+  <script>
+  // v40: açılışta eski yerel veriyle çizip sonra bulut verisiyle değiştirme (titreme) yerine, ilk bulut verisi gelene kadar masaları gizle
+  (function() {
+    var rel = function() { document.body.classList.remove('bkm-wait'); };
+    try {
+      if (typeof fbDb !== 'undefined' && fbDb && isCloudReady && navigator.onLine !== false) {
+        document.body.classList.add('bkm-wait');
+        var t = setTimeout(rel, 4000);
+        fbDb.ref('branchesData').once('value').then(function() { clearTimeout(t); setTimeout(function() { try { renderDesks(); } catch (e) {} setTimeout(rel, 450); }, 150); }).catch(function() { clearTimeout(t); rel(); });
+      }
+    } catch (e) { rel(); }
+  })();
+  // Sayfayı yenile düğmesi (üst çubuk)
+  async function bkmHardRefresh() {
+    try {
+      if (navigator.onLine !== false) {
+        if (window.caches) { var ks = await caches.keys(); await Promise.all(ks.map(function(k) { return caches.delete(k); })); }
+        if (navigator.serviceWorker) { var rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(function(r) { return r.update().catch(function() {}); })); }
+      }
+    } catch (e) {}
+    location.reload();
+  }
+  (function() {
+    var w = document.getElementById('notifBellWrapper'); if (!w || document.getElementById('btnRefreshPage')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'btnRefreshPage'; b.title = 'Sayfayı yenile'; b.onclick = bkmHardRefresh;
+    b.className = 'w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center shadow-sm';
+    b.innerHTML = '<i class="fa-solid fa-rotate-right"></i>';
+    w.parentNode.insertBefore(b, w);
+  })();
   </script>
 
 </body>
