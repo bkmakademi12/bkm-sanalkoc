@@ -13109,7 +13109,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=81', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=90', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -16071,7 +16071,7 @@
     var nSel = Object.keys(ep.sel).filter(function(k) { return ep.sel[k]; }).length;
     var cap = 0; ep.order.forEach(function(n) { var r = ep.rooms.find(function(x) { return x.name === n; }); if (r) cap += (+r.cap || 0); });
     var h = '<div style="font-weight:900;font-size:13px;margin-bottom:6px">1) Sınav adı ve şube</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="epTitle" value="' + epEsc(ep.title || '') + '" oninput="ep.title=this.value" placeholder="Sınav adı (örn. 8. Sınıf Deneme-3)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:700">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="epTitle" value="' + epEsc(ep.title || '') + '" oninput="ep.title=this.value" placeholder="Sınav adı (zorunlu, Excel başlığında görünür)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:700">' +
       '<select onchange="epPickBranch(this.value)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:800">' + BRANCHES.map(function(b) { return '<option' + (b === ep.br ? ' selected' : '') + '>' + epEsc(b) + '</option>'; }).join('') + '</select></div>';
     clsList.sort(function(x, y) { return String(x).localeCompare(String(y), 'tr', { numeric: true }); });
     var cnt = {}; sts.forEach(function(u) { var c = cnt[u.class] = cnt[u.class] || { t: 0, s: 0 }; c.t++; if (ep.sel[u.username]) c.s++; });
@@ -16141,8 +16141,8 @@
       if (r.cap <= 12 && !r.alt && ord.length >= take.length) {
         // Derslik (12 kişilik): A sınıfı en arka (6 ve 12), sonra 5-11, 4-10 ... G en önde (1 ve 7)
         var srt = take.slice().sort(function(x, y) { var lx = letter44(x.class), ly = letter44(y.class); return lx < ly ? -1 : lx > ly ? 1 : 0; });
-        list = srt.map(function(u, i) { return { seat: ord[i], name: u.name, cls: u.cls0 || u.class, br: u.branch, x1: u.x1, x2: u.x2 }; }).sort(function(x, y) { return x.seat - y.seat; });
-      } else list = take.map(function(u, i) { return { seat: r.alt ? i * 2 + 1 : i + 1, name: u.name, cls: u.cls0 || u.class, br: u.branch, x1: u.x1, x2: u.x2 }; });
+        list = srt.map(function(u, i) { return { seat: ord[i], name: u.name, cls: u.cls0 || u.class, br: u.branch, src: u }; }).sort(function(x, y) { return x.seat - y.seat; });
+      } else list = take.map(function(u, i) { return { seat: r.alt ? i * 2 + 1 : i + 1, name: u.name, cls: u.cls0 || u.class, br: u.branch, src: u }; });
       res.push({ room: r.name, cap: r.full || r.cap, alt: !!r.alt, list: list });
     });
     return { rooms: res, left: pool.slice(k) };
@@ -16163,7 +16163,7 @@
     var h = '<div style="font-weight:900;font-size:13px;margin:14px 0 6px">4) Dağıtım sonucu</div><div style="display:flex;gap:8px;margin-bottom:8px"><button type="button" onclick="epDistribute()" style="flex:1;background:#fff;border:1px solid #4f46e5;color:#4f46e5;border-radius:10px;padding:9px;font-weight:900">🔀 Yeniden karıştır</button><button type="button" onclick="epExcel()" style="flex:1;background:#16a34a;color:#fff;border-radius:10px;padding:9px;font-weight:900"><i class="fa-solid fa-file-excel"></i> Excel indir</button></div>';
     used.forEach(function(r) {
       h += '<div style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;overflow:hidden"><div style="background:#eef2ff;padding:6px 10px;font-weight:900;color:#3730a3">' + epEsc(r.room) + ' <span style="font-weight:700;color:#64748b">· ' + r.list.length + ' / ' + r.cap + (r.alt ? ' · 1 dolu 1 boş' : '') + '</span></div><div style="padding:4px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 12px">' +
-        r.list.map(function(x) { return '<div style="padding:2px 0"><b>' + x.seat + '.</b> ' + epEsc(x.name) + ' <span style="color:#64748b">(' + epEsc(x.cls) + ')</span></div>'; }).join('') + '</div></div>';
+        r.list.map(function(x) { return '<div style="padding:2px 0"><b>' + x.seat + '.</b> ' + (x.src && x.src.no ? '<span style="color:#64748b">' + epEsc(x.src.no) + '</span> ' : '') + epEsc(x.name) + ' <span style="color:#64748b">(' + epEsc(x.cls) + ')</span></div>'; }).join('') + '</div></div>';
     });
     el.innerHTML = h;
   }
@@ -16397,7 +16397,7 @@
     var cnt = {}; sts.forEach(function(u) { var c = cnt[u.class] = cnt[u.class] || { t: 0, s: 0 }; c.t++; if (rt.sel[u.username]) c.s++; });
     var nSel = sts.filter(function(u) { return rt.sel[u.username]; }).length;
     var plans = rtBrPlans(), h = '';
-    h += '<div style="font-weight:900;font-size:13px;margin-bottom:6px">1) Sınav adı ve şube</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input value="' + epEsc(rt.title) + '" oninput="rt.title=this.value" placeholder="Sınav adı (örn. Deneme-4)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:700"><select onchange="rtPickBranch(this.value)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:800">' + BRANCHES.map(function(b) { return '<option' + (b === rt.br ? ' selected' : '') + '>' + epEsc(b) + '</option>'; }).join('') + '</select></div>';
+    h += '<div style="font-weight:900;font-size:13px;margin-bottom:6px">1) Sınav adı ve şube</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input value="' + epEsc(rt.title) + '" oninput="rt.title=this.value" placeholder="Sınav adı (zorunlu, Excel başlığında görünür)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:700"><select onchange="rtPickBranch(this.value)" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-weight:800">' + BRANCHES.map(function(b) { return '<option' + (b === rt.br ? ' selected' : '') + '>' + epEsc(b) + '</option>'; }).join('') + '</select></div>';
     h += '<div style="font-weight:900;font-size:13px;margin:14px 0 6px">2) Geçmiş sınavlar <span style="font-weight:600;color:#64748b">(kural: son 2 kayıtlı sınavdaki salona tekrar girilmez)</span></div><div style="border:1px solid #e2e8f0;border-radius:10px;padding:4px 8px">';
     if (!plans.length) h += '<div style="padding:8px;color:#64748b">Kayıtlı sınav yok. İlk sınavı dağıtıp "Planı geçmişe kaydet" ile kaydedin; sonraki sınavlarda kural otomatik işler.</div>';
     plans.slice().reverse().forEach(function(p, i) {
@@ -16438,7 +16438,8 @@
       var forb = {}, lastRoom = null, lastGroup = null, hist = { D: 0, E: 0 }, prev = [];
       plans.forEach(function(p) { var rn = p.assign && p.assign[u.username]; if (rn) { var g = (p.groups || {})[rn]; if (g) hist[g]++; } });
       last2.forEach(function(p) { var rn = p.assign && p.assign[u.username]; if (rn) { forb[rn] = 1; lastRoom = rn; lastGroup = (p.groups || {})[rn] || null; prev.push(p.title + ': ' + rn); } });
-      info[u.username] = { forb: forb, lastRoom: lastRoom, lastGroup: lastGroup, hist: hist, target: lastGroup ? (lastGroup === 'D' ? 'E' : 'D') : null, prev: prev };
+      var streak = 0; for (var pi = plans.length - 1; pi >= 0; pi--) { var rn2 = plans[pi].assign && plans[pi].assign[u.username]; if (rn2 && (plans[pi].groups || {})[rn2] === 'E') streak++; else break; }
+      info[u.username] = { streak: streak, forb: forb, lastRoom: lastRoom, lastGroup: lastGroup, hist: hist, target: lastGroup ? (lastGroup === 'D' ? 'E' : 'D') : null, prev: prev };
     });
     var cap = { D: 0, E: 0 }; rooms.forEach(function(r) { cap[r.g] += r.cap; });
     var tg = { D: [], E: [], F: [] };
@@ -16447,7 +16448,7 @@
       var o = g === 'D' ? 'E' : 'D';
       if (tg[g].length > cap[g]) {
         // taşan: bu gruba en çok girmiş olanlar karşı gruba gitsin (adil)
-        epShuffle(tg[g]); tg[g].sort(function(a, b) { return info[b.username].hist[g] - info[a.username].hist[g]; });
+        epShuffle(tg[g]); tg[g].sort(function(a, b) { var pa = (g === 'D' && info[a.username].lastGroup === 'E') ? 1 : 0, pb = (g === 'D' && info[b.username].lastGroup === 'E') ? 1 : 0; return pa - pb || (g === 'D' ? (info[a.username].streak - info[b.username].streak || info[a.username].hist.E - info[b.username].hist.E) : 0) || info[b.username].hist[g] - info[a.username].hist[g]; });
         var extra = tg[g].splice(0, tg[g].length - cap[g]); extra.forEach(function(u) { info[u.username].target = o; tg[o].push(u); });
       }
     });
@@ -16463,6 +16464,13 @@
     var assigned = {};
     function ok(u, r, level) {
       var f = info[u.username];
+      if (f.lastGroup === 'E') {
+        if (level === 0) return r.g === 'D' && !f.forb[r.name];
+        if (level === 1) return r.g === 'D' && r.name !== f.lastRoom;
+        if (level === 2) return r.g === 'D';
+        if (level === 3) return !f.forb[r.name];
+        return true;
+      }
       if (level === 0) return r.g === f.target && !f.forb[r.name];
       if (level === 1) return !f.forb[r.name];
       if (level === 2) return r.name !== f.lastRoom;
@@ -16484,9 +16492,14 @@
       }
       return false;
     }
-    var order = epShuffle(students.slice()).sort(function(a, b) { return Object.keys(info[b.username].forb).length - Object.keys(info[a.username].forb).length; });
+    // Geçen sınavda etütte olanlar önce, derslik hakkı en çok etütte kalmış olandan başlayarak yerleştirilir (üst üste etüt = en yüksek öncelik)
+    var placedPre = {};
+    epShuffle(students.filter(function(u) { return info[u.username].lastGroup === 'E'; })).sort(function(a, b) { return info[b.username].streak - info[a.username].streak || info[b.username].hist.E - info[a.username].hist.E; }).forEach(function(u) {
+      for (var lv = 0; lv <= 2; lv++) { if (tryA(u, lv, {})) { placedPre[u.username] = 1; break; } }
+    });
+    var order = epShuffle(students.filter(function(u) { return !placedPre[u.username]; })).sort(function(a, b) { return Object.keys(info[b.username].forb).length - Object.keys(info[a.username].forb).length; });
     var pending = order;
-    for (var level = 0; level <= 3 && pending.length; level++) {
+    for (var level = 0; level <= 4 && pending.length; level++) {
       var next = []; pending.forEach(function(u) { if (!tryA(u, level, {})) next.push(u); }); pending = next;
     }
     return { info: info, inRoom: inRoom, assigned: assigned, unplaced: pending };
@@ -16508,12 +16521,13 @@
     var cap = rooms.reduce(function(a, r) { return a + r.cap; }, 0);
     if (cap < sts.length) { alert('Kontenjan yetersiz: ' + sts.length + ' öğrenci, ' + cap + ' yer.'); return; }
     var R = rtCompute(sts, rooms), res = [], viol = [];
-    rooms.forEach(function(r) { res.push({ room: r.name, g: r.g, cap: r.full, alt: r.alt, list: rtSeatRoom(r, R.inRoom[r.name]).map(function(x) { return { seat: x.seat, name: x.u.name, un: x.u.username, cls: x.u.class, br: x.u.branch }; }) }); });
+    rooms.forEach(function(r) { res.push({ room: r.name, g: r.g, cap: r.full, alt: r.alt, list: rtSeatRoom(r, R.inRoom[r.name]).map(function(x) { return { seat: x.seat, name: x.u.name, un: x.u.username, cls: x.u.cls0 || x.u.class, br: x.u.branch, src: x.u }; }) }); });
     var stat = { sw: 0, same: 0, first: 0 };
     sts.forEach(function(u) {
       var f = R.info[u.username], rn = R.assigned[u.username]; if (!rn) return;
       var rg = (rooms.find(function(r) { return r.name === rn; }) || {}).g;
       if (f.forb[rn]) viol.push(u.name + ' — ' + rn + ' salonuna son 2 sınavda zaten girmişti');
+      if (f.lastGroup === 'E' && rg === 'E') { (stat.ee = stat.ee || []).push(u.name); }
       if (!f.lastGroup) stat.first++; else if (f.lastGroup !== rg) stat.sw++; else stat.same++;
     });
     R.unplaced.forEach(function(u) { viol.push(u.name + ' — yerleştirilemedi'); });
@@ -16526,12 +16540,13 @@
       '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:8px;text-align:center"><div style="font-size:10px;font-weight:700;color:#92400e">AYNI GRUPTA (FARKLI SALON)</div><div style="font-size:16px;font-weight:900">' + r.stat.same + '</div></div>' +
       '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:8px;text-align:center"><div style="font-size:10px;font-weight:700;color:#166534">İLK KEZ / GEÇMİŞSİZ</div><div style="font-size:16px;font-weight:900">' + r.stat.first + '</div></div>' +
       '<div style="background:' + (r.viol.length ? '#fef2f2' : '#f0fdf4') + ';border:1px solid ' + (r.viol.length ? '#fca5a5' : '#86efac') + ';border-radius:10px;padding:8px;text-align:center"><div style="font-size:10px;font-weight:700;color:' + (r.viol.length ? '#991b1b' : '#166534') + '">KURAL İHLALİ</div><div style="font-size:16px;font-weight:900">' + r.viol.length + '</div></div></div>';
+    if (r.stat.ee && r.stat.ee.length) h += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:8px;margin-bottom:8px;font-size:11px;color:#7f1d1d"><b>Dikkat:</b> Geçen sınavda etütte olan ' + r.stat.ee.length + ' öğrenci derslik kontenjanı yetmediği için yine etüte yerleşti: ' + r.stat.ee.slice(0, 8).map(epEsc).join(', ') + (r.stat.ee.length > 8 ? ' …' : '') + '. Derslik ekleyerek çözebilirsiniz.</div>';
     if (r.stat.same > 0) h += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:8px;margin-bottom:8px;font-size:11px;color:#78350f">ℹ️ Derslik ve etüt kontenjanları dengeli olmadığı ya da salon kuralı gerektirdiği için ' + r.stat.same + ' öğrenci geçen sınavdaki grupta kaldı (salonu farklı). Daha fazla geçiş için derslik ve etüt kontenjanlarını birbirine yaklaştırın (örn. etüt salonunda "1 dolu 1 boş" seçeneğini kapatın).</div>';
     if (r.viol.length) h += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:8px;margin-bottom:8px;font-size:11px;color:#7f1d1d"><b>Dikkat:</b> Son 2 sınavdaki salonlardan kaçınmak için yeterli salon/boş yer yok (aynı grupta üç sınavlık dönüşüm için en az 3 ayrı salon gerekir). Salon ya da kontenjan ekleyin:<br>' + r.viol.slice(0, 12).map(epEsc).join('<br>') + (r.viol.length > 12 ? '<br>… +' + (r.viol.length - 12) + ' kişi daha' : '') + '</div>';
     h += '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><button type="button" onclick="rtDistribute()" style="flex:1;background:#fff;border:1px solid #7c3aed;color:#7c3aed;border-radius:10px;padding:9px;font-weight:900">🔀 Yeniden karıştır</button><button type="button" onclick="rtExcel()" style="flex:1;background:#16a34a;color:#fff;border-radius:10px;padding:9px;font-weight:900">Excel indir</button><button type="button" onclick="rtSavePlan()" style="flex:1;background:#0f172a;color:#fff;border-radius:10px;padding:9px;font-weight:900">💾 Planı geçmişe kaydet</button></div>';
     r.rooms.filter(function(x) { return x.list.length; }).forEach(function(x) {
       h += '<div style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;overflow:hidden"><div style="background:' + (x.g === 'E' ? '#f5f3ff' : '#ecfeff') + ';padding:6px 10px;font-weight:900">' + epEsc(x.room) + ' <span style="font-weight:700;color:#64748b">· ' + x.list.length + ' / ' + x.cap + (x.alt ? ' · 1 dolu 1 boş' : '') + '</span></div><div style="padding:4px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 12px">' +
-        x.list.map(function(p) { return '<div style="padding:2px 0"><b>' + p.seat + '.</b> ' + epEsc(p.name) + ' <span style="color:#64748b">(' + epEsc(p.cls) + ')</span></div>'; }).join('') + '</div></div>';
+        x.list.map(function(p) { return '<div style="padding:2px 0"><b>' + p.seat + '.</b> ' + (p.src && p.src.no ? '<span style="color:#64748b">' + epEsc(p.src.no) + '</span> ' : '') + epEsc(p.name) + ' <span style="color:#64748b">(' + epEsc(p.cls) + ')</span></div>'; }).join('') + '</div></div>';
     });
     el.innerHTML = h;
   }
@@ -16592,7 +16607,7 @@
     if (grid && !document.getElementById('modExamCard')) {
       var c = document.createElement('button'); c.type = 'button'; c.id = 'modExamCard'; c.className = 'mod-card';
       c.style.cssText = '--c:#8b5cf6;display:none'; c.setAttribute('onclick', "pickModule('exam')");
-      c.innerHTML = '<span class="mod-ic"><i class="fa-solid fa-clipboard-list"></i></span><span><b>Sınav Modülü</b><small>Sınav oturma planı ve sınav rotasyonu (salon dağıtımı, Excel)</small></span>';
+      c.innerHTML = '<span class="mod-ic"><i class="fa-solid fa-clipboard-list"></i></span><span><b>Sınav Modülü</b><small>Sınav rotasyonu: salon dağıtımı, oturma listesi, Excel</small></span>';
       grid.appendChild(c);
     }
     if (!document.getElementById('examModule')) {
@@ -16600,7 +16615,6 @@
       m.style.cssText = 'position:fixed;inset:0;z-index:44;overflow:auto;background:#f1f5f9';
       m.innerHTML = '<div class="qs-top"><button type="button" onclick="showModules()" class="qs-btn" style="background:#475569"><i class="fa-solid fa-arrow-left"></i> Modüller</button><b style="color:#0f172a;font-size:16px">Sınav Modülü</b><span></span></div>' +
         '<div style="max-width:560px;margin:0 auto;padding:12px;display:grid;gap:10px">' +
-        '<button type="button" class="qs-card" style="text-align:left" onclick="epOpen()"><b><i class="fa-solid fa-chair" style="color:#0d9488"></i> Sınav Oturma Planı</b><div style="color:#64748b;font-size:12px">Şube › sınıflar › salonlar › rastgele dağıtım (A arkada → G önde) › Excel</div></button>' +
         '<button type="button" class="qs-card" style="text-align:left" onclick="rtOpen()"><b><i class="fa-solid fa-shuffle" style="color:#7c3aed"></i> Sınav Rotasyonu</b><div style="color:#64748b;font-size:12px">Son 2 sınavdaki salona girmeden, derslik ↔ etüt değişimiyle adil dağıtım</div></button>' +
         '</div>';
       document.body.appendChild(m);
@@ -16629,114 +16643,6 @@
   })();
   </script>
 
-  <script>
-  // v79: Sınav Oturma Planı — Excel'den aday listesi yükleme (bursluluk vb. dış adaylar)
-  (function() {
-    ep.ext = ep.ext || []; ep.extLabels = ep.extLabels || []; ep.xl = null;
-    var seq = 0;
-    var _epS79 = epStudents;
-    epStudents = function() {
-      return _epS79.apply(this, arguments).concat(ep.ext).sort(function(a, b) { return String(a.class).localeCompare(String(b.class), 'tr', { numeric: true }) || String(a.name).localeCompare(String(b.name), 'tr'); });
-    };
-    function cell(v) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); }
-    // aoa -> {headers, rows, map}
-    window.epExtParse = function(aoa) {
-      var hi = 0; for (var i = 0; i < Math.min(aoa.length, 15); i++) { if ((aoa[i] || []).filter(function(c) { return cell(c); }).length >= 2) { hi = i; break; } }
-      var headers = (aoa[hi] || []).map(function(c, k) { return cell(c) || ('Sütun ' + (k + 1)); });
-      var rows = aoa.slice(hi + 1).filter(function(r) { return (r || []).some(function(c) { return cell(c); }); });
-      var map = { name: -1, sur: -1, cls: -1, x1: -1, x2: -1 }, used = {};
-      var find = function(re, skip) { for (var k = 0; k < headers.length; k++) if (!used[k] && re.test(headers[k].toLocaleLowerCase('tr'))) return k; return -1; };
-      var n = find(/ad[ıi]?\s*soyad|ad\s*soyad/); if (n < 0) n = find(/(öğrenci|ogrenci|aday|kişi|kisi)\s*(ad|isim)|^(öğrenci|ogrenci|isim|aday)$/); if (n < 0) n = find(/isim|öğrenci|ogrenci/);
-      if (n > -1) { map.name = n; used[n] = 1; }
-      else { n = find(/^ad[ıi]?$/); if (n > -1) { map.name = n; used[n] = 1; var sx = find(/soyad/); if (sx > -1) { map.sur = sx; used[sx] = 1; } } }
-      var c = find(/sınıf|sinif|şube|sube|grup|düzey|duzey|seviye/); if (c > -1) { map.cls = c; used[c] = 1; }
-      var x = find(/okul/); if (x < 0) x = find(/aday\s*no|numara|\bno\b|tc/); if (x > -1) { map.x1 = x; used[x] = 1; }
-      var y = find(/okul|aday\s*no|numara|\bno\b|tc|ilçe|ilce/); if (y > -1) { map.x2 = y; used[y] = 1; }
-      if (map.name < 0) { map.name = 0; }
-      return { headers: headers, rows: rows, map: map };
-    };
-    window.epExtBuild = function(xl) {
-      var m = xl.map, out = [];
-      xl.rows.forEach(function(r) {
-        var nm = cell(r[m.name]); if (m.sur > -1) nm = (nm + ' ' + cell(r[m.sur])).trim();
-        if (!nm) return;
-        var c0 = m.cls > -1 ? cell(r[m.cls]) : '';
-        out.push({ name: nm, c0: c0, x1: m.x1 > -1 ? cell(r[m.x1]) : '', x2: m.x2 > -1 ? cell(r[m.x2]) : '' });
-      });
-      return out;
-    };
-    window.epExtAdd = function() {
-      var xl = ep.xl; if (!xl) return;
-      var list = epExtBuild(xl); if (!list.length) { alert('Aday bulunamadı. Ad Soyad sütununu kontrol edin.'); return; }
-      var labs = []; if (xl.map.x1 > -1) labs.push(xl.headers[xl.map.x1]); if (xl.map.x2 > -1) labs.push(xl.headers[xl.map.x2]);
-      // ek sütun sırası x1,x2 sabit kalsın: yalnızca seçili olanlar yazılsın
-      if (xl.map.x1 < 0 && xl.map.x2 > -1) { list.forEach(function(u) { u.x1 = u.x2; u.x2 = ''; }); }
-      if (!ep.ext.length) ep.extLabels = labs;
-      else if (labs.length !== ep.extLabels.length) { labs = ep.extLabels; }
-      list.forEach(function(u) {
-        var id = 'xl_' + (++seq) + '_' + Date.now();
-        var cls = u.c0 || 'Aday';
-        ep.ext.push({ username: id, name: u.name, role: 'student', branch: ep.br, class: 'Excel · ' + cls, cls0: cls, x1: u.x1, x2: u.x2, ext: true });
-        ep.sel[id] = true;
-      });
-      ep.xl = null; ep.res = null; epRender();
-    };
-    window.epExtClear = function() {
-      if (!ep.ext.length) return;
-      if (!confirm(ep.ext.length + ' adaylık Excel listesi silinsin mi?')) return;
-      ep.ext.forEach(function(u) { delete ep.sel[u.username]; }); ep.ext = []; ep.extLabels = []; ep.res = null; epRender();
-    };
-    window.epExtPick = function() {
-      var inp = document.getElementById('epXlFile');
-      if (!inp) {
-        inp = document.createElement('input'); inp.type = 'file'; inp.id = 'epXlFile'; inp.accept = '.xlsx,.xls,.csv'; inp.style.display = 'none';
-        inp.onchange = function() {
-          var f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
-          if (typeof XLSX === 'undefined') { alert('Excel bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.'); return; }
-          var fr = new FileReader();
-          fr.onload = function() {
-            try {
-              var wb = XLSX.read(fr.result, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
-              var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
-              var r = epExtParse(aoa); r.file = f.name;
-              if (!r.rows.length) { alert('Dosyada veri satırı bulunamadı.'); return; }
-              ep.xl = r; epRender();
-            } catch (e) { alert('Dosya okunamadı: ' + (e && e.message || e)); }
-          };
-          fr.readAsArrayBuffer(f);
-        };
-        document.body.appendChild(inp);
-      }
-      inp.click();
-    };
-    function opts(headers, sel, none) {
-      return (none ? '<option value="-1">' + none + '</option>' : '') + headers.map(function(h, k) { return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + epEsc(h) + '</option>'; }).join('');
-    }
-    window.epExtSet = function(k, v) { ep.xl.map[k] = +v; epRender(); };
-    function block() {
-      var h = '<div style="font-weight:900;font-size:13px;margin:14px 0 6px">📄 Excel\'den aday listesi yükle <span style="font-weight:600;color:#64748b">(bursluluk vb.)</span></div>' +
-        '<div style="border:1px dashed #94a3b8;border-radius:10px;padding:8px;background:#f8fafc">' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button type="button" onclick="epExtPick()" style="background:#0f766e;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800"><i class="fa-solid fa-file-excel"></i> Excel / CSV seç</button>' +
-        (ep.ext.length ? '<span style="font-weight:800;color:#166534">' + ep.ext.length + ' aday yüklü</span><button type="button" onclick="epExtClear()" style="color:#e11d48;font-weight:800">Listeyi temizle</button>' : '<span style="color:#64748b">İlk sayfa okunur; başlık satırı otomatik bulunur.</span>') + '</div>';
-      if (ep.xl) {
-        var xl = ep.xl, m = xl.map, prev = epExtBuild(xl).slice(0, 3);
-        var sel = function(lab, k, none) { return '<label style="display:flex;flex-direction:column;font-weight:700;font-size:11px">' + lab + '<select onchange="epExtSet(\'' + k + '\',this.value)" style="border:1px solid #cbd5e1;border-radius:6px;padding:5px">' + opts(xl.headers, m[k], none) + '</select></label>'; };
-        h += '<div style="margin-top:8px;font-weight:800;color:#334155">' + epEsc(xl.file || '') + ' — ' + xl.rows.length + ' satır. Sütunları kontrol edin:</div>' +
-          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-top:6px">' + sel('Ad Soyad *', 'name') + sel('Soyad (ayrıysa)', 'sur', '(yok)') + sel('Sınıf / Grup', 'cls', '(yok)') + sel('Ek bilgi 1 (okul, aday no…)', 'x1', '(yok)') + sel('Ek bilgi 2', 'x2', '(yok)') + '</div>' +
-          '<div style="margin-top:6px;color:#475569">Örnek: ' + (prev.length ? prev.map(function(u) { return epEsc(u.name + (u.c0 ? ' (' + u.c0 + ')' : '')); }).join(' · ') : '—') + '</div>' +
-          '<div style="display:flex;gap:6px;margin-top:8px"><button type="button" onclick="epExtAdd()" style="background:#4f46e5;color:#fff;border-radius:8px;padding:8px 14px;font-weight:900">Listeye ekle (' + epExtBuild(xl).length + ' aday)</button><button type="button" onclick="ep.xl=null;epRender()" style="background:#e2e8f0;border-radius:8px;padding:8px 12px;font-weight:800">Vazgeç</button></div>';
-      }
-      return h + '</div>';
-    }
-    var _epR79 = epRender;
-    epRender = function() {
-      _epR79.apply(this, arguments);
-      var body = document.getElementById('epBody'); if (!body) return;
-      var tgt = null; Array.prototype.forEach.call(body.children, function(e) { if (!tgt && String(e.textContent).indexOf('2) Sınıflar') === 0) tgt = e; });
-      if (tgt) tgt.insertAdjacentHTML('beforebegin', block());
-    };
-  })();
-  </script>
 
   <script>
   // v80: (1) mantık dışı soru/süre girişini engelle  (2) geçmiş günlerin masa verisini tam düzenleme (düzenle / sil / satır ekle / günü sil / eksik gün ekle)
@@ -16911,6 +16817,342 @@
     if (k > -1) { a[k][2] = (+a[k][2] || 0) + m * 60; a[k][3] = (+a[k][3] || 0) + q; } else a.push([sub, top, m * 60, q]);
     dhWrite(a, '✅ Satır eklendi');
   }
+  </script>
+
+  <script>
+  // v82: Excel şablonu (Öğrenci No, Ad, Soyad, Sınıf Seviyesi, Şube) — Oturma Planı + Sınav Rotasyonu ortak aday listesi; yeni Excel çıktı düzeni
+  var EXT = [];
+  (function() {
+    var exPend = null;
+    window.ep.ext = EXT; ep.extLabels = [];
+    function cell(v) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); }
+    function norm(v) { return cell(v).toLocaleLowerCase('tr'); }
+    var _epS82 = epStudents, _rtS82 = rtStudents;
+    var cmp = function(a, b) { return String(a.class).localeCompare(String(b.class), 'tr', { numeric: true }) || String(a.name).localeCompare(String(b.name), 'tr'); };
+    epStudents = function() { EXT.forEach(function(u) { u.branch = ep.br; }); return _epS82.apply(this, arguments).concat(EXT).sort(cmp); };
+    rtStudents = function() { EXT.forEach(function(u) { u.branch = rt.br; }); return _rtS82.apply(this, arguments).concat(EXT).sort(cmp); };
+
+    window.exParse = function(aoa) {
+      var hi = -1, map = null;
+      for (var i = 0; i < Math.min(aoa.length, 15) && hi < 0; i++) {
+        var m = { no: -1, ad: -1, soyad: -1, lvl: -1, sube: -1, full: -1 };
+        (aoa[i] || []).forEach(function(c, k) {
+          var t = norm(c); if (!t) return;
+          if (/^(öğrenci |ogrenci |okul |aday )?(no|numara|numarası)$/.test(t) && m.no < 0) m.no = k;
+          else if (/^soyad/.test(t)) m.soyad = k;
+          else if (/ad[ıi]?\s*soyad|^ad\s*soyad/.test(t)) m.full = k;
+          else if (/^(öğrenci |ogrenci |aday )?(ad|adı|isim)$/.test(t)) m.ad = k;
+          else if (/sınıf|sinif|seviye/.test(t)) m.lvl = k;
+          else if (/şube|sube/.test(t)) m.sube = k;
+        });
+        if (m.ad > -1 || m.full > -1) { hi = i; map = m; }
+      }
+      if (hi < 0) map = { no: 0, ad: 1, soyad: 2, lvl: 3, sube: 4, full: -1 };
+      var rows = [], warn = [], seen = {}, noNo = 0;
+      aoa.slice(hi + 1).forEach(function(r) {
+        r = r || []; if (!r.some(function(c) { return cell(c); })) return;
+        var ad = map.ad > -1 ? cell(r[map.ad]) : '', soyad = map.soyad > -1 ? cell(r[map.soyad]) : '';
+        if (!ad && map.full > -1) { var p = cell(r[map.full]).split(' '); soyad = p.length > 1 ? p.pop() : ''; ad = p.join(' '); }
+        if (!ad && !soyad) return;
+        var no = map.no > -1 ? cell(r[map.no]) : '', lvl = map.lvl > -1 ? cell(r[map.lvl]) : '', sube = map.sube > -1 ? cell(r[map.sube]) : '';
+        if (lvl && !sube) {
+          var sm = /^(\d{1,2})\s*(?:[-\/. ]\s*)?(.*)$/.exec(lvl);
+          if (sm) { lvl = sm[1]; sube = /^s[ıi]n[ıi]f[ıi]?$/i.test(sm[2].trim()) ? '' : sm[2].trim(); }
+          else { sube = lvl; lvl = ''; }
+        }
+        if (!no) noNo++; else { if (seen[no]) warn.push('Aynı numara birden fazla: ' + no); seen[no] = 1; }
+        rows.push({ no: no, ad: ad, soyad: soyad, lvl: lvl, sube: sube });
+      });
+      if (noNo) warn.push(noNo + ' adayın öğrenci numarası boş (rotasyon geçmişi için numara önerilir)');
+      return { rows: rows, warn: warn, header: hi >= 0 };
+    };
+    function mk(r) {
+      var cls0 = (r.lvl ? (r.lvl + (r.sube ? '-' + r.sube : '')) : (r.sube || 'Aday')).toLocaleUpperCase('tr');
+      // şube harfi (A-G…) oturma kuralı için: "A", "a", "A Şubesi", "8A", "8/A" -> A ; harf yoksa (örn. Deneme) rastgele
+      var sb = String(r.sube || '').trim().toLocaleUpperCase('tr').replace(/\s*(ŞUBESİ|ŞUBE|SUBESI|SUBE)$/, ''), lm = /(?:^|[^A-Z])([A-Z])$/.exec(sb.replace(/İ/g, 'I')), L = lm && sb.replace(/İ/g, 'I').length <= 4 ? lm[1] : '';
+      if (!L && !r.sube && r.lvl) { var m2 = /^\s*\d+\s*[-\/. ]?\s*([A-Za-z])\s*$/.exec(r.lvl); if (m2) L = m2[1].toUpperCase(); }
+      var clsKey = L ? ((String(r.lvl || '').replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü. ]/g, '').trim() || 'X') + '-' + L) : cls0;
+      var key = r.no ? 'no_' + r.no.toLowerCase() : 'nm_' + norm(r.ad + ' ' + r.soyad + ' ' + cls0).replace(/\s+/g, '_');
+      return { username: key, name: (r.ad + ' ' + r.soyad).trim(), ad: r.ad, soyad: r.soyad, no: r.no, lvl: r.lvl, sube: r.sube, role: 'student', branch: '', class: 'Excel · ' + clsKey, cls0: cls0, letter: L, ext: true };
+    }
+    function refresh() { try { if (document.getElementById('epBody')) epRender(); } catch (e) {} try { if (document.getElementById('rtBody')) rtRender(); } catch (e) {} }
+    window.exAdd = function() {
+      if (!exPend || !exPend.rows.length) return;
+      exPend.rows.forEach(function(r) {
+        var u = mk(r), k = -1; EXT.forEach(function(x, i) { if (x.username === u.username) k = i; });
+        if (k > -1) EXT[k] = u; else EXT.push(u);
+        ep.sel[u.username] = true; rt.sel[u.username] = true;
+      });
+      exPend = null; ep.res = null; rt.res = null; refresh();
+    };
+    window.exClear = function() {
+      if (!EXT.length || !confirm(EXT.length + ' adaylık Excel listesi silinsin mi?')) return;
+      EXT.forEach(function(u) { delete ep.sel[u.username]; delete rt.sel[u.username]; }); EXT.length = 0; ep.res = null; rt.res = null; refresh();
+    };
+    window.exCancel = function() { exPend = null; refresh(); };
+    window.exTemplate = function() {
+      if (typeof XLSX === 'undefined') { alert('Excel bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.'); return; }
+      var ws = XLSX.utils.aoa_to_sheet([['Öğrenci No', 'Ad', 'Soyad', 'Sınıf'], ['1001', 'Ali', 'Yılmaz', '8-A'], ['1002', 'Ayşe', 'Demir', '8-B'], ['1003', 'Can', 'Kaya', '8-DENEME']]);
+      ws['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 14 }];
+      var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Aday Listesi'); XLSX.writeFile(wb, 'Sinav_Aday_Sablonu.xlsx');
+    };
+    window.exPick = function() {
+      var inp = document.getElementById('exXlFile');
+      if (!inp) {
+        inp = document.createElement('input'); inp.type = 'file'; inp.id = 'exXlFile'; inp.accept = '.xlsx,.xls,.csv'; inp.style.display = 'none';
+        inp.onchange = function() {
+          var f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+          if (typeof XLSX === 'undefined') { alert('Excel bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.'); return; }
+          var fr = new FileReader();
+          fr.onload = function() {
+            try {
+              var wb = XLSX.read(fr.result, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
+              var r = exParse(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false })); r.file = f.name;
+              if (!r.rows.length) { alert('Dosyada aday bulunamadı. Şablondaki sütun düzenini (Öğrenci No, Ad, Soyad, Sınıf) kullanın.'); return; }
+              exPend = r; refresh();
+            } catch (e) { alert('Dosya okunamadı: ' + (e && e.message || e)); }
+          };
+          fr.readAsArrayBuffer(f);
+        };
+        document.body.appendChild(inp);
+      }
+      inp.click();
+    };
+    function block() {
+      var bs = 'border-radius:8px;padding:7px 12px;font-weight:800';
+      var h = '<div style="font-weight:900;font-size:13px;margin:14px 0 6px">📄 Excel\'den aday listesi yükle <span style="font-weight:600;color:#64748b">(bursluluk vb.) — sütunlar: Öğrenci No · Ad · Soyad · Sınıf (8-A, 8-B, 8-DENEME gibi)</span></div>' +
+        '<div style="border:1px dashed #94a3b8;border-radius:10px;padding:8px;background:#f8fafc"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
+        '<button type="button" onclick="exTemplate()" style="background:#e2e8f0;' + bs + '"><i class="fa-solid fa-download"></i> Örnek şablonu indir</button>' +
+        '<button type="button" onclick="exPick()" style="background:#0f766e;color:#fff;' + bs + '"><i class="fa-solid fa-file-excel"></i> Excel / CSV yükle</button>' +
+        (EXT.length ? '<span style="font-weight:800;color:#166534">' + EXT.length + ' aday yüklü</span><button type="button" onclick="exClear()" style="color:#e11d48;font-weight:800">Listeyi temizle</button>' : '') + '</div>';
+      if (exPend) {
+        h += '<div style="margin-top:8px;font-weight:800;color:#334155">' + epEsc(exPend.file || '') + ' — ' + exPend.rows.length + ' aday okundu' + (exPend.header ? '' : ' (başlık bulunamadı; sütunlar sırayla alındı)') + '</div>' +
+          '<div style="max-height:150px;overflow:auto;border:1px solid #e2e8f0;border-radius:8px;margin-top:4px;background:#fff"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#f1f5f9;text-align:left"><th style="padding:4px">Öğrenci No</th><th>Ad</th><th>Soyad</th><th>Sınıf</th></tr></thead><tbody>' +
+          exPend.rows.slice(0, 50).map(function(r) { return '<tr style="border-top:1px solid #f1f5f9"><td style="padding:3px 4px">' + epEsc(r.no) + '</td><td>' + epEsc(r.ad) + '</td><td>' + epEsc(r.soyad) + '</td><td>' + epEsc((r.lvl ? r.lvl + (r.sube ? '-' + r.sube : '') : r.sube).toLocaleUpperCase('tr')) + '</td></tr>'; }).join('') +
+          (exPend.rows.length > 50 ? '<tr><td colspan="4" style="padding:4px;color:#64748b">… +' + (exPend.rows.length - 50) + ' aday daha</td></tr>' : '') + '</tbody></table></div>' +
+          (exPend.warn.length ? '<div style="margin-top:4px;color:#b45309;font-weight:700">⚠ ' + exPend.warn.map(epEsc).join('<br>⚠ ') + '</div>' : '') +
+          '<div style="display:flex;gap:6px;margin-top:8px"><button type="button" onclick="exAdd()" style="background:#4f46e5;color:#fff;border-radius:8px;padding:8px 14px;font-weight:900">Listeye ekle (' + exPend.rows.length + ' aday)</button><button type="button" onclick="exCancel()" style="background:#e2e8f0;border-radius:8px;padding:8px 12px;font-weight:800">Vazgeç</button></div>';
+      }
+      return h + '</div>';
+    }
+    function inject(bodyId, startsWith) {
+      var body = document.getElementById(bodyId); if (!body) return;
+      var tgt = null; Array.prototype.forEach.call(body.children, function(e) { if (!tgt && String(e.textContent).indexOf(startsWith) === 0) tgt = e; });
+      if (tgt) tgt.insertAdjacentHTML('beforebegin', block());
+    }
+    var _epR82 = epRender; epRender = function() { _epR82.apply(this, arguments); inject('epBody', '2) Sınıflar'); };
+    var _rtR82 = rtRender; rtRender = function() { _rtR82.apply(this, arguments); inject('rtBody', '3) Sınıflar'); };
+
+    // ---- ortak Excel çıktısı: Öğrenci No | Ad | Soyad | Sınıf Seviyesi | Şube | Salon | Sıra No ----
+    function parts(p) {
+      var s = p.src || {};
+      if (s.ad != null || s.soyad != null) return { no: s.no || '', ad: s.ad || '', soyad: s.soyad || '', lvl: s.lvl || '', sube: s.sube || '' };
+      var nm = String(p.name || s.name || '').trim().split(/\s+/), soyad = nm.length > 1 ? nm.pop() : '', c = String(p.cls || '').split('-');
+      return { no: s.no || '', ad: nm.join(' '), soyad: soyad, lvl: c[0] || '', sube: c.slice(1).join('-') };
+    }
+    var HEAD = ['Öğrenci No', 'Ad', 'Soyad', 'Sınıf Seviyesi', 'Şube', 'Salon', 'Sıra No'], WCH = [{ wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 8 }, { wch: 18 }, { wch: 9 }];
+    function colL(n) { return String.fromCharCode(64 + n); }
+    window.exWorkbook = function(title, rooms, xHead, xFn) {
+      var wb = XLSX.utils.book_new(), used = {}, all = [];
+      xHead = xHead || []; xFn = xFn || function() { return []; };
+      rooms.forEach(function(r) { r.list.forEach(function(p) { var q = parts(p); all.push({ room: r.room, seat: p.seat, q: q, x: xFn(p, r), cap: r.cap }); }); });
+      var row = function(a) { return [a.q.no, a.q.ad, a.q.soyad, a.q.lvl, a.q.sube, a.room, a.seat]; };
+      var wch = WCH.concat(xHead.map(function() { return { wch: 26 }; })), nc = 7 + xHead.length;
+      var s1 = XLSX.utils.aoa_to_sheet([[title], [], HEAD.concat(xHead)].concat(all.map(function(a) { return row(a).concat(a.x); })));
+      s1['!cols'] = wch; s1['!autofilter'] = { ref: 'A3:' + colL(nc) + (all.length + 3) }; XLSX.utils.book_append_sheet(wb, s1, epSheetName('Tüm Salonlar', used));
+      var az = all.slice().sort(function(a, b) { return String(a.q.ad).localeCompare(String(b.q.ad), 'tr') || String(a.q.soyad).localeCompare(String(b.q.soyad), 'tr'); });
+      var s2 = XLSX.utils.aoa_to_sheet([[title + ' — Aday listesi (A-Z)'], [], HEAD.concat(xHead)].concat(az.map(function(a) { return row(a).concat(a.x); })));
+      s2['!cols'] = wch; s2['!autofilter'] = { ref: 'A3:' + colL(nc) + (az.length + 3) }; XLSX.utils.book_append_sheet(wb, s2, epSheetName('Öğrenci Listesi', used));
+      rooms.forEach(function(r) {
+        if (!r.list.length) return;
+        var rs = all.filter(function(a) { return a.room === r.room; });
+        var w = XLSX.utils.aoa_to_sheet([[title], [r.room + ' — Kontenjan: ' + r.cap + (r.alt ? ' (1 dolu 1 boş)' : '') + ' · Öğrenci: ' + r.list.length], [], HEAD].concat(rs.map(row)));
+        w['!cols'] = WCH; w['!autofilter'] = { ref: 'A4:G' + (rs.length + 4) }; XLSX.utils.book_append_sheet(wb, w, epSheetName(r.room, used));
+      });
+      return wb;
+    };
+    function fname(prefix, title) {
+      var tr = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'Ç': 'C', 'Ğ': 'G', 'İ': 'I', 'Ö': 'O', 'Ş': 'S', 'Ü': 'U' };
+      return prefix + String(title).replace(/[çğıöşüÇĞİÖŞÜ]/g, function(c) { return tr[c]; }).replace(/[^A-Za-z0-9\-]+/g, '_') + '_' + todayKey() + '.xlsx';
+    }
+    epExcel = function() {
+      if (!ep.res) return;
+      if (typeof XLSX === 'undefined') { alert('Excel bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.'); return; }
+      var title = (ep.title || '').trim() || 'Sınav Oturma Planı';
+      XLSX.writeFile(exWorkbook(title + ' — ' + ep.br, ep.res), fname('Oturma_Plani_', title));
+    };
+    rtExcel = function() {
+      var r = rt.res; if (!r) return;
+      if (typeof XLSX === 'undefined') { alert('Excel bileşeni yüklenemedi. Sayfayı yenileyip tekrar deneyin.'); return; }
+      var title = (rt.title || '').trim() || 'Sınav Rotasyon Planı', g = {};
+      r.rooms.forEach(function(x) { g[x.room] = x.g; });
+      var wb = exWorkbook(title + ' — ' + rt.br, r.rooms, ['Grup', 'Önceki sınav salonları'], function(p, room) { var f = (r.info[p.un] || { prev: [] }); return [room.g === 'E' ? 'Etüt' : 'Derslik', f.prev.join(' | ') || '—']; });
+      XLSX.writeFile(wb, fname('Rotasyon_Plani_', title));
+    };
+  })();
+  </script>
+
+
+  <script>
+  // v84: Sınav Excel çıktısı — yalnızca "Öğrenci Listesi" + salon sayfaları; Grup / Önceki salon sütunları yok; satırlar beyaz / açık mavi dönüşümlü
+  (function() {
+    var enc = function(s) { return new TextEncoder().encode(s); };
+    var CT = null;
+    function crc32(u8) {
+      if (!CT) { CT = []; for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); CT[n] = c >>> 0; } }
+      var crc = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) crc = CT[(crc ^ u8[i]) & 255] ^ (crc >>> 8); return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+    function zip(files) {
+      var parts = [], central = [], off = 0, cdSize = 0;
+      files.forEach(function(f) {
+        var nm = enc(f.name), crc = crc32(f.data), sz = f.data.length;
+        var h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, 0, true); h.setUint16(12, 0x21, true);
+        h.setUint32(14, crc, true); h.setUint32(18, sz, true); h.setUint32(22, sz, true); h.setUint16(26, nm.length, true); h.setUint16(28, 0, true);
+        parts.push(new Uint8Array(h.buffer), nm, f.data);
+        var c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, 0, true); c.setUint16(14, 0x21, true);
+        c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+        central.push(new Uint8Array(c.buffer), nm); cdSize += 46 + nm.length; off += 30 + nm.length + sz;
+      });
+      var e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
+      var all = parts.concat(central, [new Uint8Array(e.buffer)]), tot = 0; all.forEach(function(p) { tot += p.length; });
+      var out = new Uint8Array(tot), pos = 0; all.forEach(function(p) { out.set(p, pos); pos += p.length; }); return out;
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); }
+    function colL(i) { var s = ''; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+    // sheet = { name, widths:[], rows:[{k:'title'|'sub'|'blank'|'head'|'data', c:[...]}], filterHead:true }
+    function sheetXml(sh) {
+      var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">', hr = 0, di = 0, last = 0, nc = 0;
+      sh.rows.forEach(function(r, i) { if (r.k === 'head') hr = i + 1; if (r.k === 'data') last = i + 1; nc = Math.max(nc, (r.c || []).length); });
+      if (hr) xml += '<sheetViews><sheetView workbookViewId="0"><pane ySplit="' + hr + '" topLeftCell="A' + (hr + 1) + '" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>';
+      xml += '<cols>' + sh.widths.map(function(w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols><sheetData>';
+      sh.rows.forEach(function(r, i) {
+        var st = r.k === 'title' ? 4 : r.k === 'sub' ? 5 : r.k === 'head' ? 1 : r.k === 'data' ? (di++ % 2 === 0 ? 2 : 3) : 0;
+        xml += '<row r="' + (i + 1) + '">';
+        (r.c || []).forEach(function(v, j) {
+          var ref = colL(j) + (i + 1);
+          if (typeof v === 'number' && isFinite(v)) xml += '<c r="' + ref + '" s="' + st + '"><v>' + v + '</v></c>';
+          else xml += '<c r="' + ref + '" s="' + st + '" t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
+        });
+        xml += '</row>';
+      });
+      xml += '</sheetData>';
+      if (hr && last >= hr) xml += '<autoFilter ref="A' + hr + ':' + colL(Math.max(0, sh.widths.length - 1)) + last + '"/>';
+      return xml + '</worksheet>';
+    }
+    window.exBuildXlsx = function(sheets) {
+      var files = [], wbS = '', rel = '', ct = '';
+      sheets.forEach(function(sh, i) {
+        files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: enc(sheetXml(sh)) });
+        wbS += '<sheet name="' + esc(sh.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>';
+        rel += '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>';
+        ct += '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+      });
+      var H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+      files.unshift(
+        { name: '[Content_Types].xml', data: enc(H + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' + ct + '</Types>') },
+        { name: '_rels/.rels', data: enc(H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>') },
+        { name: 'xl/workbook.xml', data: enc(H + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + wbS + '</sheets></workbook>') },
+        { name: 'xl/_rels/workbook.xml.rels', data: enc(H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rel + '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>') },
+        { name: 'xl/styles.xml', data: enc(H + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+          '<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/></font></fonts>' +
+          '<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDEBF7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFCBD5E1"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+          '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border></borders>' +
+          '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+          '<cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+          '<xf numFmtId="0" fontId="0" fillId="2" borderId="1" xfId="0" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>' +
+          '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>' +
+          '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>') });
+      return zip(files);
+    };
+    window.exSave = function(bytes, name) {
+      var b = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    };
+
+    function parts(p) {
+      var s = p.src || {};
+      if (s.ad != null || s.soyad != null) return { no: s.no || '', ad: s.ad || '', soyad: s.soyad || '', cls: s.cls0 || p.cls || '' };
+      var nm = String(p.name || s.name || '').trim().split(/\s+/), soyad = nm.length > 1 ? nm.pop() : '';
+      return { no: s.no || '', ad: nm.join(' '), soyad: soyad, cls: p.cls || '' };
+    }
+    var HEAD = ['Öğrenci No', 'Ad', 'Soyad', 'Sınıf', 'Sınav Salonu', 'Sıra No'], W = [13, 18, 18, 14, 20, 10], WR = W.concat([16]);
+    function nice(br) { return String(br || '').toLocaleLowerCase('tr').split(' ').map(function(w) { return w.charAt(0).toLocaleUpperCase('tr') + w.slice(1); }).join(' '); }
+    function build(title, rooms) {
+      var used = {}, all = [];
+      rooms.forEach(function(r) { r.list.forEach(function(p) { var q = parts(p); all.push({ room: r.room, seat: p.seat, c: [q.no, q.ad, q.soyad, q.cls, r.room, p.seat], q: q }); }); });
+      var az = all.slice().sort(function(a, b) { return String(a.q.ad).localeCompare(String(b.q.ad), 'tr') || String(a.q.soyad).localeCompare(String(b.q.soyad), 'tr'); });
+      var sheets = [{ name: epSheetName('Öğrenci Listesi', used), widths: W, rows: [{ k: 'title', c: [title] }, { k: 'blank', c: [] }, { k: 'head', c: HEAD }].concat(az.map(function(a) { return { k: 'data', c: a.c }; })) }];
+      rooms.forEach(function(r) {
+        if (!r.list.length) return;
+        var rs = all.filter(function(a) { return a.room === r.room; }).sort(function(a, b) { return a.seat - b.seat; });
+        sheets.push({ name: epSheetName(r.room, used), widths: WR, rows: [{ k: 'title', c: [title] }, { k: 'sub', c: [r.room + ' — Kontenjan: ' + r.cap + (r.alt ? ' (1 dolu 1 boş)' : '') + ' · Öğrenci: ' + r.list.length] }, { k: 'blank', c: [] }, { k: 'head', c: HEAD.concat(['Yoklama']) }].concat(rs.map(function(a) { return { k: 'data', c: a.c.concat(['']) }; })) });
+      });
+      return sheets;
+    }
+    function fname(prefix, title) {
+      var tr = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'Ç': 'C', 'Ğ': 'G', 'İ': 'I', 'Ö': 'O', 'Ş': 'S', 'Ü': 'U' };
+      return prefix + String(title).replace(/[çğıöşüÇĞİÖŞÜ]/g, function(c) { return tr[c]; }).replace(/[^A-Za-z0-9\-]+/g, '_') + '_' + todayKey() + '.xlsx';
+    }
+    function needTitle(m) { if (!String(m.title || '').trim()) { alert('Önce "Sınav adı" kutusuna sınavın adını yazın (Excel başlığında görünecek).'); return true; } return false; }
+    var _epD84 = epDistribute; epDistribute = function() { if (needTitle(ep)) return; return _epD84.apply(this, arguments); };
+    var _rtD84 = rtDistribute; rtDistribute = function() { if (needTitle(rt)) return; return _rtD84.apply(this, arguments); };
+    epExcel = function() {
+      if (!ep.res) return;
+      var title = (ep.title || '').trim() || 'Sınav';
+      var head = (ep.br + ' ' + title + ' Oturma Listesi').toLocaleUpperCase('tr');
+      exSave(exBuildXlsx(build(head, ep.res)), head.replace(/[\\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() + '.xlsx');
+    };
+    rtExcel = function() {
+      if (!rt.res) return;
+      var title = (rt.title || '').trim() || 'Sınav';
+      var head = (rt.br + ' ' + title + ' Oturma Listesi').toLocaleUpperCase('tr');
+      exSave(exBuildXlsx(build(head, rt.res.rooms)), head.replace(/[\\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() + '.xlsx');
+    };
+  })();
+  </script>
+
+  <script>
+  // v88: her modül ekranında "Çıkış" düğmesi
+  (function() {
+    function mkBtn(extra) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'qs-btn mod-logout88'; b.title = 'Çıkış Yap';
+      b.setAttribute('onclick', 'logout()'); b.style.cssText = 'background:#e11d48;white-space:nowrap;' + (extra || '');
+      b.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Çıkış'; return b;
+    }
+    document.querySelectorAll('.qs-top').forEach(function(bar) {
+      if (bar.querySelector('.mod-logout88')) return;
+      var last = bar.lastElementChild;
+      if (last && last.tagName === 'SPAN' && !last.textContent.trim() && !last.children.length) bar.replaceChild(mkBtn(), last); else bar.appendChild(mkBtn());
+    });
+    var gate = document.getElementById('moduleGate');
+    if (gate && !gate.querySelector('.mod-logout88')) gate.appendChild(mkBtn('position:fixed;top:12px;right:12px;z-index:3'));
+    var kurs = document.getElementById('kursPanel');
+    if (kurs && !kurs.querySelector('.mod-logout88')) {
+      var back = kurs.querySelector('button[onclick="showModules()"]');
+      if (back) back.insertAdjacentElement('afterend', mkBtn('float:right'));
+    }
+  })();
+  </script>
+
+  <script>
+  // v90: ilk girişte modül kartları (Soru Çözüm / Sınav / Muhasebe) kullanıcı bilgisi ve yetkiler tam yüklenince kendiliğinden belirsin
+  (function() {
+    function refresh() {
+      try {
+        var g = document.getElementById('moduleGate'); if (!g || g.classList.contains('hidden') || !currentUser) return;
+        [['kurs', 'modKursCard'], ['etut', 'modEtutCard'], ['acc', 'modAccCard'], ['qs', 'modQsCard'], ['exam', 'modExamCard']].forEach(function(p) {
+          var el = document.getElementById(p[1]); if (!el) return;
+          var d = canModule(p[0]) ? '' : 'none'; if (el.style.display !== d) el.style.display = d; el.classList.remove('locked');
+        });
+        var w = document.getElementById('modWelcome'); if (w && currentUser.name) { var t = 'Hoş geldiniz, ' + currentUser.name + ' — girmek istediğiniz modülü seçin'; if (w.innerText !== t) w.innerText = t; }
+      } catch (e) {}
+    }
+    var _uai90 = updateAuthUI;
+    updateAuthUI = function() { var r = _uai90.apply(this, arguments); setTimeout(refresh, 0); return r; };
+    setInterval(refresh, 600);
+    try { if (typeof fbDb !== 'undefined' && fbDb && isCloudReady) fbDb.ref('rolePerms').on('value', function() { setTimeout(refresh, 50); }); } catch (e) {}
+  })();
   </script>
 
 </body>
