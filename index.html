@@ -13109,7 +13109,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=79', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=81', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -15666,7 +15666,7 @@
       '<button type="button" onclick="dvOrphan(true)" style="background:#e11d48;color:#fff;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:800">Sil</button></div>';
     h += '<button type="button" onclick="dvResetToday()" style="margin-top:10px;width:100%;background:#fff;border:1px solid #e11d48;color:#e11d48;border-radius:10px;padding:8px;font-size:12px;font-weight:800">🧹 Bugünkü tüm verileri sıfırla</button>';
     var days = Object.keys(dvArch || {}).filter(function(x) { return x !== (d.dayKey || todayKey()); }).sort().reverse();
-    h += '<div style="font-weight:900;font-size:13px;margin:14px 0 4px">Geçmiş günler</div>';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 4px"><b style="font-size:13px">Geçmiş günler</b><button type="button" onclick="dhOpen(curDesk().username,curDesk().studentName)" style="background:#4f46e5;color:#fff;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800">Tüm geçmişi düzenle</button></div>';
     if (!days.length) h += '<div style="color:#64748b;font-size:12px">Geçmiş kayıt yok.</div>';
     else {
       if (!dvDay || days.indexOf(dvDay) < 0) dvDay = days[0];
@@ -15817,7 +15817,7 @@
           var dsc = anDayScale(days[day]);
           days[day].forEach(function(e) { sec += Math.floor((+e[2] || 0) * dsc); q += +e[3] || 0; });
         });
-        rows.push({ name: st.studentName, cls: it.cls, br: it.br, sec: sec, q: q });
+        rows.push({ name: st.studentName, cls: it.cls, br: it.br, sec: sec, q: q, un: un });
         if (--left === 0 && tok === rkState.tok) { rkState.rows = rows; rkRender(); }
       };
       if (!un) add({}); else anLoad(un, add);
@@ -15850,7 +15850,7 @@
     if (!rows.length) h += '<tr><td colspan="5" style="padding:20px;text-align:center;color:#64748b">Gösterilecek öğrenci yok.</td></tr>';
     rows.forEach(function(r, i) {
       var z = r.sec <= 0 && r.q <= 0;
-      h += '<tr style="border-bottom:1px solid #f1f5f9;' + (z ? 'color:#94a3b8' : '') + '"><td style="padding:7px 4px;font-weight:800">' + (i + 1) + '</td><td style="padding:7px 4px;font-weight:800">' + rkEsc(r.name) + '</td><td style="padding:7px 4px">' + rkEsc(r.cls) + '</td><td style="padding:7px 4px;text-align:right;font-weight:800">' + rkFmt(r.sec) + '</td><td style="padding:7px 4px;text-align:right;font-weight:800">' + r.q + '</td></tr>';
+      h += '<tr style="border-bottom:1px solid #f1f5f9;' + (z ? 'color:#94a3b8' : '') + '"><td style="padding:7px 4px;font-weight:800">' + (i + 1) + '</td><td style="padding:7px 4px;font-weight:800">' + rkEsc(r.name) + (dvIsStaff() && r.un ? ' <button type="button" title="Geçmiş masa verisini düzenle" onclick="dhOpen(decodeURIComponent(\'' + encodeURIComponent(r.un) + '\'),decodeURIComponent(\'' + encodeURIComponent(r.name) + '\'))" style="color:#4f46e5;font-size:11px">✏️</button>' : '') + '</td><td style="padding:7px 4px">' + rkEsc(r.cls) + '</td><td style="padding:7px 4px;text-align:right;font-weight:800">' + rkFmt(r.sec) + '</td><td style="padding:7px 4px;text-align:right;font-weight:800">' + r.q + '</td></tr>';
     });
     h += '<tr style="border-top:2px solid #0f172a"><td></td><td style="padding:8px 4px;font-weight:900">Toplam</td><td></td><td style="padding:8px 4px;text-align:right;font-weight:900">' + rkFmt(ts) + '</td><td style="padding:8px 4px;text-align:right;font-weight:900">' + tq + '</td></tr></tbody></table>';
     body.innerHTML = h;
@@ -16736,6 +16736,181 @@
       if (tgt) tgt.insertAdjacentHTML('beforebegin', block());
     };
   })();
+  </script>
+
+  <script>
+  // v80: (1) mantık dışı soru/süre girişini engelle  (2) geçmiş günlerin masa verisini tam düzenleme (düzenle / sil / satır ekle / günü sil / eksik gün ekle)
+  var QMAX_ENTRY = 300, QMAX_DAY = 1000, QMAX_REP = 500;
+  (function() {
+    document.addEventListener('input', function(e) {
+      var t = e.target; if (!t || t.tagName !== 'INPUT') return;
+      var id = t.id || '', isDesk = id === 'studyQuestions', isRep = /^(rep_|inp_)(kaz|yen|std)_/.test(id) || id === 'hwItemQuestions';
+      if (!isDesk && !isRep) return;
+      var v = String(t.value); if (v === '') return;
+      var max = isDesk ? dqMax() : QMAX_REP;
+      if (/[^0-9]/.test(v) || !isFinite(Number(v))) { t.value = ''; try { bkmToast('⚠️ Soru sayısı yalnızca rakam olmalı', 2500); } catch (x) {} return; }
+      if (Number(v) > max) { t.value = String(max); try { bkmToast(isDesk && max < QMAX_ENTRY ? '⚠️ Çalışma sürene göre en fazla ' + max + ' soru girebilirsin' : '⚠️ En fazla ' + max + ' girilebilir', 3000); } catch (x) {} }
+      if (isDesk) dqHint();
+    }, true);
+    // çalışma süresi x 3 soru kuralı (yalnızca öğrenci girişlerinde)
+    window.DQ_PER_MIN = 3;
+    window.dqInfo = function() {
+      if (!currentUser || currentUser.role !== 'student') return null;
+      var d = null; try { d = curDesk(); } catch (x) {} if (!d) return null;
+      try { recalcDesk(d, Date.now()); } catch (x) {}
+      var mins = Math.floor((+d.secondsStudied || 0) / 60), allowed = mins * DQ_PER_MIN, used = +d.qBanked || 0;
+      return { mins: mins, allowed: allowed, used: used, left: Math.max(0, allowed - used) };
+    };
+    window.dqMax = function() { var i = dqInfo(); return i ? Math.min(QMAX_ENTRY, i.left) : QMAX_ENTRY; };
+    window.dqHint = function() {
+      var inp = document.getElementById('studyQuestions'); if (!inp) return;
+      var h = document.getElementById('studyQLimit');
+      if (!h) { h = document.createElement('div'); h.id = 'studyQLimit'; h.style.cssText = 'font-size:10px;font-weight:700;margin-top:3px;color:#b45309'; inp.parentNode.appendChild(h); }
+      var i = dqInfo(); if (!i) { h.textContent = ''; return; }
+      h.textContent = 'Bugün ' + i.mins + ' dk çalıştın → en fazla ' + i.allowed + ' soru girebilirsin (' + i.used + ' girildi, ' + i.left + ' hakkın var).';
+    };
+    try { var _dm80 = document.getElementById('deskActionModal'); if (_dm80) new MutationObserver(function() { setTimeout(dqHint, 80); }).observe(_dm80, { attributes: true, attributeFilter: ['class'] }); } catch (x) {}
+    setInterval(function() { try { var m = document.getElementById('deskActionModal'); if (m && !m.classList.contains('hidden')) dqHint(); } catch (x) {} }, 20000);
+    ['studyQuestions', 'hwItemQuestions'].forEach(function(id) { var el = document.getElementById(id); if (el) { el.setAttribute('max', id === 'studyQuestions' ? QMAX_ENTRY : QMAX_REP); el.setAttribute('step', '1'); el.setAttribute('inputmode', 'numeric'); } });
+
+    var _ssd80 = saveStudyData;
+    saveStudyData = function() {
+      var el = document.getElementById('studyQuestions'), raw = el ? String(el.value).trim() : '';
+      if (raw !== '') {
+        var n = Number(raw);
+        if (!/^\d+$/.test(raw) || !isFinite(n) || n > QMAX_ENTRY) { alert('Soru sayısı 0 ile ' + QMAX_ENTRY + ' arasında, tam sayı olmalı. Lütfen kontrol edip tekrar girin.'); return; }
+        var d = null; try { d = curDesk(); } catch (x) {}
+        var qi = dqInfo();
+        if (qi && n > qi.left) { alert('Bugün ' + qi.mins + ' dakika çalıştın; dakika başına en fazla ' + DQ_PER_MIN + ' soru girilebilir (toplam ' + qi.allowed + ' soru). Şu ana kadar ' + qi.used + ' soru girdin, en fazla ' + qi.left + ' soru daha girebilirsin. Lütfen sayıyı kontrol et.'); return; }
+        if (d && (+d.qBanked || 0) + n > QMAX_DAY) { alert('Bugünkü toplam soru sayısı ' + QMAX_DAY + ' değerini aşamaz. Lütfen girdiğin sayıyı kontrol et.'); return; }
+      }
+      return _ssd80.apply(this, arguments);
+    };
+
+    window.dhSan = function(v) {
+      Object.keys(v || {}).forEach(function(day) {
+        (v[day] || []).forEach(function(e) {
+          var q = +e[3], sec = +e[2];
+          if (e[3] != null && (!isFinite(q) || q < 0 || q > QMAX_DAY)) { e[3] = 0; e.bad = true; }
+          if (e[2] != null && (!isFinite(sec) || sec < 0 || sec > 86400)) { e[2] = 0; e.bad = true; }
+        });
+      });
+      return v;
+    };
+    var _anLoad80 = anLoad;
+    anLoad = function(u, cb) { return _anLoad80.call(this, u, function(v) { try { dhSan(v); } catch (x) {} cb(v); }); };
+
+    var _rc80 = recalcDesk;
+    recalcDesk = function(d, now) {
+      var ch = _rc80.apply(this, arguments);
+      try {
+        if (d) {
+          var bad = false, sum = 0;
+          if (d.qLog) Object.keys(d.qLog).forEach(function(k) { var x = +d.qLog[k]; if (!isFinite(x) || x < 0 || x > QMAX_DAY) { delete d.qLog[k]; bad = true; } else sum += x; });
+          if (d.questions != null && (!isFinite(+d.questions) || d.questions < 0 || d.questions > QMAX_ENTRY)) { d.questions = 0; bad = true; }
+          if (bad || (d.qBanked != null && (!isFinite(+d.qBanked) || d.qBanked > QMAX_DAY))) { d.qBanked = sum; d.sessQ0 = Math.min(d.sessQ0 || 0, d.qBanked); ch = true; }
+        }
+      } catch (x) {}
+      return ch;
+    };
+  })();
+
+  var dh = { un: '', name: '', days: {}, day: null, newDay: false };
+  function dhEsc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function dhFmt(sec) { var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return (h ? h + ' sa ' : '') + m + ' dk'; }
+  function dhDays() { return Object.keys(dh.days).filter(function(x) { return x < todayKey() && (dh.days[x] || []).length; }).sort().reverse(); }
+  function dhOpen(un, name) {
+    if (!dvIsStaff() || !un) return;
+    var ov = document.getElementById('dhOverlay');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'dhOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:98;background:rgba(15,23,42,.65);display:flex;align-items:center;justify-content:center;padding:10px';
+      ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.4)">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0"><div><div id="dhTitle" style="font-weight:900;font-size:14px;color:#0f172a"></div><div style="font-size:10px;color:#64748b">Geçmiş günlerin süre ve soru kayıtlarını düzenleyin, silin ya da ekleyin</div></div>' +
+        '<button type="button" onclick="document.getElementById(\'dhOverlay\').style.display=\'none\'" style="width:32px;height:32px;border-radius:50%;background:#f1f5f9;font-weight:900">✕</button></div>' +
+        '<div id="dhBody" style="padding:10px 16px 16px;overflow-y:auto;font-size:12px;color:#334155"></div></div>';
+      document.body.appendChild(ov);
+    }
+    dh.un = un; dh.name = name || un; dh.days = {}; dh.day = null; dh.newDay = false;
+    document.getElementById('dhTitle').textContent = 'Geçmiş masa verisi — ' + dh.name;
+    ov.style.display = 'flex'; document.getElementById('dhBody').innerHTML = '<div style="padding:24px;text-align:center;color:#64748b">Yükleniyor...</div>';
+    try { delete anState.cache[un]; } catch (e) {}
+    anLoad(un, function(v) { dh.days = v || {}; dhRender(); });
+  }
+  function dhSums(arr) { var s = 0, q = 0, bad = false; (arr || []).forEach(function(e) { s += +e[2] || 0; q += +e[3] || 0; if (e.bad) bad = true; }); return { s: s, q: q, bad: bad }; }
+  function dhRender() {
+    var box = document.getElementById('dhBody'); if (!box) return;
+    var days = dhDays(); if (dh.day && days.indexOf(dh.day) < 0 && !dh.newDay) dh.day = null;
+    if (!dh.day && days.length) dh.day = days[0];
+    var h = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">' +
+      '<select onchange="dh.day=this.value;dh.newDay=false;dhRender()" style="border:1px solid #cbd5e1;border-radius:8px;padding:6px;font-weight:700;flex:1;min-width:200px">' +
+      (dh.newDay && days.indexOf(dh.day) < 0 ? '<option selected value="' + dh.day + '">' + dh.day + ' (yeni gün)</option>' : '') +
+      days.map(function(d) { var t = dhSums(dh.days[d]); return '<option value="' + d + '"' + (d === dh.day ? ' selected' : '') + '>' + d + ' · ' + dhFmt(t.s) + ' · ' + t.q + ' soru' + (t.bad ? ' ⚠' : '') + '</option>'; }).join('') + '</select>' +
+      '<input type="date" id="dhNewDate" max="' + todayKey() + '" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px"><button type="button" onclick="dhNewDay()" style="background:#0f766e;color:#fff;border-radius:8px;padding:6px 10px;font-weight:800">+ Gün ekle</button></div>';
+    if (!days.length && !dh.newDay) h += '<div style="padding:14px;color:#64748b;text-align:center">Geçmiş kayıt yok. Yukarıdan bir gün ekleyebilirsiniz.</div>';
+    if (dh.day) {
+      var arr = dh.days[dh.day] || [], t = dhSums(arr);
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0"><b>' + dh.day + ' — ' + dhFmt(t.s) + ' · ' + t.q + ' soru</b>' +
+        (arr.length ? '<button type="button" onclick="dhDelDay()" style="color:#e11d48;font-weight:800">🗑️ Günü tümüyle sil</button>' : '') + '</div>';
+      if (t.bad) h += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:6px 8px;color:#991b1b;font-weight:700;margin-bottom:4px">⚠ Bu günde mantık dışı değerler vardı; sayımda 0 alındı. Satırı düzeltip Kaydet veya Sil deyin.</div>';
+      h += arr.length ? arr.map(function(e, i) {
+        return '<div style="display:grid;grid-template-columns:1fr 62px 62px auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #e2e8f0' + (e.bad ? ';background:#fef2f2' : '') + '">' +
+          '<div style="min-width:0"><div style="font-weight:800;color:#0f172a">' + dhEsc(e[0]) + (e.bad ? ' ⚠' : '') + '</div><div style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + dhEsc(e[1]) + '</div></div>' +
+          '<input type="number" min="0" step="1" id="dhM' + i + '" value="' + Math.round((+e[2] || 0) / 60) + '" title="dakika" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px;font-weight:700;width:100%">' +
+          '<input type="number" min="0" step="1" id="dhQ' + i + '" value="' + (+e[3] || 0) + '" title="soru" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px;font-weight:700;width:100%">' +
+          '<span style="display:flex;gap:4px"><button type="button" onclick="dhSaveRow(' + i + ')" style="background:#4f46e5;color:#fff;border-radius:8px;padding:5px 8px;font-weight:800">Kaydet</button><button type="button" onclick="dhDelRow(' + i + ')" style="background:#e11d48;color:#fff;border-radius:8px;padding:5px 8px;font-weight:800">Sil</button></span></div>';
+      }).join('') : '<div style="padding:10px;color:#64748b">Bu günde kayıt yok.</div>';
+      var subs = {}; Object.keys(dh.days).forEach(function(d) { (dh.days[d] || []).forEach(function(e) { if (e[0]) subs[e[0]] = 1; }); });
+      ['Matematik', 'Türkçe', 'Fen Bilimleri', 'Sosyal Bilgiler', 'İngilizce', 'Fizik', 'Kimya', 'Biyoloji', 'Tarih', 'Coğrafya', 'Edebiyat', 'Geometri'].forEach(function(x) { subs[x] = 1; });
+      h += '<datalist id="dhSubs">' + Object.keys(subs).map(function(x) { return '<option value="' + dhEsc(x) + '">'; }).join('') + '</datalist>' +
+        '<div style="margin-top:10px;padding:8px;border:1px dashed #94a3b8;border-radius:10px;background:#f8fafc"><div style="font-weight:800;margin-bottom:6px">+ Bu güne satır ekle</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 62px 62px auto;gap:6px;align-items:center"><input id="dhAS" list="dhSubs" placeholder="Ders" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px"><input id="dhAT" placeholder="Konu (isteğe bağlı)" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px">' +
+        '<input type="number" min="0" step="1" id="dhAM" placeholder="dk" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px"><input type="number" min="0" step="1" id="dhAQ" placeholder="soru" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px"><button type="button" onclick="dhAddRow()" style="background:#0f766e;color:#fff;border-radius:8px;padding:6px 10px;font-weight:800">Ekle</button></div></div>';
+    }
+    box.innerHTML = h;
+  }
+  function dhNewDay() {
+    var v = (document.getElementById('dhNewDate') || {}).value;
+    if (!v) { alert('Bir tarih seçin.'); return; }
+    if (v >= todayKey()) { alert('Geçmiş bir gün seçin. Bugünün verisi masa ekranından düzenlenir.'); return; }
+    if (!dh.days[v]) dh.days[v] = [];
+    dh.day = v; dh.newDay = true; dhRender();
+  }
+  function dhNum(id, max, lab) {
+    var raw = String(document.getElementById(id).value).trim(); if (raw === '') raw = '0';
+    if (!/^\d+$/.test(raw) || +raw > max) { alert(lab + ' 0 ile ' + max + ' arasında tam sayı olmalı.'); return null; }
+    return +raw;
+  }
+  function dhWrite(arr, msg) {
+    var day = dh.day; arr = arr.filter(function(e) { return (+e[2] || 0) > 0 || (+e[3] || 0) > 0; });
+    var clean = arr.map(function(e) { return [e[0] || 'Genel', e[1] || '', Math.round(+e[2] || 0), Math.round(+e[3] || 0)]; });
+    try {
+      var ref = fbDb.ref('deskLog/' + tpKey(dh.un) + '/' + day);
+      (clean.length ? ref.set(clean) : ref.remove()).then(function() {
+        if (clean.length) dh.days[day] = clean; else { delete dh.days[day]; }
+        dh.newDay = clean.length ? false : dh.newDay; try { delete anState.cache[dh.un]; } catch (x) {}
+        dhRender(); bkmToast(msg, 2500);
+        try { var ro = document.getElementById('rkOverlay'); if (ro && ro.style.display !== 'none') rkLoad(); } catch (x) {}
+        try { updateLeaderboards(); } catch (x) {}
+      }).catch(function(e) { alert('Kaydedilemedi: ' + ((e && e.code) || e)); });
+    } catch (e) { alert('Bağlantı yok, kaydedilemedi.'); }
+  }
+  function dhCur() { return (dh.days[dh.day] || []).map(function(e) { return [e[0], e[1], e[2], e[3]]; }); }
+  function dhSaveRow(i) {
+    var m = dhNum('dhM' + i, 960, 'Dakika'); if (m === null) return; var q = dhNum('dhQ' + i, QMAX_DAY, 'Soru sayısı'); if (q === null) return;
+    var a = dhCur(); a[i][2] = m * 60; a[i][3] = q; dhWrite(a, '✅ Kayıt güncellendi');
+  }
+  function dhDelRow(i) { if (!confirm('Bu satır silinsin mi?')) return; var a = dhCur(); a.splice(i, 1); dhWrite(a, '🗑️ Satır silindi'); }
+  function dhDelDay() { if (!confirm(dh.day + ' günündeki TÜM kayıtlar (' + dh.name + ') silinsin mi?')) return; dhWrite([], '🗑️ Gün silindi'); }
+  function dhAddRow() {
+    var sub = (document.getElementById('dhAS').value || '').trim(), top = (document.getElementById('dhAT').value || '').trim();
+    if (!sub) { alert('Ders adı girin.'); return; }
+    var m = dhNum('dhAM', 960, 'Dakika'); if (m === null) return; var q = dhNum('dhAQ', QMAX_DAY, 'Soru sayısı'); if (q === null) return;
+    if (!m && !q) { alert('Dakika veya soru girin.'); return; }
+    var a = dhCur(), k = -1; a.forEach(function(e, j) { if (k < 0 && e[0] === sub && (e[1] || '') === top) k = j; });
+    if (k > -1) { a[k][2] = (+a[k][2] || 0) + m * 60; a[k][3] = (+a[k][3] || 0) + q; } else a.push([sub, top, m * 60, q]);
+    dhWrite(a, '✅ Satır eklendi');
+  }
   </script>
 
 </body>
