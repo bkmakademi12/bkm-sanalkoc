@@ -13112,7 +13112,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=105', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=117', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -17316,17 +17316,17 @@
     function sigNow() { return (currentUser ? currentUser.username + '|' + currentUser.role : '-') + '|' + HUB_MENUS.map(function(m) { return m.items.map(function(i) { return can(i.key) ? 1 : 0; }).join(''); }).join(','); }
 
     window.hubRender = function(keepFocus) {
-      var vm = visibleMenus(), q = norm(st.q).trim(), closedN = vm.filter(function(x) { return st.closed[x.m.id]; }).length;
-      var anyOpen = vm.some(function(x) { return !st.closed[x.m.id] && !st.coll[x.m.id]; });
+      var stu = !!(currentUser && currentUser.role === 'student'), vm = visibleMenus(), q = norm(st.q).trim(), closedN = stu ? 0 : vm.filter(function(x) { return st.closed[x.m.id]; }).length;
+      var anyOpen = vm.some(function(x) { return (stu || !st.closed[x.m.id]) && !st.coll[x.m.id]; });
       var cards = '', shown = 0;
       vm.forEach(function(x) {
-        if (st.closed[x.m.id]) return;
+        if (!stu && st.closed[x.m.id]) return;
         var its = q ? x.items.filter(function(it) { return norm(it.name + ' ' + it.desc + ' ' + x.m.title).indexOf(q) > -1; }) : x.items;
         if (!its.length) return; shown++;
         var col = q ? false : !!st.coll[x.m.id];
         cards += '<div class="hub-card" data-id="' + x.m.id + '" style="--c:' + x.m.color + '"><div class="hub-hd"><i class="fa-solid ' + x.m.icon + ' ic"></i><b>' + esc(x.m.title) + '</b>' +
           '<button type="button" title="' + (col ? 'Aç' : 'Küçült') + '" onclick="hubColl(\'' + x.m.id + '\')"><i class="fa-solid ' + (col ? 'fa-expand' : 'fa-compress') + '"></i></button>' +
-          '<button type="button" class="x" title="Menüyü kapat" onclick="hubClose(\'' + x.m.id + '\')"><i class="fa-solid fa-xmark"></i></button></div>';
+          (stu ? '' : '<button type="button" class="x" title="Menüyü kapat" onclick="hubClose(\'' + x.m.id + '\')"><i class="fa-solid fa-xmark"></i></button>') + '</div>';
         if (!col) its.forEach(function(it) {
           var nm = esc(it.name); if (q) { var i0 = norm(it.name).indexOf(q); if (i0 > -1) nm = esc(it.name.slice(0, i0)) + '<span class="hub-hl">' + esc(it.name.slice(i0, i0 + q.length)) + '</span>' + esc(it.name.slice(i0 + q.length)); }
           cards += '<div class="hub-row"><button type="button" class="hub-name" onclick="hubGo(\'' + x.m.id + '\',\'' + it.key + '\')">' + nm + '</button><button type="button" class="hub-chev" title="Ayrıntı" onclick="hubSub(this)"><i class="fa-solid fa-chevron-down"></i></button></div>' +
@@ -17335,12 +17335,12 @@
         cards += '</div>';
       });
       var pop = '';
-      if (st.openList) pop = '<div class="hub-pop">' + (closedN ? vm.filter(function(x) { return st.closed[x.m.id]; }).map(function(x) { return '<div><span><i class="fa-solid ' + x.m.icon + '" style="color:' + x.m.color + ';width:22px"></i> ' + esc(x.m.title) + '</span><button type="button" onclick="hubOpenMenu(\'' + x.m.id + '\')">Aç</button></div>'; }).join('') : '<div style="color:#5b6b8c">Kapalı menü yok</div>') + '</div>';
+      if (st.openList && !stu) pop = '<div class="hub-pop">' + (closedN ? vm.filter(function(x) { return st.closed[x.m.id]; }).map(function(x) { return '<div><span><i class="fa-solid ' + x.m.icon + '" style="color:' + x.m.color + ';width:22px"></i> ' + esc(x.m.title) + '</span><button type="button" onclick="hubOpenMenu(\'' + x.m.id + '\')">Aç</button></div>'; }).join('') : '<div style="color:#5b6b8c">Kapalı menü yok</div>') + '</div>';
       var nm = currentUser && currentUser.name ? currentUser.name : '';
       wrap.innerHTML = '<div class="hub-top"><div class="hub-brand"><img src="' + (window.BKM_LOGO || './icon-192.png') + '" alt="BKM" onerror="this.style.display=\'none\'"><div><b>BKM AKADEMİ</b><small>' + esc(nm ? 'Hoş geldiniz, ' + nm : 'Modüller') + '</small></div></div>' +
         '<div class="hub-search"><input id="hubQ" type="text" placeholder="Menü Ara" autocomplete="off" value="' + esc(st.q) + '" oninput="hubSearch(this.value)"><button type="button" title="Ara" onclick="document.getElementById(\'hubQ\').focus()"><i class="fa-solid fa-magnifying-glass"></i></button></div>' +
         '<div class="hub-right">' + (window.kurumChip ? kurumChip() : '') + '<button type="button" class="hub-btn" title="' + (anyOpen ? 'Tümünü küçült' : 'Tümünü aç') + '" onclick="hubCollAll(' + (anyOpen ? 1 : 0) + ')"><i class="fa-solid ' + (anyOpen ? 'fa-compress' : 'fa-expand') + '"></i></button>' +
-        '<button type="button" class="hub-btn" onclick="hubPop()"><span class="lbl">Kapalı Menüler</span><span class="hub-badge">' + closedN + '</span></button>' +
+        (stu ? '' : '<button type="button" class="hub-btn" onclick="hubPop()"><span class="lbl">Kapalı Menüler</span><span class="hub-badge">' + closedN + '</span></button>') +
         '<button type="button" id="hubOrdReset" class="hub-btn" style="display:none" title="Menü sırasını sıfırla" onclick="hubOrderReset()"><i class="fa-solid fa-arrow-rotate-left"></i></button>' +
         '<button type="button" class="hub-btn out mod-logout88" title="Çıkış Yap" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i><span class="lbl">Çıkış</span></button>' + pop + '</div></div>' +
         (shown ? '<div class="hub-cols">' + cards + '</div>' : '<div class="hub-empty">' + (q ? 'Aramanızla eşleşen menü bulunamadı.' : (closedN ? 'Tüm menüler kapalı. "Kapalı Menüler" düğmesinden açabilirsiniz.' : 'Bu hesap için açık modül yok.')) + '</div>');
