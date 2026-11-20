@@ -8730,7 +8730,7 @@
         const isCurrentUserDesk = currentUser && currentUser.role === 'student' && 
                                   currentUser.branch === currentBranch && 
                                   currentUser.class === currentClass && 
-                                  currentUser.deskIndex === desk.deskNumber;
+                                  isMyDesk(desk.deskNumber);
 
         let cardStyleClass = '';
         let statusBadge = '';
@@ -9040,8 +9040,9 @@
       }
 
       if (currentUser.role === 'student') {
-        if (currentUser.branch !== currentBranch || currentUser.class !== currentClass || currentUser.deskIndex !== deskNum) {
-          alert(`Bu masa size ait değil! Kendi masanız: ${currentUser.branch} ${currentUser.class} Sıra #${currentUser.deskIndex}`);
+        try { deskHeal(); } catch (e) {}
+      if (currentUser.branch !== currentBranch || currentUser.class !== currentClass || !isMyDesk(deskNum)) {
+          alert(`Bu masa size ait değil! Kendi masanız: ${currentUser.branch} ${currentUser.class} Sıra #${(myDeskObj() || {}).deskNumber || currentUser.deskIndex}`);
           return;
         }
       }
@@ -9353,7 +9354,7 @@
 
         let defaultSessions = 4;
         if (currentUser.role === 'student' && currentUser.class) {
-          const desk = branchesData[currentUser.branch]?.[currentUser.class]?.find(d => d.deskNumber === currentUser.deskIndex);
+          const desk = branchesData[currentUser.branch]?.[currentUser.class]?.find(d => d.deskNumber === ((myDeskObj() || {}).deskNumber || currentUser.deskIndex));
           if (desk) {
             defaultSessions = Math.max(desk.sessionsCompleted || 1, 1);
             if (document.getElementById('repTopics')) {
@@ -9640,7 +9641,7 @@
           const stReports = filteredReports.filter(r => 
             (r.username && st.username && r.username.trim().toLowerCase() === st.username.trim().toLowerCase()) ||
             (r.studentName && st.studentName && r.studentName.trim().toLowerCase() === st.studentName.trim().toLowerCase()) ||
-            (r.deskIndex === st.deskNumber && (r.class === currentClass || currentClass === 'Tümü'))
+            (!(r.username || r.studentName) && r.deskIndex === st.deskNumber && (r.class === currentClass || currentClass === 'Tümü'))
           );
           let stPages = 0, stMins = 0, stSess = 0;
           let books = [], notes = [];
@@ -9716,7 +9717,7 @@
         const stReports = filteredReports.filter(r => 
           (r.username && st.username && r.username.trim().toLowerCase() === st.username.trim().toLowerCase()) ||
           (r.studentName && st.studentName && r.studentName.trim().toLowerCase() === st.studentName.trim().toLowerCase()) ||
-          (r.deskIndex === st.deskNumber && (r.class === currentClass || currentClass === 'Tümü'))
+          (!(r.username || r.studentName) && r.deskIndex === st.deskNumber && (r.class === currentClass || currentClass === 'Tümü'))
         );
         let dCount = 0, yCount = 0, bCount = 0, sessions = 0;
         let topicsArr = [], notesArr = [];
@@ -10559,7 +10560,7 @@
       if (currentAnalyticsSubject === 'Kitap Okuma') {
         csv = 'Sube,Sinif,Sira_No,Ogrenci_Adi,Kullanici_Adi,Okuma_Suresi_Dk,Okunan_Sayfa_Sayisi,Okunan_Kitaplar,Etut_Sayisi,Donem\n';
         classStudents.forEach(st => {
-          const stReports = filteredReports.filter(r => r.deskIndex === st.deskNumber || r.studentName === st.studentName);
+          const stReports = filteredReports.filter(r => (r.username && st.username) ? r.username.toLowerCase() === st.username.toLowerCase() : (r.studentName ? r.studentName === st.studentName : r.deskIndex === st.deskNumber));
           let stPages = 0, stMins = 0, stSess = 0;
           let books = [];
           stReports.forEach(rep => {
@@ -10576,7 +10577,7 @@
       } else {
         csv = 'Sube,Sinif,Sira_No,Ogrenci_Adi,Ders,Dogru,Yanlis,Bos,Toplam_Soru,Net,Etut_Sayisi,Donem\n';
         classStudents.forEach(st => {
-          const stReports = filteredReports.filter(r => r.deskIndex === st.deskNumber || r.studentName === st.studentName);
+          const stReports = filteredReports.filter(r => (r.username && st.username) ? r.username.toLowerCase() === st.username.toLowerCase() : (r.studentName ? r.studentName === st.studentName : r.deskIndex === st.deskNumber));
           let d = 0, y = 0, b = 0, sess = 0;
           stReports.forEach(rep => {
             sess += (rep.sessionCount || 0);
@@ -13112,7 +13113,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=117', { scope: './' })
+        navigator.serviceWorker.register('./sw.js?v=120', { scope: './' })
           .then((reg) => {
             console.log('BKM Service Worker kayıtlı:', reg.scope);
             reg.update();
@@ -13438,7 +13439,7 @@
     var r = _osrm8.apply(this, arguments);
     try {
       if (!currentUser || currentUser.role !== 'student') return r;
-      var desk = ((branchesData[currentUser.branch] || {})[currentUser.class] || []).find(function(x){ return x.deskNumber === currentUser.deskIndex; }) || {};
+      var desk = ((branchesData[currentUser.branch] || {})[currentUser.class] || []).find(function(x){ return x.deskNumber === ((myDeskObj() || {}).deskNumber || currentUser.deskIndex); }) || {};
       var secs = desk.secondsStudied || 0, mins = Math.floor(secs / 60), sess = Math.max(desk.sessionsCompleted || 0, Math.round(secs / 2400));
       var inp = document.getElementById('repSessionCount'), par = inp && inp.parentNode, info = document.getElementById('repDeskInfo');
       if (par && !info) { info = document.createElement('div'); info.id = 'repDeskInfo'; info.style.cssText = 'grid-column:1/-1;margin-bottom:8px;padding:8px 10px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12px;font-weight:600'; par.parentNode.insertBefore(info, par); }
@@ -17247,7 +17248,8 @@
     { id: 'qs', title: 'SORU ÇÖZÜM', icon: 'fa-circle-question', color: BKM_C.sky, items: [
       { name: 'Soru Çözüm Sırası', key: 'qs', desc: 'Öğretmenle soru çözüm sırası ve istatistikleri', go: function() { pickModule('qs'); } } ] },
     { id: 'exam', title: 'ÖLÇME VE DEĞERLENDİRME', icon: 'fa-clipboard-list', color: BKM_C.red, items: [
-      { name: 'Sınavlar', key: 'exam', desc: 'Sınav tanımlama, şubelere aktarma ve sonuçlar', go: function() { pickModule('exam'); olcTab('sinav'); } },
+      { name: 'Sınavlar', key: 'exam', desc: 'Uygulanan sınavlar, sonuç yükleme ve sonuçlar', go: function() { pickModule('exam'); olcTab('sinav'); } },
+      { name: 'Denemeler', key: 'exam', desc: 'Deneme tanımla, cevap anahtarı ve kazanım yükle, sınav uygula', go: function() { pickModule('exam'); olcTab('deneme'); } },
       { name: 'Sınav Analizi', key: 'exam', desc: 'Sınıf ve öğrenci bazlı sınav analizleri', go: function() { pickModule('exam'); olcTab('analiz'); } },
       { name: 'Hata Kitapçığı', key: 'exam', desc: 'Yanlış yapılan soruların kişisel kitapçığı', go: function() { pickModule('exam'); olcTab('hata'); } },
       { name: 'Sınav Oturma Planı', key: 'exam', desc: 'Salon dağıtımı, oturma listesi ve Excel çıktısı', go: function() { pickModule('exam'); olcTab('oturma'); rtOpen(); } } ] },
@@ -19381,7 +19383,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   function need() {
     var b = sc(); if (b.length !== 1) { alert('Önce üstteki Kurum alanından bir kurum seçin (ana kurumdayken kayıt yapılamaz).'); return ''; } return b[0];
   }
-  function sList() { var s = sc(); return Object.keys(O.sinav).map(function(k) { return O.sinav[k]; }).filter(function(x) { return x && (!x.kurum || s.indexOf(x.kurum) > -1); }); }
+  function sList() { var s = sc(); return Object.keys(O.sinav).map(function(k) { return O.sinav[k]; }).filter(function(x) { return x && !x.dn && (!x.kurum || s.indexOf(x.kurum) > -1); }); }
   function aList() { var s = sc(); return Object.keys(O.analiz).map(function(k) { return O.analiz[k]; }).filter(function(x) { return x && (!x.kurum || s.indexOf(x.kurum) > -1); }); }
   function rows(sid) { var r = O.sonuc[sid]; return r ? Object.keys(r).map(function(k) { return r[k]; }) : []; }
 
@@ -19420,6 +19422,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
           var gi = ds.off + i, q = qOf(fr, gi), pos = gi;
           if (X !== 'A' && q.d && q.d[X]) { var p = parseInt(q.d[X], 10); if (p > 0) pos = p - 1; }
           var ch = a[pos] || '', ans = /[A-F]/.test(ch) ? ch : '', k = q.k || '';
+          if (q.x) { d++; det.push({ s: 'D', a: ans, k: k || 'X' }); continue; }
           if (!k) { det.push({ s: 'I', a: ans, k: '' }); continue; }
           if (!ans) { b++; det.push({ s: 'B', a: '', k: k }); } else if (ans === k) { d++; det.push({ s: 'D', a: ans, k: k }); } else { y++; det.push({ s: 'Y', a: ans, k: k }); }
         }
@@ -19452,7 +19455,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     '.ol-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.ol-k{background:#F8FBFF;border:1px solid #dbeafe;border-radius:8px;padding:10px 12px}.ol-k small{display:block;color:#64748b;font-size:11px}.ol-k b{font-size:20px;color:#0201E3}';
   document.head.appendChild(css);
 
-  function redraw() { if (O.busy) return; var b = $('olcBody'); if (b && !$('examModule').classList.contains('hidden') && (O.tab === 'sinav' || O.tab === 'analiz' || O.tab === 'hata') && !$('olOv')) draw(); }
+  function redraw() { if (O.busy) return; var b = $('olcBody'); if (b && !$('examModule').classList.contains('hidden') && (O.tab === 'sinav' || O.tab === 'deneme' || O.tab === 'analiz' || O.tab === 'hata') && !$('olOv')) draw(); }
   function dlg(title, body, foot, w) {
     var ov = $('olOv'); if (!ov) { ov = document.createElement('div'); ov.id = 'olOv'; document.body.appendChild(ov); ov.addEventListener('mousedown', function(e) { if (e.target === ov && !O.lock) olClose(); }); }
     ov.innerHTML = '<div class="ol-dlg" style="max-width:' + (w || 720) + 'px"><div class="ol-h"><b>' + title + '</b><a onclick="olClose()">✕</a></div><div class="ol-bd" id="olBd">' + body + '</div><div class="ol-f" id="olFt">' + (foot || '') + '</div></div>';
@@ -19460,7 +19463,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   function setDlg(body, foot) { var b = $('olBd'), f = $('olFt'); if (b) b.innerHTML = body; if (f) f.innerHTML = foot || ''; }
   window.olClose = function() { var o = $('olOv'); if (o) o.remove(); O.lock = false; draw(); };
 
-  var TABS = [['sinav', 'Sınavlar'], ['analiz', 'Sınav Analizi'], ['hata', 'Hata Kitapçığı'], ['oturma', 'Sınav Oturma Planı']];
+  var TABS = [['sinav', 'Sınavlar'], ['deneme', 'Denemeler'], ['analiz', 'Sınav Analizi'], ['hata', 'Hata Kitapçığı'], ['oturma', 'Sınav Oturma Planı']];
   window.olcTab = function(t) {
     if (t) O.tab = t;
     if (O.tab === 'oturma') { if (_oldTab) _oldTab(t); return; }
@@ -19469,7 +19472,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   function draw() {
     var tb = $('olcTabs'), bd = $('olcBody'); if (!tb || !bd) return;
     tb.innerHTML = TABS.map(function(x) { return '<button type="button" class="' + (x[0] === O.tab ? 'on' : '') + '" onclick="olcTab(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('');
-    bd.innerHTML = '<div class="ol-w">' + (O.tab === 'sinav' ? vSinav() : O.tab === 'analiz' ? vAnaliz() : vHata()) + '</div>';
+    bd.innerHTML = '<div class="ol-w">' + (O.tab === 'sinav' ? vSinav() : O.tab === 'deneme' ? vDeneme() : O.tab === 'analiz' ? vAnaliz() : vHata()) + '</div>';
   }
   window.olQ = function(v) { O.q = v; draw(); var i = document.querySelector('#olcBody .ol-q-in'); if (i) { i.focus(); i.setSelectionRange(99, 99); } };
 
@@ -19487,8 +19490,11 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   var TPL = [
     { id: 'lgs1', ad: 'LGS (Tek Oturum) · A-B', tur: 'LGS', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'LGS', kit: ['A', 'B'], dersler: cp(SOZEL.concat(SAYISAL)) }]; }, hesap: lgsH },
     { id: 'lgs1d', ad: 'LGS (Tek Oturum) · A-B-C-D', tur: 'LGS', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'LGS', kit: ['A', 'B', 'C', 'D'], dersler: cp(SOZEL.concat(SAYISAL)) }]; }, hesap: lgsH },
-    { id: 'lgs2', ad: 'LGS (Çift Oturum: Sözel + Sayısal) · A-B', tur: 'LGS', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'Sözel', kit: ['A', 'B'], dersler: cp(SOZEL) }, { ad: 'Sayısal', kit: ['A', 'B'], dersler: cp(SAYISAL) }]; }, hesap: lgsH },
-    { id: 'lgs2d', ad: 'LGS (Çift Oturum) · A-B-C-D', tur: 'LGS', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'Sözel', kit: ['A', 'B', 'C', 'D'], dersler: cp(SOZEL) }, { ad: 'Sayısal', kit: ['A', 'B', 'C', 'D'], dersler: cp(SAYISAL) }]; }, hesap: lgsH },
+    { id: 'lgs2', ad: 'LGS (Sözel + Sayısal bir arada) · A-B', tur: 'LGS', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'Sözel', kit: ['A', 'B'], dersler: cp(SOZEL) }, { ad: 'Sayısal', kit: ['A', 'B'], dersler: cp(SAYISAL) }]; }, hesap: lgsH },
+    { id: 'lgs2d', ad: 'LGS (Sözel + Sayısal bir arada) · A-B-C-D', tur: 'LGS', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'Sözel', kit: ['A', 'B', 'C', 'D'], dersler: cp(SOZEL) }, { ad: 'Sayısal', kit: ['A', 'B', 'C', 'D'], dersler: cp(SAYISAL) }]; }, hesap: lgsH },
+    { id: 'tyt', ad: 'TYT (Türkçe, Sosyal, Matematik, Fen) · A-B', tur: 'TYT', seviye: '12', sec: 5, formlar: function() { return [{ ad: 'TYT', kit: ['A', 'B'], dersler: [{ ad: 'Türkçe', n: 40 }, { ad: 'Sosyal Bilimler', n: 20 }, { ad: 'Temel Matematik', n: 40 }, { ad: 'Fen Bilimleri', n: 20 }] }]; }, hesap: null },
+    { id: 'ayts', ad: 'AYT Sayısal (Mat, Fizik, Kimya, Biyoloji) · A-B', tur: 'AYT', seviye: '12', sec: 5, formlar: function() { return [{ ad: 'AYT', kit: ['A', 'B'], dersler: [{ ad: 'Matematik', n: 40 }, { ad: 'Fizik', n: 14 }, { ad: 'Kimya', n: 13 }, { ad: 'Biyoloji', n: 13 }] }]; }, hesap: null },
+    { id: 'ayte', ad: 'AYT Eşit Ağırlık (Mat, Edebiyat-Sosyal 1, Sosyal 2) · A-B', tur: 'AYT', seviye: '12', sec: 5, formlar: function() { return [{ ad: 'AYT', kit: ['A', 'B'], dersler: [{ ad: 'Matematik', n: 40 }, { ad: 'Türk Dili ve Edebiyatı - Sosyal Bilimler 1', n: 40 }] }]; }, hesap: null },
     { id: 'bos', ad: 'Boş şablon (kendim tanımlayacağım)', tur: 'Deneme', seviye: '8', sec: 4, formlar: function() { return [{ ad: 'Form 1', kit: ['A'], dersler: [] }]; }, hesap: null }
   ];
   function myTpl() { var s = sc(); return Object.keys(O.sablon || {}).map(function(k) { return O.sablon[k]; }).filter(function(x) { return x && (!x.kurum || s.indexOf(x.kurum) > -1); }); }
@@ -19511,7 +19517,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     return '<div class="ol-bar"><b class="t">Sınav Yönetimi <small style="color:#64748b;font-weight:400;font-size:12px">Şablon seç, formları ve kitapçıkları belirle, anahtar/kazanım yükle</small></b>' +
       '<input class="ol-in ol-q-in" style="width:200px" placeholder="Ara..." value="' + E(O.q) + '" oninput="olQ(this.value)">' +
       (isMainAdmin() ? '<button type="button" class="ol-b or" onclick="olSinavAktar()"><i class="fa-solid fa-share-nodes"></i> Alt Kurumlara Aktar</button>' : '') +
-      '<button type="button" class="ol-b" onclick="olSinavEdit(\'\')"><i class="fa-solid fa-plus"></i> Yeni Sınav</button></div>' +
+      '<button type="button" class="ol-b gr" onclick="olUygulaSec()"><i class="fa-solid fa-play"></i> Denemeden Sınav Uygula</button><button type="button" class="ol-b o" onclick="olSinavEdit(\'\')"><i class="fa-solid fa-plus"></i> Yeni Sınav</button></div>' +
       '<div class="ol-card"><table class="ol-t"><thead><tr><th>İşlemler</th><th>Sınav Adı</th><th>Tür</th><th>Formlar (kitapçık)</th><th class="c">Sınıf</th><th>Tarih</th><th class="c">Soru</th><th class="c">Anahtar</th><th class="c">Kazanım</th><th class="c">Katılım</th><th class="c">Ort. Net</th></tr></thead><tbody>' +
       (body || '<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Henüz sınav yok. "Yeni Sınav" → önce şablon seçin (ör. LGS Tek/Çift Oturum).</td></tr>') + '</tbody></table></div>';
   }
@@ -19524,10 +19530,10 @@ body.mod-etut>header #userBadge button{color:#475569!important}
 
   // ---------------- Yeni sınav / düzenle ----------------
   var D = null;
-  window.olSinavEdit = function(id) {
+  window.olSinavEdit = function(id, dn) {
     closeDD(); var s = id ? O.sinav[id] : null; if (!s && !need()) return;
     if (s) { D = cp(s); D.formlar = cp(nzForms(s)); D.hesap = s.hesap ? cp(s.hesap) : null; }
-    else D = { id: '', ad: '', no: '', tarih: today(), saat: '', tur: 'LGS', seviye: '8', sec: 4, kural: 'dg', formlar: [], hesap: null, tpl: '' };
+    else D = { id: '', dn: dn ? 1 : 0, yayin: '', ad: '', no: '', tarih: today(), saat: '', tur: 'LGS', seviye: '8', sec: 4, kural: 'dg', formlar: [], hesap: null, tpl: '' };
     D._fi = 0; D._hs = !!D.hesap; O.lock = true; drawSinavDlg(true);
   };
   function drawSinavDlg(first) {
@@ -19545,9 +19551,9 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     var hs = D._hs ? '<div class="ol-g2"><div class="ol-fr"><label>Taban puan</label><input class="ol-in" id="oh_taban" value="' + E(D.hesap ? D.hesap.taban : 0) + '"></div><div class="ol-fr"><label>Tavan puan</label><input class="ol-in" id="oh_tavan" value="' + E(D.hesap ? D.hesap.tavan : 500) + '"></div></div>' +
       '<label class="ol-row" style="cursor:pointer"><input type="checkbox" id="oh_eksi" ' + (!D.hesap || D.hesap.eksi !== false ? 'checked' : '') + '> Eksi netleri hesaba dahil et</label>' +
       '<div class="ol-card"><table class="ol-t"><thead><tr><th>Ders</th><th style="width:150px">Katsayı</th></tr></thead><tbody>' + dl.map(function(ad, i) { return '<tr><td>' + E(ad) + '</td><td><input class="ol-in" style="width:130px" id="oh_k' + i + '" data-ad="' + E(ad) + '" value="' + E(katOf(D.hesap, ad)) + '"></td></tr>'; }).join('') + '</tbody></table></div><div class="ol-info">Puan = Taban + Σ (ders neti × katsayı), en çok Tavan puan.</div>' : '<div style="color:#64748b;font-size:12px">Puan hesaplanmayacak (yalnızca net). Açmak için tıklayın.</div>';
-    var h = '<div class="ol-g2"><div class="ol-fr"><label>Sınav adı *</label><input class="ol-in" id="os_ad" value="' + E(D.ad) + '" placeholder="Örn. 8. SINIF 7. DENEME SINAVI"></div><div class="ol-fr"><label>Sınav no</label><input class="ol-in" id="os_no" value="' + E(D.no) + '"></div>' +
-      '<div class="ol-fr"><label>Uygulama zamanı *</label><div style="display:flex;gap:6px"><input class="ol-in" type="date" id="os_tarih" value="' + E(D.tarih) + '"><input class="ol-in" type="time" id="os_saat" style="width:110px" value="' + E(D.saat) + '"></div></div>' +
-      '<div class="ol-fr"><label>Sınav türü</label><select class="ol-in" id="os_tur">' + ['LGS', 'Deneme', 'Konu Tarama', 'Yazılı', 'Diğer'].map(function(t) { return '<option' + (D.tur === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>' +
+    var h = '<div class="ol-g2"><div class="ol-fr"><label>' + (D.dn ? 'Deneme adı' : 'Sınav adı') + ' *</label><input class="ol-in" id="os_ad" value="' + E(D.ad) + '" placeholder="Örn. 8. SINIF 7. DENEME SINAVI"></div><div class="ol-fr"><label>Sınav no</label><input class="ol-in" id="os_no" value="' + E(D.no) + '"></div>' +
+      (D.dn ? '<div class="ol-fr"><label>Yayın / Deneme seti</label><input class="ol-in" id="os_yayin" value="' + E(D.yayin || '') + '" placeholder="Örn. Mozaik Yayınları"></div>' : '<div class="ol-fr"><label>Uygulama zamanı *</label><div style="display:flex;gap:6px"><input class="ol-in" type="date" id="os_tarih" value="' + E(D.tarih) + '"><input class="ol-in" type="time" id="os_saat" style="width:110px" value="' + E(D.saat) + '"></div></div>') +
+      '<div class="ol-fr"><label>Sınav türü</label><select class="ol-in" id="os_tur">' + ['LGS', 'TYT', 'AYT', 'Deneme', 'Konu Tarama', 'Yazılı', 'Diğer'].map(function(t) { return '<option' + (D.tur === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>' +
       '<div class="ol-fr"><label>Sınıf seviyesi</label><select class="ol-in" id="os_sev">' + [4, 5, 6, 7, 8, 9, 10, 11, 12].map(function(s) { return '<option value="' + s + '"' + (String(D.seviye) === String(s) ? ' selected' : '') + '>' + s + '. sınıf</option>'; }).join('') + '</select></div>' +
       '<div class="ol-fr"><label>Seçenek sayısı</label><select class="ol-in" id="os_sec"><option value="4"' + (+D.sec === 4 ? ' selected' : '') + '>4 (A-D)</option><option value="5"' + (+D.sec === 5 ? ' selected' : '') + '>5 (A-E)</option></select></div>' +
       '<div class="ol-fr"><label>Sınav kuralı</label><select class="ol-in" id="os_kural"><option value="dg"' + (D.kural !== 'yok' ? ' selected' : '') + '>Yanlışlar doğruyu götürür (4 seçenek: 3 yanlış 1 doğru)</option><option value="yok"' + (D.kural === 'yok' ? ' selected' : '') + '>Yanlış doğruyu götürmez</option></select></div></div>' +
@@ -19557,11 +19563,11 @@ body.mod-etut>header #userBadge button{color:#475569!important}
       '<div class="ol-fr"><label><a style="cursor:pointer;color:#0201E3" onclick="olHesapTog()">' + (D._hs ? '▾' : '▸') + ' Hesaplama (puan)</a></label>' + hs + '</div>';
     var f = '<button type="button" class="ol-b o" style="margin-right:auto" onclick="olTplSave()"><i class="fa-solid fa-star"></i> Şablon olarak kaydet</button><button type="button" class="ol-b" onclick="olSinavSave()">Kaydet</button><button type="button" class="ol-b g" onclick="olWCancel()">Kapat</button>';
     var sc0 = first ? 0 : (($('olBd') || {}).scrollTop || 0);
-    if (first) dlg(D.id ? 'Sınavı Düzenle' : 'Yeni Sınav', h, f, 900); else setDlg(h, f);
+    if (first) dlg(D.dn ? (D.id ? 'Denemeyi Düzenle' : 'Yeni Deneme Tanımla') : (D.id ? 'Sınavı Düzenle' : 'Yeni Sınav'), h, f, 900); else setDlg(h, f);
     if ($('olBd')) $('olBd').scrollTop = sc0;
   }
   function readSinav() {
-    if (!$('os_ad')) return; D.ad = $('os_ad').value; D.no = $('os_no').value; D.tarih = $('os_tarih').value; D.saat = $('os_saat').value; D.tur = $('os_tur').value; D.seviye = $('os_sev').value; D.sec = +$('os_sec').value; D.kural = $('os_kural').value;
+    if (!$('os_ad')) return; D.ad = $('os_ad').value; D.no = $('os_no').value; if ($('os_tarih')) { D.tarih = $('os_tarih').value; D.saat = $('os_saat').value; } if ($('os_yayin')) D.yayin = $('os_yayin').value; D.tur = $('os_tur').value; D.seviye = $('os_sev').value; D.sec = +$('os_sec').value; D.kural = $('os_kural').value;
     olFormRead(true);
     if (D._hs && $('oh_taban')) { D.hesap = { taban: parseFloat(String($('oh_taban').value).replace(',', '.')) || 0, tavan: parseFloat(String($('oh_tavan').value).replace(',', '.')) || 500, eksi: $('oh_eksi').checked, kats: [] }; document.querySelectorAll('#olBd input[id^=oh_k]').forEach(function(i) { D.hesap.kats.push({ ad: i.getAttribute('data-ad'), k: parseFloat(String(i.value).replace(',', '.')) || 0 }); }); }
   }
@@ -19591,18 +19597,18 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   };
   window.olWCancel = function() { W = null; D = null; olClose(); };
   window.olSinavSave = function() {
-    readSinav(); if (!D.ad.trim()) { alert('Sınav adı zorunludur.'); return; } if (!D.tarih) { alert('Uygulama zamanı zorunludur.'); return; }
+    readSinav(); if (!D.ad.trim()) { alert('Sınav adı zorunludur.'); return; } if (!D.dn && !D.tarih) { alert('Uygulama zamanı zorunludur.'); return; }
     if (!D.formlar.length) { alert('En az bir form ekleyin (şablon seçebilirsiniz).'); return; }
     for (var i = 0; i < D.formlar.length; i++) { var f = D.formlar[i]; if (!arr(f.dersler).length) { alert('"' + f.ad + '" formunda ders yok.'); return; } for (var j = 0; j < f.dersler.length; j++) if (!String(f.dersler[j].ad).trim() || !(f.dersler[j].n > 0)) { alert('"' + f.ad + '" formunda ders adı ve soru sayısı zorunludur.'); return; } }
     var kurum = D.id ? (O.sinav[D.id] || {}).kurum : need(); if (!kurum) return;
-    if (sList().some(function(x) { return x.id !== D.id && up(x.ad) === up(D.ad) && x.tarih === D.tarih; })) { alert('Aynı ad ve tarihte bir sınav zaten var.'); return; }
+    if ((D.dn ? dList() : sList()).some(function(x) { return x.id !== D.id && up(x.ad) === up(D.ad) && (D.dn || x.tarih === D.tarih); })) { alert(D.dn ? 'Aynı adlı bir deneme zaten var.' : 'Aynı ad ve tarihte bir sınav zaten var.'); return; }
     var old = D.id ? O.sinav[D.id] : null, oldF = old ? nzForms(old) : [];
     var formlar = D.formlar.map(function(f, fi) {
       var dersler = arr(f.dersler).map(function(d) { return { ad: String(d.ad).trim(), n: +d.n }; }), N = dersler.reduce(function(a, d) { return a + d.n; }, 0), q = [], of = oldF[fi];
       for (var k = 0; k < N; k++) q.push(of && of.q && of.q[k] ? of.q[k] : { k: '', z: ['', '', ''], d: {} });
       return { ad: f.ad.trim() || ('Form ' + (fi + 1)), kit: arr(f.kit).length ? arr(f.kit) : ['A'], dersler: dersler, q: q };
     });
-    var o = { id: D.id || nid('s'), ad: D.ad.trim(), no: D.no, tarih: D.tarih, saat: D.saat, tur: D.tur, seviye: D.seviye, sec: D.sec, kural: D.kural, tpl: D.tpl || '', kurum: kurum, created: (old && old.created) || Date.now(), formlar: formlar, hesap: D._hs ? D.hesap : null };
+    var o = { id: D.id || nid('s'), dn: D.dn ? 1 : 0, yayin: D.yayin || '', denemeId: (old && old.denemeId) || '', subeler: (old && old.subeler) || [], ad: D.ad.trim(), no: D.no, tarih: D.dn ? '' : D.tarih, saat: D.saat, tur: D.tur, seviye: D.seviye, sec: D.sec, kural: D.kural, tpl: D.tpl || '', kurum: kurum, created: (old && old.created) || Date.now(), formlar: formlar, hesap: D._hs ? D.hesap : null };
     if (put('olcSinav/' + o.id, o)) { var yeni = !D.id; O.sinav[o.id] = o; D = null; O.lock = false; olClose(); if (yeni) setTimeout(function() { olForm(o.id, 0); }, 50); }
   };
   window.olSinavDel = function(id) { closeDD(); var s = O.sinav[id]; if (!s || !confirm('"' + s.ad + '" sınavı ve yüklenen sonuçları silinsin mi?\n(Analizlerde kullanılıyorsa analizler etkilenir.)')) return; put('olcSinav/' + id, null); put('olcSonuc/' + id, null); delete O.sinav[id]; delete O.sonuc[id]; draw(); };
@@ -19619,7 +19625,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     var dons = arr(fr.kit).filter(function(k) { return k !== 'A'; }).map(function(k) { var c = 0; for (var i = 0; i < N; i++) { var q = qOf(fr, i); if (q.d && q.d[k]) c++; } return k + ': ' + (c ? c + '/' + N : 'sıra aynı'); }).join(' · ');
     var h = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' + tabs + '</div>' +
       '<div class="ol-info"><b>' + E(sn.ad) + ' · ' + E(fr.ad) + '</b> — kitapçıklar: ' + arr(fr.kit).join(', ') + ' · ' + N + ' soru' + (dons ? '<br>Dönüşüm → ' + dons : '') + '</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="ol-b o" onclick="olFormSablon()"><i class="fa-solid fa-download"></i> Bu form için Excel şablonunu indir</button><label class="ol-b gr" style="cursor:pointer"><i class="fa-solid fa-file-arrow-up"></i> Excel ile Yükle (anahtar + dönüşüm + kazanım)<input type="file" accept=".xlsx,.xls" style="display:none" onchange="olFormXlsx(this)"></label></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="ol-b o" onclick="olFormSablon()"><i class="fa-solid fa-download"></i> Excel şablonunu indir (tüm oturumlar tek dosya)</button><label class="ol-b gr" style="cursor:pointer"><i class="fa-solid fa-file-arrow-up"></i> Excel ile Yükle (anahtar + dönüşüm + kazanım · tüm oturumlar)<input type="file" accept=".xlsx,.xls" style="display:none" onchange="olFormXlsx(this)"></label></div>' +
       '<div class="ol-card"><table class="ol-t"><thead><tr><th>Ders</th><th class="c" style="width:70px">Soru</th><th>Cevap anahtarı (A kitapçığı sırasıyla; bilinmeyen için -)</th><th class="c" style="width:90px">Kazanım</th></tr></thead><tbody>' +
       fl.map(function(d, i) { return '<tr><td><b>' + E(d.ad) + '</b></td><td class="c">' + d.n + '</td><td><input class="ol-in" style="width:100%;font-family:monospace;letter-spacing:1px" id="ok_' + i + '" value="' + E(d.key) + '" onchange="olKeyRead()"></td><td class="c">' + (d.kz ? '<span class="ol-chip g">' + d.kz + '/' + d.n + '</span>' : '<span class="ol-chip y">yok</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
     var f = '<button type="button" class="ol-b" onclick="olFormSave()">Kaydet</button><button type="button" class="ol-b g" onclick="olFormClose()">Kapat</button>';
@@ -19663,6 +19669,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     Object.keys(k.kyt || {}).forEach(function(id) { var y = k.kyt[id]; if (!y || (kurum && y.sube !== kurum) || !k.ogr[y.ogrId] || y.durum === 'pasif' || y.ayrilma) return; if (lv && sevN(y.seviye) !== lv) return; if (seen[y.ogrId]) return; seen[y.ogrId] = 1; stu.push([y.no || '', stuName(y.ogrId), subeOf(y.ogrId).join(', ')]); });
     stu.sort(function(x, y) { return (parseInt(x[0], 10) || 99999) - (parseInt(y[0], 10) || 99999); });
     nzForms(sn).forEach(function(fr) { var a = [['Öğrenci No', 'Ad Soyad', 'Şube', 'Kitapçık', 'Cevaplar']]; stu.forEach(function(s) { a.push(s.concat(['A', ''])); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), String(fr.ad).slice(0, 28)); });
+    if (nzForms(sn).length > 1) { var a2 = [['Öğrenci No', 'Ad Soyad', 'Şube', 'Kitapçık', 'Cevaplar']]; stu.forEach(function(s) { a2.push(s.concat(['A', ''])); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a2), 'Tek optik (tüm oturum)'); }
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Cevaplar sütununa o formun tüm cevaplarını soru sırasıyla bitişik yazın (boş için - ). Yayınınızın Excel\'i farklıysa "Sonuç Yükle" ekranında sütunları eşleştirebilirsiniz.']]), 'Açıklama');
     XLSX.writeFile(wb, 'Sonuc_Sablonu_' + fold(sn.ad).replace(/ /g, '_') + '.xlsx');
   };
@@ -19671,7 +19678,7 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   var IM = null;
   function hdrRow(aoa) { for (var i = 0; i < Math.min(aoa.length, 20); i++) { if (aoa[i].filter(function(c) { return String(c).trim() !== ''; }).length >= 3) return i; } return 0; }
   function autoMap(sn, fi, hdr) {
-    var fr = nzForms(sn)[fi], m = { no: -1, ad: -1, kit: -1, mode: 'tek', tek: -1, ders: {}, soru1: -1 }, f = hdr.map(fold);
+    var fr = fi === 'all' ? IMF() : nzForms(sn)[fi], m = { no: -1, ad: -1, kit: -1, mode: 'tek', tek: -1, ders: {}, soru1: -1 }, f = hdr.map(fold);
     m.no = f.findIndex(function(x) { return /^(ogrenci )?(no|numara)$|^ogr no$|^okul no$|ogrenci no|ogrenci numara/.test(x); });
     m.ad = f.findIndex(function(x) { return /ad soyad|adi soyadi|^isim$|^ad$|^adi$|ogrenci adi|^ogrenci$/.test(x); });
     m.kit = f.findIndex(function(x) { return x.indexOf('kitapcik') > -1 && x.indexOf('donusum') < 0; });
@@ -19687,10 +19694,10 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   };
   function colOpts(sel) { var hdr = IM.aoa[IM.hr]; return '<option value="-1">— yok —</option>' + hdr.map(function(h, i) { return '<option value="' + i + '"' + (+sel === i ? ' selected' : '') + '>' + E(String(h).trim() || ('(sütun ' + (i + 1) + ')')) + '</option>'; }).join(''); }
   function drawIm(first) {
-    var sn = O.sinav[IM.sid], forms = nzForms(sn), fr = forms[IM.fi], n = arr(fr.dersler).reduce(function(a, d) { return a + d.n; }, 0);
+    var sn = O.sinav[IM.sid], forms = nzForms(sn), fr = IMF(), n = arr(fr.dersler).reduce(function(a, d) { return a + d.n; }, 0);
     var h = '<div class="ol-info">Excel biçimi yayından yayına değişir; bu yüzden sütunları siz eşleştirirsiniz. Bir kez eşleştirip <b>yayın profili</b> olarak kaydedin, sonraki yüklemelerde tek tıkla uygulansın.</div>' +
       (katilim(IM.sid) ? '<div class="ol-warn">Bu sınav için ' + katilim(IM.sid) + ' öğrencinin sonucu yüklü. Aynı öğrencinin aynı formu yeniden yüklenirse güncellenir.</div>' : '') +
-      '<div class="ol-g2"><div class="ol-fr"><label>Hangi form?</label><select class="ol-in" id="oi_form" onchange="olImForm(this.value)">' + forms.map(function(f, i) { return '<option value="' + i + '"' + (i === IM.fi ? ' selected' : '') + '>' + E(f.ad) + ' (' + arr(f.kit).join('') + ' · ' + arr(f.dersler).reduce(function(a, d) { return a + d.n; }, 0) + ' soru)</option>'; }).join('') + '</select></div>' +
+      '<div class="ol-g2"><div class="ol-fr"><label>Hangi form?</label><select class="ol-in" id="oi_form" onchange="olImForm(this.value)">' + forms.map(function(f, i) { return '<option value="' + i + '"' + (i === IM.fi ? ' selected' : '') + '>' + E(f.ad) + ' (' + arr(f.kit).join('') + ' · ' + arr(f.dersler).reduce(function(a, d) { return a + d.n; }, 0) + ' soru)</option>'; }).join('') + (forms.length > 1 ? '<option value="all"' + (IM.fi === 'all' ? ' selected' : '') + '>Tüm oturumlar bir arada (tek optik · ' + totalQ(sn) + ' soru)</option>' : '') + '</select></div>' +
       '<div class="ol-fr"><label>Excel dosyası</label><label class="ol-b gr" style="cursor:pointer"><i class="fa-solid fa-file-arrow-up"></i> Dosya seç<input type="file" accept=".xlsx,.xls" style="display:none" onchange="olImFile(this)"></label></div></div>';
     if (IM.aoa) {
       var m = IM.m, hdr = IM.aoa[IM.hr], pr = profList();
@@ -19708,21 +19715,21 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     if (first) dlg('Sınav Sonuç Yükle — ' + E(sn.ad), h, f, 860); else setDlg(h, f);
   }
   window.olImClose = function() { IM = null; olClose(); };
-  window.olImForm = function(v) { imRead(); IM.fi = +v; if (IM.aoa) IM.m = autoMap(O.sinav[IM.sid], IM.fi, IM.aoa[IM.hr]); IM.prev = null; IM.ok = false; drawIm(); };
+  window.olImForm = function(v) { imRead(); IM.fi = v === 'all' ? 'all' : +v; if (IM.aoa) IM.m = autoMap(O.sinav[IM.sid], IM.fi, IM.aoa[IM.hr]); IM.prev = null; IM.ok = false; drawIm(); };
   window.olImFile = function(inp) { var f = inp.files && inp.files[0]; if (!f) return; readXlsx(f, function(aoa) { IM.aoa = aoa; IM.hr = hdrRow(aoa); IM.m = autoMap(O.sinav[IM.sid], IM.fi, aoa[IM.hr]); IM.prev = null; IM.ok = false; drawIm(); }); };
   window.olImHr = function(v) { IM.hr = Math.max(0, (parseInt(v, 10) || 1) - 1); IM.m = autoMap(O.sinav[IM.sid], IM.fi, IM.aoa[IM.hr] || []); IM.prev = null; drawIm(); };
   window.olImMode = function(md) { imRead(); IM.m.mode = md; IM.prev = null; drawIm(); };
   function imRead() {
     if (!IM || !IM.m || !$('oi_no')) return; var m = IM.m, v = function(id) { var e = $(id); return e ? +e.value : -1; }; if ($('oi_pn')) IM.pn = $('oi_pn').value;
-    m.no = v('oi_no'); m.ad = v('oi_ad'); m.kit = v('oi_kit'); if ($('oi_tek')) m.tek = v('oi_tek'); if ($('oi_s1')) m.soru1 = v('oi_s1'); arr(nzForms(O.sinav[IM.sid])[IM.fi].dersler).forEach(function(d, i) { if ($('oi_d' + i)) m.ders[i] = v('oi_d' + i); });
+    m.no = v('oi_no'); m.ad = v('oi_ad'); m.kit = v('oi_kit'); if ($('oi_tek')) m.tek = v('oi_tek'); if ($('oi_s1')) m.soru1 = v('oi_s1'); arr(IMF().dersler).forEach(function(d, i) { if ($('oi_d' + i)) m.ders[i] = v('oi_d' + i); });
   }
   window.olImProf = function(id) {
     var p = O.profil[id]; if (!p || !IM.aoa) return; var hdr = IM.aoa[IM.hr].map(fold), find = function(nm) { return nm ? hdr.indexOf(fold(nm)) : -1; }, c = p.cfg, m = IM.m;
-    m.no = find(c.no); m.ad = find(c.ad); m.kit = find(c.kit); m.mode = c.mode; m.tek = find(c.tek); m.soru1 = find(c.soru1); m.ders = {}; arr(nzForms(O.sinav[IM.sid])[IM.fi].dersler).forEach(function(d, i) { m.ders[i] = find((c.ders || {})[d.ad]); }); IM.prev = null; drawIm();
+    m.no = find(c.no); m.ad = find(c.ad); m.kit = find(c.kit); m.mode = c.mode; m.tek = find(c.tek); m.soru1 = find(c.soru1); m.ders = {}; arr(IMF().dersler).forEach(function(d, i) { m.ders[i] = find((c.ders || {})[d.ad]); }); IM.prev = null; drawIm();
   };
   function cleanAns(raw, N) { var s = String(raw == null ? '' : raw).toUpperCase(); if (s.length !== N) s = s.replace(/\s+/g, ''); s = (s + new Array(N + 1).join('-')).slice(0, N); return s.replace(/[^A-F]/g, '-'); }
   function imParse() {
-    var sn = O.sinav[IM.sid], fr = nzForms(sn)[IM.fi], m = IM.m, N = arr(fr.dersler).reduce(function(a, d) { return a + d.n; }, 0), out = [], g = function(r, i) { return i > -1 ? r[i] : ''; };
+    var sn = O.sinav[IM.sid], fr = IMF(), m = IM.m, N = arr(fr.dersler).reduce(function(a, d) { return a + d.n; }, 0), out = [], g = function(r, i) { return i > -1 ? r[i] : ''; };
     IM.aoa.slice(IM.hr + 1).forEach(function(r) {
       var no = String(g(r, m.no) || '').trim().replace(/\.0$/, ''), ad = String(g(r, m.ad) || '').trim(); if (!no && !ad) return; var a = '';
       if (m.mode === 'tek') { if (m.tek < 0) return; a = cleanAns(r[m.tek], N); }
@@ -19738,16 +19745,16 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     if (m.mode === 'tek' && m.tek < 0) { alert('Cevaplar sütununu seçin.'); return; } if (m.mode === 'soru' && m.soru1 < 0) { alert('1. soru sütununu seçin.'); return; }
     var sn = O.sinav[IM.sid], rs = imParse(), nm = noMap(sn.kurum), am = nameMap(sn.kurum), ok = 0, bad = [], kit = {};
     IM.res = rs.map(function(r) { var id = r.no && nm[r.no] ? nm[r.no] : (r.ad && am[fold(r.ad)] && am[fold(r.ad)] !== 'dup' ? am[fold(r.ad)] : ''); if (id) ok++; else bad.push((r.no ? r.no + ' ' : '') + r.ad); kit[r.k] = (kit[r.k] || 0) + 1; return { ogr: id, no: r.no, ad: r.ad || (id ? stuName(id) : ''), k: r.k, a: r.a }; });
-    var s0 = IM.res[0], fr = nzForms(sn)[IM.fi];
+    var s0 = IM.res[0], fr = IMF();
     IM.prev = '<div class="ol-info"><b>' + rs.length + '</b> satır okundu · <b>' + ok + '</b> eşleşti' + (bad.length ? ' · <b style="color:#b45309">' + bad.length + '</b> eşleşmeyen' : '') + ' · kitapçıklar: ' + Object.keys(kit).map(function(k) { return k + '=' + kit[k]; }).join(', ') + '</div>' + (bad.length ? '<div class="ol-warn">Eşleşmeyenler (sonuçta görünür, analize girmez): ' + E(bad.slice(0, 8).join('; ')) + (bad.length > 8 ? ' …' : '') + '</div>' : '') +
       (s0 ? '<div class="ol-fr"><label>İlk satır kontrolü: ' + E(s0.ad || s0.no) + ' · kitapçık ' + s0.k + '</label><div style="font-family:monospace;font-size:12px;word-break:break-all;background:#f1f5f9;border-radius:6px;padding:6px">' + (function() { var off = 0, p = []; arr(fr.dersler).forEach(function(d) { p.push('<b>' + E(d.ad.slice(0, 8)) + ':</b> ' + E(s0.a.substr(off, d.n))); off += d.n; }); return p.join(' · '); })() + '</div></div>' : '');
     IM.ok = rs.length > 0; drawIm();
   };
   window.olImSave = function() {
     if (!IM || !IM.res) return; var sid = IM.sid, fi = IM.fi, cur = O.sonuc[sid] || {}, res = cp(cur), pn = (($('oi_pn') ? $('oi_pn').value : IM.pn) || '').trim();
-    IM.res.forEach(function(r) { var key = r.ogr ? r.ogr : 'x' + String(r.no || fold(r.ad)).replace(/[^A-Za-z0-9]+/g, '_'); var row = res[key] || { id: key, ogr: r.ogr, no: r.no, ad: r.ad, f: {} }; row.f = row.f || {}; row.f[fi] = { k: r.k, a: r.a }; if (r.ad) row.ad = r.ad; if (r.no) row.no = r.no; res[key] = row; });
+    IM.res.forEach(function(r) { var key = r.ogr ? r.ogr : 'x' + String(r.no || fold(r.ad)).replace(/[^A-Za-z0-9]+/g, '_'); var row = res[key] || { id: key, ogr: r.ogr, no: r.no, ad: r.ad, f: {} }; row.f = row.f || {}; if (fi === 'all') { var o2 = 0; nzForms(O.sinav[sid]).forEach(function(ff, x) { var n2 = arr(ff.dersler).reduce(function(a, d) { return a + d.n; }, 0); row.f[x] = { k: r.k, a: r.a.substr(o2, n2) }; o2 += n2; }); } else row.f[fi] = { k: r.k, a: r.a }; if (r.ad) row.ad = r.ad; if (r.no) row.no = r.no; res[key] = row; });
     if (!put('olcSonuc/' + sid, res)) return; O.sonuc[sid] = res;
-    if (pn) { var m = IM.m, fr = nzForms(O.sinav[sid])[fi], hdr = IM.aoa[IM.hr], hn = function(i) { return i > -1 ? String(hdr[i]).trim() : ''; }; var cfg = { no: hn(m.no), ad: hn(m.ad), kit: hn(m.kit), mode: m.mode, tek: hn(m.tek), soru1: hn(m.soru1), ders: {} }; arr(fr.dersler).forEach(function(d, i) { cfg.ders[d.ad.replace(/[.#$\/\[\]]/g, '_')] = hn(m.ders[i]); }); var p = { id: nid('p'), ad: pn, kurum: O.sinav[sid].kurum, cfg: cfg }; if (put('olcProfil/' + p.id, p)) O.profil[p.id] = p; }
+    if (pn) { var m = IM.m, fr = IMF(), hdr = IM.aoa[IM.hr], hn = function(i) { return i > -1 ? String(hdr[i]).trim() : ''; }; var cfg = { no: hn(m.no), ad: hn(m.ad), kit: hn(m.kit), mode: m.mode, tek: hn(m.tek), soru1: hn(m.soru1), ders: {} }; arr(fr.dersler).forEach(function(d, i) { cfg.ders[d.ad.replace(/[.#$\/\[\]]/g, '_')] = hn(m.ders[i]); }); var p = { id: nid('p'), ad: pn, kurum: O.sinav[sid].kurum, cfg: cfg }; if (put('olcProfil/' + p.id, p)) O.profil[p.id] = p; }
     var n = IM.res.length; IM = null; olClose(); alert(n + ' öğrencinin sonucu kaydedildi.');
   };
   var NOMAP = null;
@@ -19977,6 +19984,137 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     w.document.write('<html><head><meta charset="utf-8"><title>Hata Kitapçığı</title>' + KCSS + '</head><body>' + ids.map(function(i) { return kitapHtml(a, i); }).join('') + '<script>setTimeout(function(){window.print()},400)<\/script></body></html>'); w.document.close();
   };
 
+
+  // =====================================================================
+  // v118: DENEMELER (tanım kütüphanesi) · tek Excel biçimi · SINAV UYGULA · tek/çift optik
+  // =====================================================================
+  function dList() { var s = sc(); return Object.keys(O.sinav).map(function(k) { return O.sinav[k]; }).filter(function(x) { return x && x.dn && (!x.kurum || s.indexOf(x.kurum) > -1); }); }
+  function uyg(did) { return sList().filter(function(x) { return x.denemeId === did; }).length; }
+  function fOffs(sn) { var o = [], t = 0; nzForms(sn).forEach(function(f) { o.push(t); t += arr(f.dersler).reduce(function(a, d) { return a + (+d.n || 0); }, 0); }); return o; }
+  function gRows(sn) {
+    var rows = [], g = 0; nzForms(sn).forEach(function(fr, fi) { var off = 0; arr(fr.dersler).forEach(function(d) { for (var i = 0; i < d.n; i++) rows.push({ fi: fi, gi: off + i, g: ++g, ders: d.ad, dn: i + 1 }); off += +d.n || 0; }); });
+    return rows;
+  }
+  function kitsOf(sn) { return LET.filter(function(l) { return l !== 'A' && nzForms(sn).some(function(f) { return arr(f.kit).indexOf(l) > -1; }); }); }
+
+  function vDeneme() {
+    var q = O.q.toLocaleLowerCase('tr'), l = dList().filter(function(s) { return !q || (s.ad + ' ' + (s.yayin || '') + ' ' + s.tur).toLocaleLowerCase('tr').indexOf(q) > -1; }).sort(function(a, b) { return (b.created || 0) - (a.created || 0); });
+    var body = l.map(function(s) {
+      var tot = totalQ(s), key = keyCount(s), kaz = kazCount(s), fm = nzForms(s).map(function(f) { return E(f.ad) + ' (' + arr(f.kit).join('') + ')'; }).join(' + ');
+      return '<tr><td><details class="ol-dd"><summary><i class="fa-solid fa-gear"></i> İşlemler ▾</summary><div class="mn">' +
+        '<a onclick="olDnSablon(\'' + s.id + '\')"><i class="fa-solid fa-file-excel" style="color:#16a34a;width:20px"></i> Cevap Anahtarı Yükleme Şablonu (Excel)</a>' +
+        '<a onclick="olForm(\'' + s.id + '\',0)"><i class="fa-solid fa-key" style="color:#0201E3;width:20px"></i> Cevap Anahtarı &amp; Kazanım Yükle / Düzenle</a><hr>' +
+        '<a onclick="olSinavEdit(\'' + s.id + '\')"><i class="fa-solid fa-pen-to-square" style="color:#f59e0b;width:20px"></i> Düzenle (deneme tanımı)</a>' +
+        '<a onclick="olDnKopya(\'' + s.id + '\')"><i class="fa-solid fa-copy" style="color:#7c3aed;width:20px"></i> Denemeyi Kopyala</a>' +
+        '<a class="x" onclick="olSinavDel(\'' + s.id + '\')"><i class="fa-solid fa-trash" style="width:20px"></i> Sil</a></div></details></td>' +
+        '<td><button type="button" class="ol-b gr sm" onclick="olUygula(\'' + s.id + '\')"><i class="fa-solid fa-play"></i> Sınav Uygula</button></td>' +
+        '<td><b>' + E(s.ad) + '</b>' + (s.no ? ' <small style="color:#64748b">#' + E(s.no) + '</small>' : '') + '</td><td>' + E(s.yayin || '') + '</td><td>' + E(s.tur || '') + '</td><td>' + fm + '</td><td class="c">' + E(s.seviye || '') + '</td><td class="c">' + tot + '</td>' +
+        '<td class="c"><span class="ol-chip ' + (key >= tot && tot ? 'g' : 'y') + '">' + key + '/' + tot + '</span></td><td class="c">' + (kaz ? '<span class="ol-chip g">' + kaz + '</span>' : '<span class="ol-chip y">yok</span>') + '</td><td class="c"><span class="ol-chip">' + uyg(s.id) + '</span></td><td>' + dt(new Date(s.created || Date.now()).toISOString()) + '</td></tr>';
+    }).join('');
+    return '<div class="ol-bar"><b class="t">Denemeler <small style="color:#64748b;font-weight:400;font-size:12px">Deneme tanımla, cevap anahtarı ve kazanımları yükle, sonra "Sınav Uygula" ile Sınavlar ekranına al</small></b>' +
+      '<input class="ol-in ol-q-in" style="width:200px" placeholder="Ara..." value="' + E(O.q) + '" oninput="olQ(this.value)">' +
+      '<button type="button" class="ol-b" onclick="olSinavEdit(\'\',1)"><i class="fa-solid fa-plus"></i> Yeni Deneme</button></div>' +
+      '<div class="ol-card"><table class="ol-t"><thead><tr><th>İşlemler</th><th>Uygula</th><th>Deneme Adı</th><th>Yayın</th><th>Tür</th><th>Formlar (kitapçık)</th><th class="c">Sınıf</th><th class="c">Soru</th><th class="c">Anahtar</th><th class="c">Kazanım</th><th class="c">Uygulanan</th><th>Oluşturulma</th></tr></thead><tbody>' +
+      (body || '<tr><td colspan="12" style="text-align:center;color:#64748b;padding:24px">Henüz deneme yok. "Yeni Deneme" → şablon seçin (ör. LGS Sözel + Sayısal bir arada) → Excel ile cevap anahtarı ve kazanım yükleyin.</td></tr>') + '</tbody></table></div>';
+  }
+  window.olDnKopya = function(id) {
+    closeDD(); var s = O.sinav[id]; if (!s) return; var o = cp(s); o.id = nid('s'); o.ad = s.ad + ' (kopya)'; o.created = Date.now();
+    if (put('olcSinav/' + o.id, o)) { O.sinav[o.id] = o; draw(); }
+  };
+
+  // ---- tek Excel biçimi (Edesis): Kitapçık türü | Soru no | Ders grubu | Ders | Ders soru numarası | B karşılığı | Cevap | Konu kodu | Yayından gelen kazanım | İptal | Zorluk | Soru tipi | Video
+  function buildAllXlsx(sn) {
+    var fs = nzForms(sn), kits = kitsOf(sn), fo = fOffs(sn), head = ['Kitapçık türü', 'Soru no', 'Ders grubu', 'Ders', 'Ders soru numarası'].concat(kits.map(function(k) { return k + ' karşılığı'; }), ['Cevap', 'Konu kodu', 'Yayından gelen kazanım', 'İptal için X yazınız', 'Zorluk seviyesi', 'Soru tipi', 'Deneme video çözüm linki']), a = [head], tur = String(sn.tur || 'DENEME');
+    gRows(sn).forEach(function(r) {
+      var q = qOf(fs[r.fi], r.gi), z = arr(q.z);
+      a.push(['A', r.g, tur + '-' + up(r.ders), r.ders, r.dn].concat(kits.map(function(k) { var v = q.d && q.d[k]; return v ? (+v + fo[r.fi]) : r.g; }), [q.k || '', q.kn || '', z[0] || '', q.x ? 'X' : '', q.zl || '', q.tp || '', q.v || '']));
+    });
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), 'Deneme cevap');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Soru tipleri (örnek)'], ['Bilgi'], ['Kavrama'], ['Uygulama'], ['Analiz'], ['Yorum'], ['Muhakeme']]), 'Soru tipleri');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Açıklama'], ['Tüm oturumlar (ör. Sözel + Sayısal) TEK sayfada, tek dosyadadır. Soru no: sınavın tamamında 1..' + totalQ(sn) + ' sıralı numara.'], ['Cevap: A kitapçığındaki doğru cevap (A-E). Bilinmiyorsa boş bırakın.'], kits.length ? ['"' + kits.join('", "') + ' karşılığı": o sorunun diğer kitapçıktaki soru no\'su (1..' + totalQ(sn) + '). Aynıysa soru no\'yu yazın.'] : ['Tek kitapçık: karşılık sütunu yoktur.'], ['Yayından gelen kazanım, Konu kodu, Zorluk, Soru tipi, Video linki isteğe bağlıdır.'], ['İptal edilen soru için "İptal" sütununa X yazın: iptal sorular herkese doğru sayılır.'], ['Sütun başlıklarını ve satır sayısını değiştirmeyin.']]), 'Açıklama');
+    XLSX.writeFile(wb, 'Cevap_Anahtari_Sablonu_' + fold(sn.ad || 'deneme').replace(/ /g, '_') + '.xlsx');
+  }
+  window.olDnSablon = function(id) { closeDD(); var s = O.sinav[id]; if (!s) return; if (!totalQ(s)) { alert('Önce deneme tanımında dersleri ve soru sayılarını girin (şablon seçebilirsiniz).'); return; } buildAllXlsx(s); };
+  window.olFormSablon = function() { keyRead(); var tmp = cp(O.sinav[FD.sid]); tmp.formlar = FD.f; buildAllXlsx(tmp); };
+  function applyAllAoa(forms, aoa) {
+    var hi = -1, c = { don: {}, z: [] };
+    for (var i = 0; i < Math.min(aoa.length, 15); i++) {
+      var r = aoa[i].map(fold), sno = r.findIndex(function(x) { return x === 'soru no' || x === 'soru numarasi'; }), ce = r.findIndex(function(x) { return x === 'cevap' || x === 'cevap anahtari'; }), dd = r.findIndex(function(x) { return x === 'ders' || x === 'ders adi'; });
+      if (sno > -1 && ce > -1 && dd > -1) {
+        hi = i; c.sno = sno; c.ce = ce; c.dd = dd;
+        r.forEach(function(x, ci) {
+          var m = x.match(/^([b-f]) (karsiligi|kitapcigi donusum)/); if (m) c.don[m[1].toUpperCase()] = ci;
+          if (x.indexOf('kitapcik turu') > -1) c.kit = ci; if (x.indexOf('kazanim') > -1) c.z.push(ci); if (x.indexOf('konu kodu') > -1) c.kn = ci; if (x.indexOf('iptal') > -1) c.x = ci; if (x.indexOf('zorluk') > -1) c.zl = ci; if (x.indexOf('soru tipi') > -1) c.tp = ci; if (x.indexOf('video') > -1) c.v = ci;
+        }); break;
+      }
+    }
+    if (hi < 0) return { err: 'Sütun başlıkları bulunamadı (Soru no, Ders, Cevap ...). Önce "Excel şablonunu indir" ile dosyayı alıp doldurun.' };
+    var data = aoa.slice(hi + 1).filter(function(r) { var d = String(r[c.dd] || '').trim(); if (!d || fold(d).indexOf('aciklama') === 0) return false; if (c.kit != null) { var k = fold(r[c.kit]); if (k && k !== 'a') return false; } return true; });
+    var rows = gRows({ formlar: forms }), N = rows.length;
+    if (data.length !== N) return { err: 'Excel\'de ' + data.length + ' soru satırı (A kitapçığı) var, tanımda ' + N + ' soru var. Soru sayılarını / şablonu kontrol edin.' };
+    var fo = fOffs({ formlar: forms }), fn = forms.map(function(f) { return arr(f.dersler).reduce(function(a, d) { return a + (+d.n || 0); }, 0); }), ok = 0, bad = 0, kz = 0, ip = 0, g = function(r, ix) { return ix != null ? String(r[ix] == null ? '' : r[ix]).trim() : ''; };
+    rows.forEach(function(rw, j) {
+      var r = data[j], fr = forms[rw.fi]; fr.q = fr.q || []; if (fold(r[c.dd]) !== fold(rw.ders)) bad++;
+      var q = fr.q[rw.gi] = fr.q[rw.gi] || { k: '', z: ['', '', ''], d: {} }, ch = g(r, c.ce).toUpperCase().charAt(0); q.k = /[A-F]/.test(ch) ? ch : ''; if (q.k) ok++;
+      if (c.z.length) { q.z = [0, 1, 2].map(function(n) { return c.z[n] != null ? g(r, c.z[n]) : ''; }); if (q.z.some(Boolean)) kz++; }
+      q.d = {}; Object.keys(c.don).forEach(function(kk) { var v = parseInt(r[c.don[kk]], 10); if (v > 0) { var lo = fo[rw.fi], loc = (v > lo && v <= lo + fn[rw.fi]) ? v - lo : v; if (loc >= 1 && loc <= fn[rw.fi] && loc !== rw.gi + 1) q.d[kk] = loc; } });
+      q.kn = g(r, c.kn); q.zl = g(r, c.zl); q.tp = g(r, c.tp); q.v = g(r, c.v); q.x = /^x/i.test(g(r, c.x)) ? 1 : 0; if (q.x) ip++;
+    });
+    return { ok: ok, N: N, bad: bad, kz: kz, ip: ip, don: Object.keys(c.don).join(',') };
+  }
+  window.olFormXlsx = function(inp) {
+    var f = inp.files && inp.files[0]; if (!f) return; keyRead();
+    readXlsx(f, function(aoa) { var r = applyAllAoa(FD.f, aoa); if (r.err) { alert(r.err); return; } drawForm(); alert(r.ok + '/' + r.N + ' cevap anahtarı' + (r.kz ? ' · ' + r.kz + ' kazanım' : '') + (r.don ? ' · dönüşüm: ' + r.don : '') + (r.ip ? ' · ' + r.ip + ' iptal soru' : '') + ' yüklendi.' + (r.bad ? '\nUyarı: ' + r.bad + ' satırda ders adı tanımdakiyle uyuşmuyor.' : '') + '\nKaydet\'e basmayı unutmayın.'); });
+    inp.value = '';
+  };
+
+  // ---- SINAV UYGULA: denemeden Sınavlar ekranına sınav oluştur
+  var UG = null;
+  function uSube(sev) { var o = kmS(), sl = sc(); return Object.keys(o).map(function(k) { return o[k]; }).filter(function(b) { return b && (!sev || !b.seviye || sevN(b.seviye) === sevN(sev)) && (!b.kurum || sl.indexOf(b.kurum) > -1); }).sort(function(a, b) { return trc(a.ad, b.ad); }); }
+  window.olUygulaSec = function() {
+    closeDD(); var l = dList().filter(function(x) { return totalQ(x) > 0; }).sort(function(a, b) { return (b.created || 0) - (a.created || 0); });
+    O.lock = false; dlg('Denemeden Sınav Uygula', (l.length ? l.map(function(x) { return '<div class="ol-row" onclick="olUygula(\'' + x.id + '\')"><b style="flex:1">' + E(x.ad) + '</b><span style="color:#64748b">' + E(x.yayin || '') + '</span><span class="ol-chip">' + E(x.tur || '') + '</span><span class="ol-chip g">' + totalQ(x) + ' soru</span></div>'; }).join('') : '<div class="ol-info">Henüz deneme yok. Önce Denemeler sekmesinden bir deneme tanımlayın.</div>'), '<button type="button" class="ol-b g" onclick="olClose()">Kapat</button>', 640);
+  };
+  window.olUygula = function(id) {
+    closeDD(); var d = O.sinav[id]; if (!d) return; if (!totalQ(d)) { alert('Bu denemede soru yok; önce tanımı tamamlayın.'); return; }
+    var sb = uSube(d.seviye);
+    UG = { id: id, ad: d.ad, no: d.no || '', tarih: today(), saat: '', subeler: {}, coklu: false, ot: nzForms(d).map(function(f) { return today(); }), _sb: sb.map(function(b) { return b.id; }) };
+    O.lock = true; drawUg(true);
+  };
+  function drawUg(first) {
+    var d = O.sinav[UG.id], fs = nzForms(d), sb = uSube(d.seviye);
+    var h = '<div class="ol-info"><b>' + E(d.ad) + '</b> · ' + E(d.tur) + ' · ' + totalQ(d) + ' soru · ' + fs.map(function(f) { return E(f.ad) + ' (' + arr(f.kit).join('') + ')'; }).join(' + ') + '<br>Cevap anahtarı ve kazanımlar sınava kopyalanır; sonra denemede yapacağınız değişiklikler bu sınavı etkilemez.</div>' +
+      '<div class="ol-g2"><div class="ol-fr"><label>Sınav adı *</label><input class="ol-in" id="ou_ad" value="' + E(UG.ad) + '"></div><div class="ol-fr"><label>Sınav no</label><input class="ol-in" id="ou_no" value="' + E(UG.no) + '"></div>' +
+      '<div class="ol-fr"><label>Sınav tarihi *</label><div style="display:flex;gap:6px"><input class="ol-in" type="date" id="ou_tarih" value="' + E(UG.tarih) + '"><input class="ol-in" type="time" id="ou_saat" style="width:110px" value="' + E(UG.saat) + '"></div></div></div>' +
+      (fs.length > 1 ? '<label class="ol-row" style="cursor:pointer"><input type="checkbox" id="ou_coklu" ' + (UG.coklu ? 'checked' : '') + ' onchange="olUgRead();olUgRedraw()"> Çok oturumlu sınav (' + fs.map(function(f) { return E(f.ad); }).join(' ve ') + ' ayrı günlerde)</label>' + (UG.coklu ? '<div class="ol-g2">' + fs.map(function(f, i) { return '<div class="ol-fr"><label>' + E(f.ad) + ' oturumu tarihi</label><input class="ol-in" type="date" id="ou_ot' + i + '" value="' + E(UG.ot[i]) + '"></div>'; }).join('') + '</div>' : '') : '') +
+      '<div class="ol-fr"><label>Uygulanacak şubeler <small style="font-weight:400;color:#64748b">(boş bırakılırsa tüm ' + E(d.seviye || '') + '. sınıflar)</small></label><div class="ol-card" style="max-height:200px;overflow:auto;padding:6px">' +
+      (sb.length ? sb.map(function(b) { return '<label class="ol-row" style="cursor:pointer"><input type="checkbox" data-sb="' + b.id + '" ' + (UG.subeler[b.id] ? 'checked' : '') + ' onchange="olUgRead()"> ' + E(b.ad || b.id) + (b.seviye ? ' <span class="ol-chip">' + E(b.seviye) + '. sınıf</span>' : '') + '</label>'; }).join('') : '<div style="color:#64748b;font-size:12px;padding:6px">Şube bulunamadı (Kurs Modülü → Şubeler).</div>') + '</div></div>' +
+      '<div class="ol-info">Sonuçları daha sonra <b>tek optik</b> (tüm oturumlar bir dosyada) veya <b>her oturum için ayrı optik</b> olarak yükleyebilirsiniz: Sınavlar → İşlemler → Sınav Sonuç Yükle.</div>';
+    var f = '<button type="button" class="ol-b gr" onclick="olUgSave()"><i class="fa-solid fa-play"></i> Sınavı Uygula</button><button type="button" class="ol-b g" onclick="olUgClose()">Kapat</button>';
+    var sc0 = first ? 0 : (($('olBd') || {}).scrollTop || 0); if (first) dlg('Sınav Uygula', h, f, 760); else setDlg(h, f); if ($('olBd')) $('olBd').scrollTop = sc0;
+  }
+  window.olUgRead = function() {
+    if (!UG || !$('ou_ad')) return; UG.ad = $('ou_ad').value; UG.no = $('ou_no').value; UG.tarih = $('ou_tarih').value; UG.saat = $('ou_saat').value; if ($('ou_coklu')) UG.coklu = $('ou_coklu').checked;
+    nzForms(O.sinav[UG.id]).forEach(function(f, i) { if ($('ou_ot' + i)) UG.ot[i] = $('ou_ot' + i).value; });
+    UG.subeler = {}; document.querySelectorAll('#olBd input[data-sb]').forEach(function(x) { if (x.checked) UG.subeler[x.getAttribute('data-sb')] = true; });
+  };
+  window.olUgRedraw = function() { drawUg(); };
+  window.olUgClose = function() { UG = null; olClose(); };
+  window.olUgSave = function() {
+    olUgRead(); var d = O.sinav[UG.id]; if (!UG.ad.trim()) { alert('Sınav adı zorunludur.'); return; } if (!UG.tarih) { alert('Sınav tarihi zorunludur.'); return; }
+    if (sList().some(function(x) { return up(x.ad) === up(UG.ad) && x.tarih === UG.tarih; })) { alert('Aynı ad ve tarihte bir sınav zaten var.'); return; }
+    var o = cp(d); delete o.dn; delete o.yayin; o.id = nid('s'); o.denemeId = d.id; o.yayin = d.yayin || ''; o.ad = UG.ad.trim(); o.no = UG.no; o.tarih = UG.tarih; o.saat = UG.saat; o.created = Date.now();
+    o.subeler = Object.keys(UG.subeler); o.coklu = UG.coklu ? 1 : 0; if (UG.coklu) o.oturum = nzForms(d).map(function(f, i) { return { ad: f.ad, tarih: UG.ot[i] || UG.tarih }; });
+    if (put('olcSinav/' + o.id, o)) { O.sinav[o.id] = o; UG = null; O.tab = 'sinav'; olClose(); alert('Sınav uygulandı ve Sınavlar ekranına eklendi: ' + o.ad); }
+  };
+
+  // ---- tek optik (tüm oturumlar bir dosyada) / çift optik (her oturum ayrı)
+  function IMF() {
+    var sn = O.sinav[IM.sid], fs = nzForms(sn); if (IM.fi === 'all') return { ad: 'Tüm oturumlar', kit: LET.filter(function(l) { return fs.some(function(f) { return arr(f.kit).indexOf(l) > -1; }); }), dersler: [].concat.apply([], fs.map(function(f) { return arr(f.dersler); })) };
+    return fs[IM.fi];
+  }
+
   // hub'da sekme değişince yeniden çiz: Kurs Modülü şubeleri vb. geç yüklenebilir
   setInterval(function() { var m = $('examModule'); if (m && !m.classList.contains('hidden') && !$('olOv') && $('olcBody') && !$('olcBody').firstElementChild && O.tab !== 'oturma') draw(); }, 1500);
 })();
@@ -20049,7 +20187,15 @@ body.mod-etut>header #userBadge button{color:#475569!important}
 <script>
 // v114: Aynı masayı gösteren çift öğrenci kaydını onar (masa sahibi = masadaki username)
 (function() {
+  function CU() { try { return currentUser; } catch (e) { return null; } }
   function lc(x) { return String(x || '').toLowerCase(); }
+  // v120: masa sahibi = giriş bilgisi (kullanıcı adı) / ad; masa NUMARASI kimlik değildir
+  window.myDeskObj = function() {
+    var u = CU(); if (!u || u.role !== 'student') return null;
+    var a = (typeof branchesData !== 'undefined' && (branchesData[u.branch] || {})[u.class]) || [];
+    return a.find(function(d) { return d && d.username && lc(d.username) === lc(u.username); }) || a.find(function(d) { return d && !d.username && d.studentName && lc(d.studentName) === lc(u.name); }) || null;
+  };
+  window.isMyDesk = function(n) { var d = window.myDeskObj(), u = CU(); return d ? d.deskNumber === n : !!(u && u.deskIndex === n); };
   window.deskHeal = function() {
     try {
       if (typeof usersData === 'undefined' || typeof branchesData === 'undefined' || !Array.isArray(usersData)) return 0;
@@ -20064,12 +20210,12 @@ body.mod-etut>header #userBadge button{color:#475569!important}
         var dupe = usersData.some(function(v) { return v && v !== u && v.role === 'student' && v.branch === u.branch && v.class === u.class && v.deskIndex === u.deskIndex; });
         if (!other && !dupe) return;
         // kendi masasını bul
-        var own = arr.find(function(x) { return x && x.username && lc(x.username) === lc(u.username); });
+        var own = arr.find(function(x) { return x && x.username && lc(x.username) === lc(u.username); }) || arr.find(function(x) { return x && !x.username && x.studentName && lc(x.studentName) === lc(u.name); });
         if (own) u.deskIndex = own.deskNumber; else u.deskIndex = null;
         n++;
       });
       if (n) {
-        if (window.currentUser && currentUser.role === 'student') { var fresh = usersData.find(function(x) { return x && lc(x.username) === lc(currentUser.username); }); if (fresh) { currentUser.deskIndex = fresh.deskIndex; currentUser.class = fresh.class; currentUser.branch = fresh.branch; } }
+        if (CU() && currentUser.role === 'student') { var fresh = usersData.find(function(x) { return x && lc(x.username) === lc(currentUser.username); }); if (fresh) { currentUser.deskIndex = fresh.deskIndex; currentUser.class = fresh.class; currentUser.branch = fresh.branch; } try { localStorage.setItem('bkm_active_session_user', JSON.stringify(currentUser)); } catch (e) {} try { renderDesks(); } catch (e) {} }
         else { try { saveData(); } catch (e) {} }
       }
       return n;
@@ -20078,12 +20224,12 @@ body.mod-etut>header #userBadge button{color:#475569!important}
   var _ua = window.updateAuthUI || (typeof updateAuthUI === 'function' ? updateAuthUI : null);
   if (_ua) window.updateAuthUI = updateAuthUI = function() {
     try {
-      if (window.currentUser && usersData) { var f = usersData.find(function(x) { return x && lc(x.username) === lc(currentUser.username); }); if (f && currentUser !== f && currentUser.role === 'student') { currentUser.class = f.class; currentUser.branch = f.branch; currentUser.deskIndex = f.deskIndex; } }
+      if (CU() && usersData) { var f = usersData.find(function(x) { return x && lc(x.username) === lc(currentUser.username); }); if (f && currentUser !== f && currentUser.role === 'student') { currentUser.class = f.class; currentUser.branch = f.branch; currentUser.deskIndex = f.deskIndex; } }
       deskHeal();
     } catch (e) {}
     return _ua.apply(this, arguments);
   };
-  setTimeout(deskHeal, 4000); setTimeout(deskHeal, 12000);
+  setTimeout(deskHeal, 4000); setTimeout(deskHeal, 12000); setInterval(function() { try { if (CU() && currentUser.role === 'student') deskHeal(); } catch (e) {} }, 4000);
 })();
 
 </script>
