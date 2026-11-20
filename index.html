@@ -19106,8 +19106,8 @@
     var E = function(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     var LS_K = 'bkm_kurumlar_v1', LS_A = 'bkm_kurum_active', LS_C = 'bkm_kurum_kod_last';
     var DEF = [
-      { id: 'carsi', ad: 'BKM AKADEMİ ÇARŞI ŞUBESİ', branch: 'ÇARŞI ŞUBESİ', kod: '1001', durum: 'aktif' },
-      { id: 'karsiyaka', ad: 'BKM AKADEMİ KARŞIYAKA ŞUBESİ', branch: 'KARŞIYAKA ŞUBESİ', kod: '1002', durum: 'aktif' } ];
+      { id: 'carsi', ad: 'BKM AKADEMİ ÇARŞI ŞUBESİ', branch: 'ÇARŞI ŞUBESİ', kod: 'BKMAKADEMICARSI', durum: 'aktif' },
+      { id: 'karsiyaka', ad: 'BKM AKADEMİ KARŞIYAKA ŞUBESİ', branch: 'KARŞIYAKA ŞUBESİ', kod: 'BKMAKADEMIKARSIYAKA', durum: 'aktif' } ];
     var KR = window.KURUMLAR = DEF.map(function(d) { return Object.assign({}, d); }); KR.loaded = false;
     function merge(saved) { if (!saved) return; KR.forEach(function(k) { var s = saved[k.id]; if (s) { if (s.kod) k.kod = String(s.kod); if (s.durum) k.durum = s.durum; } }); }
     try { merge(JSON.parse(localStorage.getItem(LS_K))); } catch (e) {}
@@ -19237,7 +19237,7 @@
       var seen = {}, upd = [];
       for (var i = 0; i < KR.length; i++) {
         var k = KR[i], kod = norm(document.getElementById('krk_' + k.id).value), dur = document.getElementById('krd_' + k.id).value;
-        if (kod.length < 3 || kod.length > 12) { alert(k.ad + ': kod 3-12 harf/rakam olmalıdır.'); return; }
+        if (kod.length < 3 || kod.length > 30) { alert(k.ad + ': kod 3-30 harf/rakam olmalıdır.'); return; }
         if (seen[kod]) { alert('İki kurum aynı kodu kullanamaz.'); return; } seen[kod] = 1; upd.push([k, kod, dur]);
       }
       if (upd.every(function(u) { return u[2] === 'pasif'; })) { alert('En az bir kurum aktif olmalıdır.'); return; }
@@ -20084,6 +20084,58 @@ body.mod-etut>header #userBadge button{color:#475569!important}
     return _ua.apply(this, arguments);
   };
   setTimeout(deskHeal, 4000); setTimeout(deskHeal, 12000);
+})();
+
+</script>
+<script>
+(function(){var n=0;(function t(){n++;try{
+ if(typeof fbDb!=='undefined'&&fbDb&&isCloudReady&&window.currentUser&&isMainAdmin()&&window.KURUMLAR){
+  fbDb.ref('kurumKodMig115').once('value').then(function(sn){ if(sn.exists())return;
+   var m={carsi:'BKMAKADEMICARSI',karsiyaka:'BKMAKADEMIKARSIYAKA'};
+   KURUMLAR.forEach(function(k){ if(m[k.id]){ k.kod=m[k.id]; fbDb.ref('kurumlar/'+k.id).set({kod:m[k.id],durum:k.durum||'aktif'}); } });
+   try{var o={};KURUMLAR.forEach(function(k){o[k.id]={kod:k.kod,durum:k.durum}});localStorage.setItem('bkm_kurumlar_v1',JSON.stringify(o));}catch(e){}
+   fbDb.ref('kurumKodMig115').set(Date.now()); });
+  return; }
+ }catch(e){} if(n<200)setTimeout(t,3000); })();})();
+</script>
+<script>
+// v116: Açılış (ana giriş) ekranına Kurum Kodu alanı
+(function() {
+  var LS_C = 'bkm_kurum_kod_last';
+  function byCodeLocal(c) { var n = function(s) { return String(s || '').replace(/İ/g, 'I').replace(/ı/g, 'i').replace(/[çÇ]/g, 'C').replace(/[ğĞ]/g, 'G').replace(/[öÖ]/g, 'O').replace(/[şŞ]/g, 'S').replace(/[üÜ]/g, 'U').toUpperCase().replace(/[^A-Z0-9]/g, ''); }; c = n(c); if (!c || !window.KURUMLAR) return null; return KURUMLAR.filter(function(k) { return n(k.kod) === c; })[0] || null; }
+  function hint() {
+    var i = document.getElementById('gateKurum'), h = document.getElementById('gateKurumAd'); if (!i || !h) return; var k = byCodeLocal(i.value);
+    if (!i.value.trim()) { h.className = 'text-[11px] mt-1 text-slate-400'; h.textContent = 'Yönetici hesabı için kurum kodu gerekmez.'; }
+    else if (k) { h.className = 'text-[11px] mt-1 text-emerald-400'; h.textContent = '✓ ' + k.ad; }
+    else { h.className = 'text-[11px] mt-1 text-amber-400'; h.textContent = 'Kurum kodu bulunamadı.'; }
+  }
+  function build() {
+    var u = document.getElementById('gateUser'); if (!u || document.getElementById('gateKurum')) return;
+    var row = u.closest('form').firstElementChild; // kullanıcı adı satırı
+    var d = document.createElement('div');
+    d.innerHTML = '<label class="block text-[11px] font-bold text-slate-300 mb-1">Kurum Kodu</label>' +
+      '<div class="relative"><i class="fa-solid fa-building absolute left-3 top-3 text-slate-400 text-xs"></i>' +
+      '<input id="gateKurum" type="text" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="Kurum kodunuz" class="w-full bg-slate-900/60 border border-white/15 rounded-xl pl-9 pr-3 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" oninput="gateKurumHint()"></div>' +
+      '<div id="gateKurumAd" class="text-[11px] mt-1 text-slate-400">Yönetici hesabı için kurum kodu gerekmez.</div>';
+    row.parentNode.insertBefore(d, row);
+    try { var l = localStorage.getItem(LS_C); if (l) { document.getElementById('gateKurum').value = l; } } catch (e) {}
+    setTimeout(hint, 300); setTimeout(hint, 2500);
+  }
+  window.gateKurumHint = hint;
+  window.gateLogin = function(e) {
+    if (e) e.preventDefault();
+    var u = document.getElementById('gateUser').value.trim(), p = document.getElementById('gatePass').value.trim(), er = document.getElementById('gateError');
+    var gk = document.getElementById('gateKurum'), kod = gk ? gk.value.trim() : '';
+    function show(m) { er.innerText = m; er.classList.remove('hidden'); }
+    if (!u || !p) { show('Lütfen kullanıcı adı ve şifre giriniz.'); return; }
+    document.getElementById('loginUsername').value = u; document.getElementById('loginPassword').value = p;
+    var lk = document.getElementById('loginKurum'); if (lk) lk.value = kod;
+    var le = document.getElementById('loginError'); if (le) { le.innerText = ''; le.classList.add('hidden'); }
+    handleLogin();
+    if (currentUser) { er.classList.add('hidden'); document.getElementById('gatePass').value = ''; document.getElementById('welcomeGate').classList.add('hidden'); }
+    else { var m = le && !le.classList.contains('hidden') && le.innerText.trim(); show(m || 'Kullanıcı adı veya şifre hatalı!'); }
+  };
+  build(); document.addEventListener('DOMContentLoaded', build);
 })();
 
 </script>
