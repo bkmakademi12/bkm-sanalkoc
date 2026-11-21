@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BKM Ders Dağıtım</title>
+<style>
+:root{--zem:#f3f5f9;--kart:#fff;--yazi:#1b2433;--mut:#6b7689;--cizgi:#e2e7ef;--ana:#1f3b64;--ana2:#2d5a96;--vurgu:#f08a24;--yes:#2e9d6a;--tur:#e59a1a;--kir:#d64545;--r:10px;--golge:0 1px 2px rgba(16,32,64,.06),0 2px 8px rgba(16,32,64,.05)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--yazi);background:var(--zem);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+header.ust{height:56px;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--ana);color:#fff;position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.logo i{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:var(--vurgu);font-style:normal;font-size:15px}
+.logo small{display:block;font-weight:400;opacity:.7;font-size:11px;line-height:1}
+header select{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:6px 8px;max-width:300px}
+header select option{color:#000}
+.kayit{font-size:12px;opacity:.75;margin-left:auto;white-space:nowrap}.kayit.err{color:#ffb4b4;opacity:1}
+.ustbtn{display:flex;gap:6px}.ustbtn button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.ustbtn button:hover{background:rgba(255,255,255,.22)}
+.duzen{display:flex;height:calc(100% - 56px)}body:has(>.onizleme) .duzen{height:calc(100% - 100px)}
+nav#nav{width:236px;flex:none;background:#fff;border-right:1px solid var(--cizgi);padding:12px 10px;overflow:auto}
+nav#nav button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:9px 10px;border-radius:8px;cursor:pointer;text-align:left;color:#384356;margin-bottom:2px}
+nav#nav button:hover{background:#f1f4f9}
+nav#nav button.akt{background:#e8eef8;color:var(--ana);font-weight:600}
+nav#nav .no{width:20px;height:20px;border-radius:50%;background:#eef1f6;display:grid;place-items:center;font-size:11px;color:var(--mut);flex:none}
+nav#nav .akt .no{background:var(--ana);color:#fff}
+nav#nav .ik{width:18px;text-align:center}
+nav#nav .ad{flex:1}
+nav#nav .say{font-size:11px;color:var(--mut);background:#f1f4f9;border-radius:10px;padding:0 7px}
+nav#nav .say:empty{display:none}
+main#main{flex:1;overflow:auto;padding:22px 28px 60px}
+h1{font-size:22px;margin:0 0 4px;color:var(--ana)}
+h2{font-size:15px;margin:0 0 12px}
+h3{margin:0 0 10px;font-size:17px}
+h4{margin:16px 0 8px;font-size:13px;color:#384356}
+h4 small,h2 small{font-weight:400;color:var(--mut)}
+.alt{color:var(--mut);margin:0 0 16px;max-width:900px}
+.ipucu{color:var(--mut);font-size:12.5px;margin:6px 0}
+.mut{color:var(--mut)}
+code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12px}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;box-shadow:var(--golge)}
+.kart.p0{padding:0}
+.kart.bos,.bos{color:var(--mut);text-align:center;padding:26px}
+.kart.tehlike{border-color:#f2d3d3}
+.kaydir{overflow:auto}
+label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#4a5568;font-weight:500}
+label.inl{flex-direction:row;align-items:center;gap:8px}
+input,select,textarea{border:1px solid #cfd7e3;border-radius:7px;padding:7px 9px;background:#fff;min-width:0;width:100%;outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ana2);box-shadow:0 0 0 3px rgba(45,90,150,.12)}
+input[type=checkbox]{width:auto;accent-color:var(--ana)}
+input[type=color]{padding:2px;height:32px;width:42px;cursor:pointer}
+textarea{resize:vertical}
+.izg2,.izg3,.izg4{display:grid;gap:12px;margin-bottom:10px}
+.izg2{grid-template-columns:repeat(2,minmax(0,1fr))}.izg3{grid-template-columns:repeat(3,minmax(0,1fr))}.izg4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.satir{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.arac{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.arac select{width:auto}
+.bosluk{flex:1}
+.sag{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+.btn{border:1px solid #cfd7e3;background:#fff;border-radius:8px;padding:7px 13px;cursor:pointer;font-weight:500;white-space:nowrap;transition:background .15s,border .15s}
+.btn:hover{background:#f3f6fa;border-color:#b9c4d4}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ana{background:var(--ana);border-color:var(--ana);color:#fff}.btn.ana:hover{background:var(--ana2)}
+.btn.kirmizi{color:var(--kir);border-color:#efc4c4}.btn.kirmizi:hover{background:#fdf1f1}
+.btn.kucuk{padding:4px 9px;font-size:12.5px}
+.btn.buyuk{padding:11px 20px;font-size:15px}
+.ibtn{border:0;background:none;cursor:pointer;color:var(--mut);padding:4px 8px;border-radius:6px;font-size:14px}
+.ibtn:hover{background:#f1f4f9;color:var(--kir)}
+.chip{flex-direction:row;align-items:center;gap:6px;display:inline-flex;border:1px solid var(--cizgi);border-radius:20px;padding:4px 11px 4px 8px;margin:0 6px 6px 0;font-weight:500;cursor:pointer;background:#fff}
+.chip:has(input:checked){background:#e8eef8;border-color:#b9cbe6;color:var(--ana)}
+.chk{flex-direction:row;align-items:flex-start;gap:8px;margin:8px 0;font-weight:400;color:var(--yazi)}.chk input{margin-top:3px}
+.gunsec{margin-bottom:12px}
+.saatler{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.saatler span{background:#f3f6fa;border:1px solid var(--cizgi);border-radius:6px;padding:3px 8px;font-size:12.5px}
+.saatler .ogle{background:#fff4e6;border-color:#f6d7ae;color:#9a5a12}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:12px;color:var(--mut);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--cizgi);background:#fafbfd;white-space:nowrap}
+.tbl td{padding:6px 12px;border-bottom:1px solid #eef1f5;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td input,.tbl td select{padding:5px 8px}
+.nw{white-space:nowrap}
+.nokta{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.rozet{font-size:10.5px;background:#e6f4ec;color:#2b7a52;border-radius:10px;padding:1px 7px;margin-left:6px;white-space:nowrap}
+.kirmiziy{color:var(--kir);font-weight:700}.turuncuy{color:var(--tur);font-weight:700}.yesily{color:var(--yes)}
+.sekme{display:flex;gap:4px;border-bottom:1px solid var(--cizgi);margin:6px 0 16px;overflow:auto}
+.sekme button{border:0;background:none;padding:9px 14px;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500}
+.sekme button.akt{color:var(--ana);border-bottom-color:var(--ana)}
+/* matris */
+table.mat{border-collapse:separate;border-spacing:0;min-width:100%}
+.mat th,.mat td{border-bottom:1px solid #eef1f5;border-right:1px solid #f1f3f7;padding:5px;text-align:center;vertical-align:top}
+.mat thead th{background:#fafbfd;position:sticky;top:0;z-index:2;font-size:12px;min-width:118px}
+.mat thead tr.hepsi th{top:52px;background:#f4f7fb}
+.mat thead tr.hepsi input{padding:3px 6px;font-size:12px;text-align:center}
+.mat .dad{font-weight:700;font-size:13px}
+.mat th small{display:block;color:var(--mut);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.mat .yap{position:sticky;left:0;background:#fff;z-index:1;text-align:left;min-width:80px;font-weight:600;padding-left:12px}
+.mat thead .yap{z-index:3;background:#fafbfd}
+.mc{display:flex;flex-direction:column;gap:3px}
+.mc input{text-align:center;padding:3px 4px;font-weight:600}
+.mc select{font-size:11.5px;padding:2px 3px}
+.mat td.top{vertical-align:middle;font-size:15px}
+.ozel{margin-top:3px;font-size:10.5px;border:1px dashed #b9c4d4;background:#fff;border-radius:6px;padding:1px 6px;cursor:pointer;color:var(--ana2)}
+.yukl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 22px}
+.yk{display:grid;grid-template-columns:1fr 90px 54px;gap:8px;align-items:center;font-size:12.5px}
+.yk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.yk b{text-align:right}
+.bar{height:7px;background:#eef1f5;border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;border-radius:5px;background:var(--ana2);transition:width .3s}
+/* modal */
+#modal{display:none;position:fixed;inset:0;z-index:50}
+.mbg{position:absolute;inset:0;background:rgba(15,25,45,.45)}
+.mkut{position:relative;margin:6vh auto;background:#fff;border-radius:14px;max-width:520px;width:calc(100% - 24px);max-height:88vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mkut.genis{max-width:820px}
+.cokl{max-height:210px;overflow:auto;border:1px solid var(--cizgi);border-radius:8px;padding:8px 8px 2px}
+.svg{margin-bottom:4px}.svg>.btn{margin:0 6px 6px 0}
+.sbt{display:grid;grid-template-columns:150px 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px;font-size:12.5px}
+/* kapalı ızgara */
+table.kg{border-collapse:separate;border-spacing:3px;margin:8px auto;user-select:none;touch-action:none}
+.kg th{font-size:11.5px;color:var(--mut);padding:2px 6px;cursor:pointer;font-weight:600}
+.kg th small{display:block;font-weight:400;font-size:10px}
+.kg td{width:58px;height:30px;background:#e8f5ee;border-radius:5px;cursor:pointer;border:1px solid #cfe8da}
+.kg td.kap{background:#f8d7d7;border-color:#eeb4b4;background-image:repeating-linear-gradient(45deg,transparent 0 5px,rgba(214,69,69,.15) 5px 10px)}
+/* uyarılar */
+.uyarilar{border-radius:8px;padding:10px 12px;font-size:13px;margin-top:6px}
+.uyarilar>div{padding:2px 0}
+.uyarilar.hata{background:#fdf1f1;border:1px solid #f2cccc;color:#8a2626}
+.uyarilar.ok{background:#eef8f2;border:1px solid #cbe9d7;color:#24654a}
+.uyarilar.uyr{background:#fff8ea;border:1px solid #f4dfb4;color:#7a5512}
+.uyarilar summary{cursor:pointer;font-weight:600}
+.ozet4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.ozet4>div{background:#fff;border:1px solid var(--cizgi);border-radius:var(--r);padding:12px 14px;box-shadow:var(--golge)}
+.kart .ozet4>div{box-shadow:none;background:#fafbfd}
+.ozet4 b{display:block;font-size:22px;color:var(--ana)}
+.ozet4 span{color:var(--mut);font-size:12px}
+.ilerleme{margin-top:14px}.ilerleme .bar{height:10px;margin-bottom:6px}.ilerleme .bar i{width:0;background:linear-gradient(90deg,var(--ana2),var(--vurgu))}
+/* program */
+.prgarac select{min-width:160px}
+.prgw{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:start}
+.prgbas{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--cizgi)}
+.prgbas b{font-size:17px;color:var(--ana)}
+table.prg{width:100%;border-collapse:collapse;table-layout:fixed}
+.prg th{background:#fafbfd;font-size:12.5px;padding:8px 4px;border-bottom:1px solid var(--cizgi);color:#384356}
+.prg th.sa{width:64px;font-weight:400;color:var(--mut)}
+.prg th.sa b{display:block;color:var(--yazi);font-size:14px}
+.prg th.sa small{font-size:10.5px;line-height:1.2;display:block}
+.prg td{border:1px solid #eef1f5;padding:3px;height:62px;vertical-align:top;position:relative}
+.prg td.kapc{background:repeating-linear-gradient(45deg,#fafafa 0 6px,#f1f1f1 6px 12px)}
+.prg tr.ogleR td{height:auto;padding:3px;text-align:center;background:#fff7ec;color:#9a5a12;font-size:11.5px;font-weight:600;letter-spacing:.5px}
+.krt{border-left:4px solid #999;border-radius:6px;padding:4px 7px;font-size:12px;line-height:1.25;cursor:grab;position:relative;margin-bottom:2px;overflow:hidden;min-height:52px}
+.krt b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.krt span{display:block;color:#4a5568;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+.krt em{display:block;font-style:normal;font-size:10.5px;color:var(--mut)}
+.krt.dev{opacity:.85;border-top:1px dashed rgba(0,0,0,.12)}
+.krt.ortk{outline:1px dashed rgba(0,0,0,.18);outline-offset:-2px}
+.krt .pn{position:absolute;right:4px;top:3px;font-style:normal;font-size:11px}
+.krt.secili{box-shadow:0 0 0 2px var(--vurgu);z-index:2}
+td.d-ok{background:#dff5e7!important;box-shadow:inset 0 0 0 2px #5fc086;cursor:pointer}
+td.d-cf{background:#fff6f4!important;box-shadow:inset 0 0 0 1px #f3b8ae;cursor:pointer}
+td.d-blk{background:#f1f1f1!important}
+.selbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;background:#fff6ea;border:1px solid #f6d7ae;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px;position:sticky;top:-22px;z-index:5}
+.tepsi{background:#fff;border:1px solid var(--cizgi);border-radius:var(--r);padding:12px;max-height:75vh;overflow:auto;box-shadow:var(--golge);position:sticky;top:0}
+.tepsi h4{margin:0 0 8px}
+.krt.tp{min-height:0;margin-bottom:6px;cursor:pointer}
+table.crs{border-collapse:collapse;font-size:11px}
+.crs th,.crs td{border:1px solid #e6eaf0;padding:2px 3px;text-align:center;min-width:42px}
+.crs td{height:34px;line-height:1.1}
+.crs td b{display:block;font-size:11px}.crs td small{font-size:9.5px;color:#4a5568}
+.crs .gb{border-left:2px solid #9fb0c8}
+.crs thead th{background:#fafbfd;position:sticky;top:0}
+.crs .yap{position:sticky;left:0;background:#fff;text-align:left;padding:2px 8px;white-space:nowrap;z-index:1}
+.crs .yap a{cursor:pointer;color:var(--ana2)}
+/* toast */
+#toast{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;flex-direction:column;gap:8px;max-width:380px}
+.tst{background:#24324a;color:#fff;padding:10px 14px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:13px;transition:opacity .4s,transform .4s}
+.tst.ok{background:#20694a}.tst.hata{background:#a43434}.tst.uyari{background:#9a6412}
+.tst.git{opacity:0;transform:translateY(8px)}
+#yazdir{display:none}
+.onizleme{display:flex;gap:10px;justify-content:space-between;align-items:center;background:#eef4ff;border:1px solid #c9d9f3;color:#284a7a;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12.5px}.onizleme button{border:0;background:none;cursor:pointer;color:inherit}
+@media (max-width:900px){
+  .duzen{flex-direction:column;height:auto}
+  nav#nav{width:auto;display:flex;overflow-x:auto;padding:6px;border-right:0;border-bottom:1px solid var(--cizgi);position:sticky;top:56px;z-index:10}
+  nav#nav button{width:auto;flex:none;margin:0 2px}
+  nav#nav .ad{white-space:nowrap}
+  main#main{padding:16px 12px 60px;overflow:visible}
+  .prgw{grid-template-columns:1fr}
+  .ozet4{grid-template-columns:repeat(2,1fr)}
+  .izg2,.izg3{grid-template-columns:1fr}
+  header.ust{gap:8px;padding:0 10px}.logo small,.kayit{display:none}
+  header select{max-width:150px}
+  .ustbtn button span{display:none}
+  .prg td{height:54px}.krt{min-height:46px}
+}
+/* yazdırma */
+@media print{
+  body>*:not(#yazdir){display:none!important}
+  #yazdir{display:block!important}
+  body{background:#fff}
+  .ysay{page-break-after:always;padding:0}
+  .ysay:last-child{page-break-after:auto}
+  .yb{display:flex;justify-content:space-between;font-size:11px;color:#555;border-bottom:2px solid #1f3b64;padding-bottom:4px;margin-bottom:8px}
+  .ysay h2{text-align:center;font-size:17px;margin:6px 0 10px}
+  .prg.yz td{height:58px}
+  .prg.yz .krt{min-height:0;border-left-width:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .crs td,.prg td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.lst{margin-top:10px;font-size:11px;border-collapse:collapse}
+  table.lst td{padding:2px 10px;border-bottom:1px solid #ddd}
+  @page{size:A4 portrait;margin:12mm}
+  body.yatayB{zoom:.72}
+}
+</style>
+</head>
+<body>
+<header class="ust">
+  <div class="logo"><i>📅</i><div>BKM Ders Dağıtım<small>Ders programı hazırlama</small></div></div>
+  <select id="kurumSec" title="Şube"></select>
+  <span id="kayit" class="kayit"></span>
+  <div class="ustbtn">
+    <button data-act="kmal" title="Kurs Modülü'ndeki şube, ders ve öğretmenleri al">🏫<span> Kurs Modülü'nden al</span></button>
+    <button data-act="ornek" title="Örnek veri yükle">🧪<span> Örnek veri</span></button>
+    <button data-act="iceaktar" title="JSON yedeğini içe aktar">⇡<span> İçe aktar</span></button>
+    <button data-act="disaktar" title="JSON yedeği indir">⇣<span> Yedek al</span></button>
+  </div>
+  <input type="file" id="dosya" accept=".json,application/json" hidden>
+</header>
+<div class="duzen"><nav id="nav"></nav><main id="main"></main></div>
+<div id="modal"></div>
+<div id="toast"></div>
+<div id="yazdir"></div>
+<script id="core">
+/* ===== DERS DAĞITIM ÇEKİRDEĞİ (hem ana sayfada hem Web Worker'da çalışır) ===== */
+var DDCore = (function () {
+  'use strict';
+
+  function rngOf(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function parseBloklar(str, saat) {
+    saat = +saat || 0;
+    if (str) {
+      var p = String(str).split(/[+,\s]+/).map(function (x) { return parseInt(x, 10); }).filter(function (x) { return x > 0; });
+      var sum = p.reduce(function (a, b) { return a + b; }, 0);
+      if (sum === saat && p.length) return p;
+    }
+    var r = [], k = saat;
+    while (k >= 2) { r.push(2); k -= 2; }
+    if (k) r.push(1);
+    return r;
+  }
+
+  var VARSAYILAN_AGIRLIK = { tGap: 4, tGapX: 25, tDay: 1, tFree: 40, cGap: 60, cLate: 25, cBal: 3, pref: 6 };
+
+  /* ---------- Model kurulumu ---------- */
+  function build(st, opts) {
+    opts = opts || {};
+    var A = st.ayar;
+    var D = A.gunler.length, H = +A.saatSayisi, T = D * H;
+    var W = Object.assign({}, VARSAYILAN_AGIRLIK, opts.agirlik || {});
+    var warnings = [];
+
+    function idxMap(arr) { var m = {}; arr.forEach(function (x, i) { m[x.id] = i; }); return m; }
+    var cI = idxMap(st.siniflar), tI = idxMap(st.ogretmenler), rI = idxMap(st.derslikler || []);
+    var nC = st.siniflar.length, nT = st.ogretmenler.length, nR = (st.derslikler || []).length;
+
+    function mask(kapali) {
+      var m = new Uint8Array(T);
+      if (kapali) for (var k in kapali) {
+        if (!kapali[k]) continue;
+        var p = k.split('-'), g = +p[0], s = +p[1];
+        if (g < D && s < H) m[g * H + s] = 1;
+      }
+      return m;
+    }
+    var unC = st.siniflar.map(function (c) { return mask(c.kapali); });
+    var unT = st.ogretmenler.map(function (t) { return mask(t.kapali); });
+    var unR = (st.derslikler || []).map(function (r) { return mask(r.kapali); });
+    var tMax = st.ogretmenler.map(function (t) { return Math.min(H, +t.maxGunluk || H); });
+    var tMaxGap = st.ogretmenler.map(function (t) { return t.maxBosluk === '' || t.maxBosluk == null ? 99 : +t.maxBosluk; });
+    var tFreeWant = st.ogretmenler.map(function (t) { return +t.bosGun || 0; });
+    var ogle = +A.ogleSonrasi || 0; // öğle arası bu ders saatinden sonra (1..H-1), 0=yok
+    var ogleBolme = A.ogleBolme !== false;
+
+    // paralel grupları topla
+    var groups = [], gmap = {};
+    (st.atamalar || []).forEach(function (a) {
+      var saat = +a.saat || 0;
+      if (!saat) return;
+      var cls = (a.sinifIds || []).filter(function (id) { return id in cI; });
+      if (!cls.length) return;
+      var key = a.paralelGrup ? 'P:' + a.paralelGrup : 'A:' + a.id;
+      if (!gmap[key]) { gmap[key] = []; groups.push(gmap[key]); }
+      gmap[key].push(a);
+    });
+    // blok yapısı uyuşmayan paralel üyeleri ayır
+    var groups2 = [];
+    groups.forEach(function (g) {
+      var bl0 = parseBloklar(g[0].bloklar, g[0].saat).join('+');
+      var ok = [], bad = [];
+      g.forEach(function (a) { (parseBloklar(a.bloklar, a.saat).join('+') === bl0 ? ok : bad).push(a); });
+      groups2.push(ok);
+      bad.forEach(function (a) { warnings.push('Paralel grup "' + a.paralelGrup + '" içinde blok yapısı farklı ders ayrı dağıtıldı.'); groups2.push([a]); });
+    });
+
+    var units = [];
+    groups2.forEach(function (mem) {
+      var a0 = mem[0];
+      var bl = parseBloklar(a0.bloklar, a0.saat);
+      bl.forEach(function (len, bi) {
+        var cls = {}, tch = {}, cards = [], akeys = [];
+        var allOrtak = true;
+        mem.forEach(function (a) {
+          akeys.push(a.id);
+          (a.sinifIds || []).forEach(function (id) { if (id in cI) cls[cI[id]] = 1; });
+          if (!a.ortak) { allOrtak = false; (a.ogretmenIds || []).forEach(function (id) { if (id in tI) tch[tI[id]] = 1; }); }
+          var rooms = a.ortak ? [] : (a.derslikIds || []).filter(function (id) { return id in rI; }).map(function (id) { return rI[id]; });
+          cards.push({ key: a.id + '#' + bi, aid: a.id, rooms: rooms });
+        });
+        var sabit = null;
+        mem.forEach(function (a) { if (a.sabit && a.sabit[bi] && a.sabit[bi].g != null) sabit = a.sabit[bi]; });
+        units.push({
+          id: units.length, len: len, bi: bi, cards: cards, akeys: akeys,
+          classes: Object.keys(cls).map(Number), teachers: Object.keys(tch).map(Number),
+          ortak: allOrtak, tercih: a0.tercih || '', ayniGunTek: mem.some(function (a) { return a.ayniGunTek !== false; }),
+          sabit: sabit, dersId: a0.dersId
+        });
+      });
+    });
+    var nU = units.length;
+    // kardeşler (aynı atamanın diğer blokları)
+    var byA = {};
+    units.forEach(function (u) { u.akeys.forEach(function (k) { (byA[k] = byA[k] || []).push(u.id); }); });
+    units.forEach(function (u) {
+      var s = {};
+      u.akeys.forEach(function (k) { byA[k].forEach(function (v) { if (v !== u.id) s[v] = 1; }); });
+      u.sib = Object.keys(s).map(Number);
+    });
+    // olası başlangıçlar
+    units.forEach(function (u) {
+      var dom = [], why = { kapali: 0, ogle: 0 };
+      for (var g = 0; g < D; g++) for (var s = 0; s + u.len <= H; s++) {
+        if (u.sabit) { if (u.sabit.g !== g || u.sabit.s !== s) continue; dom.push(g * H + s); continue; }
+        if (ogle && ogleBolme && u.len > 1 && s < ogle && s + u.len > ogle) { why.ogle++; continue; }
+        var t = g * H + s, ok = true;
+        for (var k = 0; k < u.len && ok; k++) {
+          for (var i = 0; i < u.classes.length; i++) if (unC[u.classes[i]][t + k]) { ok = false; break; }
+          if (!ok) break;
+          for (i = 0; i < u.teachers.length; i++) if (unT[u.teachers[i]][t + k]) { ok = false; break; }
+        }
+        if (ok) for (var ci = 0; ci < u.cards.length && ok; ci++) {
+          var c = u.cards[ci];
+          if (!c.rooms.length) continue;
+          var any = false;
+          for (var ri = 0; ri < c.rooms.length && !any; ri++) {
+            var fr = true;
+            for (k = 0; k < u.len; k++) if (unR[c.rooms[ri]][t + k]) { fr = false; break; }
+            if (fr) any = true;
+          }
+          if (!any) ok = false;
+        }
+        if (ok) dom.push(t); else why.kapali++;
+      }
+      u.dom = dom; u.domWhy = why;
+    });
+
+    var M = {
+      st: st, D: D, H: H, T: T, W: W, nC: nC, nT: nT, nR: nR, units: units, nU: nU, warnings: warnings,
+      cI: cI, tI: tI, rI: rI, unC: unC, unT: unT, unR: unR, tMax: tMax, tMaxGap: tMaxGap, tFreeWant: tFreeWant,
+      cOcc: new Int32Array(nC * T).fill(-1), tOcc: new Int32Array(nT * T).fill(-1), rOcc: new Int32Array(Math.max(1, nR * T)).fill(-1),
+      tLoad: new Int16Array(Math.max(1, nT * D)), pos: new Int32Array(nU).fill(-1),
+      rooms: units.map(function (u) { return u.cards.map(function () { return -1; }); }),
+      pinned: new Uint8Array(nU), cardUnit: {}
+    };
+    units.forEach(function (u) { u.cards.forEach(function (c, i) { M.cardUnit[c.key] = [u.id, i]; }); });
+    // sınıf/öğretmen -> birimler
+    M.unitsOfClass = []; for (var i = 0; i < nC; i++) M.unitsOfClass.push([]);
+    units.forEach(function (u) { u.classes.forEach(function (c) { M.unitsOfClass[c].push(u.id); }); });
+    return M;
+  }
+
+  /* ---------- Yerleştirme işlemleri ---------- */
+  function place(M, u, t, rooms) {
+    var U = M.units[u], T = M.T, g = (t / M.H) | 0, k, i;
+    for (i = 0; i < U.classes.length; i++) for (k = 0; k < U.len; k++) M.cOcc[U.classes[i] * T + t + k] = u;
+    for (i = 0; i < U.teachers.length; i++) {
+      for (k = 0; k < U.len; k++) M.tOcc[U.teachers[i] * T + t + k] = u;
+      M.tLoad[U.teachers[i] * M.D + g] += U.len;
+    }
+    for (i = 0; i < U.cards.length; i++) {
+      var r = rooms ? rooms[i] : -1;
+      M.rooms[u][i] = r;
+      if (r >= 0) for (k = 0; k < U.len; k++) M.rOcc[r * T + t + k] = u;
+    }
+    M.pos[u] = t;
+    if (M.log) M.log.push([0, u]);
+  }
+  function remove(M, u) {
+    var t = M.pos[u]; if (t < 0) return;
+    if (M.log) M.log.push([1, u, t, M.rooms[u].slice()]);
+    var U = M.units[u], T = M.T, g = (t / M.H) | 0, k, i;
+    for (i = 0; i < U.classes.length; i++) for (k = 0; k < U.len; k++) if (M.cOcc[U.classes[i] * T + t + k] === u) M.cOcc[U.classes[i] * T + t + k] = -1;
+    for (i = 0; i < U.teachers.length; i++) {
+      for (k = 0; k < U.len; k++) if (M.tOcc[U.teachers[i] * T + t + k] === u) M.tOcc[U.teachers[i] * T + t + k] = -1;
+      M.tLoad[U.teachers[i] * M.D + g] -= U.len;
+    }
+    for (i = 0; i < U.cards.length; i++) {
+      var r = M.rooms[u][i];
+      if (r >= 0) for (k = 0; k < U.len; k++) if (M.rOcc[r * T + t + k] === u) M.rOcc[r * T + t + k] = -1;
+      M.rooms[u][i] = -1;
+    }
+    M.pos[u] = -1;
+  }
+
+  // u yerleşik DEĞİLken t başlangıcı için çakışan birimleri ve derslik seçimini döndürür
+  function conflicts(M, u, t) {
+    var U = M.units[u], T = M.T, H = M.H, D = M.D, g = (t / H) | 0, k, i, o;
+    var set = new Set();
+    for (i = 0; i < U.classes.length; i++) for (k = 0; k < U.len; k++) { o = M.cOcc[U.classes[i] * T + t + k]; if (o >= 0 && o !== u) set.add(o); }
+    for (i = 0; i < U.teachers.length; i++) for (k = 0; k < U.len; k++) { o = M.tOcc[U.teachers[i] * T + t + k]; if (o >= 0 && o !== u) set.add(o); }
+    if (U.ayniGunTek) for (i = 0; i < U.sib.length; i++) { var sp = M.pos[U.sib[i]]; if (sp >= 0 && ((sp / H) | 0) === g) set.add(U.sib[i]); }
+    // öğretmen günlük azami
+    for (i = 0; i < U.teachers.length; i++) {
+      var tc = U.teachers[i], load = M.tLoad[tc * D + g];
+      if (load + U.len <= M.tMax[tc]) continue;
+      set.forEach(function (v) { var V = M.units[v]; if (V.teachers.indexOf(tc) >= 0 && ((M.pos[v] / H) | 0) === g) load -= V.len; });
+      for (var s = 0; s < H && load + U.len > M.tMax[tc]; s++) {
+        o = M.tOcc[tc * T + g * H + s];
+        if (o >= 0 && o !== u && !set.has(o)) { set.add(o); load -= M.units[o].len; }
+      }
+    }
+    // derslikler
+    var rooms = [];
+    for (i = 0; i < U.cards.length; i++) {
+      var c = U.cards[i];
+      if (!c.rooms.length) { rooms.push(-1); continue; }
+      var best = -1, bestN = 1e9, bestSet = null;
+      for (var ri = 0; ri < c.rooms.length; ri++) {
+        var r = c.rooms[ri];
+        if (rooms.indexOf(r) >= 0) continue;
+        var bad = false, occ = [];
+        for (k = 0; k < U.len; k++) {
+          if (M.unR[r][t + k]) { bad = true; break; }
+          o = M.rOcc[r * T + t + k];
+          if (o >= 0 && o !== u && !set.has(o) && occ.indexOf(o) < 0) occ.push(o);
+        }
+        if (bad) continue;
+        if (occ.length < bestN) { best = r; bestN = occ.length; bestSet = occ; if (!occ.length) break; }
+      }
+      if (best < 0) return { set: set, blocked: true, rooms: null };
+      rooms.push(best);
+      bestSet.forEach(function (v) { set.add(v); });
+    }
+    var blocked = false;
+    set.forEach(function (v) { if (M.pinned[v]) blocked = true; });
+    return { set: set, blocked: blocked, rooms: rooms };
+  }
+
+  /* ---------- Maliyet (yumuşak kısıtlar) ---------- */
+  function teacherCost(M, tc) {
+    var H = M.H, D = M.D, T = M.T, W = M.W, c = 0, days = 0;
+    for (var g = 0; g < D; g++) {
+      var f = -1, l = -1, n = 0;
+      for (var s = 0; s < H; s++) if (M.tOcc[tc * T + g * H + s] >= 0) { if (f < 0) f = s; l = s; n++; }
+      if (!n) continue;
+      days++;
+      var gap = l - f + 1 - n;
+      c += W.tGap * gap;
+      if (gap > M.tMaxGap[tc]) c += W.tGapX * (gap - M.tMaxGap[tc]);
+    }
+    c += W.tDay * days;
+    var fw = M.tFreeWant[tc];
+    if (fw > 0 && days > D - fw) c += W.tFree * (days - (D - fw));
+    return c;
+  }
+  function classCost(M, ci) {
+    var H = M.H, D = M.D, T = M.T, W = M.W, c = 0, tot = 0, cnt = [];
+    for (var g = 0; g < D; g++) {
+      var f = -1, l = -1, n = 0;
+      for (var s = 0; s < H; s++) if (M.cOcc[ci * T + g * H + s] >= 0) { if (f < 0) f = s; l = s; n++; }
+      cnt.push(n); tot += n;
+      if (!n) continue;
+      // sınıfın kapalı saatleri günü başlatmaz: kapalı ilk saatleri say
+      var free0 = 0; for (s = 0; s < f; s++) if (!M.unC[ci][g * H + s]) free0++;
+      var gap = 0; for (s = f; s <= l; s++) if (M.cOcc[ci * T + g * H + s] < 0 && !M.unC[ci][g * H + s]) gap++;
+      c += W.cGap * gap + W.cLate * free0;
+    }
+    var avg = tot / D;
+    for (g = 0; g < D; g++) c += W.cBal * (cnt[g] - avg) * (cnt[g] - avg);
+    return c;
+  }
+  function unitCost(M, u) {
+    var U = M.units[u], t = M.pos[u];
+    if (t < 0 || !U.tercih) return 0;
+    var s = t % M.H, half = Math.ceil(M.H / 2), bad = 0;
+    for (var k = 0; k < U.len; k++) {
+      if (U.tercih === 'sabah' && s + k >= half) bad++;
+      if (U.tercih === 'ogle' && s + k < half) bad++;
+    }
+    return M.W.pref * bad;
+  }
+  function totalCost(M) {
+    var c = 0, i;
+    for (i = 0; i < M.nT; i++) c += teacherCost(M, i);
+    for (i = 0; i < M.nC; i++) c += classCost(M, i);
+    for (i = 0; i < M.nU; i++) c += unitCost(M, i);
+    return c;
+  }
+  function localCost(M, us) {
+    var ts = {}, cs = {}, c = 0;
+    us.forEach(function (u) { var U = M.units[u]; U.teachers.forEach(function (t) { ts[t] = 1; }); U.classes.forEach(function (x) { cs[x] = 1; }); c += unitCost(M, u); });
+    for (var t in ts) c += teacherCost(M, +t);
+    for (var x in cs) c += classCost(M, +x);
+    return c;
+  }
+
+  // yerleştirme sezgisi: boşluk bırakmayan, sabaha yakın saatleri tercih et
+  function heur(M, u, t) {
+    var U = M.units[u], H = M.H, T = M.T, s = t % H, g = (t / H) | 0, h = 0, i, k;
+    for (i = 0; i < U.classes.length; i++) {
+      var c = U.classes[i], base = c * T + g * H;
+      // bu günde sınıfın ilk boş saati
+      var first = 0; while (first < H && (M.cOcc[base + first] >= 0 || M.unC[c][g * H + first])) first++;
+      h += Math.abs(s - first) * 6;
+      var n = 0; for (k = 0; k < H; k++) if (M.cOcc[base + k] >= 0) n++;
+      h += n * 2;
+    }
+    for (i = 0; i < U.teachers.length; i++) {
+      var tb = U.teachers[i] * T + g * H, any = false, adj = false;
+      for (k = 0; k < H; k++) if (M.tOcc[tb + k] >= 0) { any = true; break; }
+      if (s > 0 && M.tOcc[tb + s - 1] >= 0) adj = true;
+      if (s + U.len < H && M.tOcc[tb + s + U.len] >= 0) adj = true;
+      h += adj ? -4 : (any ? 3 : 1);
+    }
+    if (U.tercih) { var half = Math.ceil(H / 2); if ((U.tercih === 'sabah' && s >= half) || (U.tercih === 'ogle' && s < half)) h += 8; }
+    return h;
+  }
+
+  /* ---------- Kurulum aşaması: çakışma güdümlü yerleştirme ---------- */
+  function construct(M, rng, maxIter, deadline) {
+    var queue = [], ej = new Int32Array(M.nU), last = new Int32Array(M.nU).fill(-1), failed = [];
+    for (var u = 0; u < M.nU; u++) if (M.pos[u] < 0 && !M.pinned[u]) queue.push(u);
+    var diff = M.units.map(function (U) { return U.dom.length / (U.len * (1 + U.classes.length * 0.3 + U.teachers.length * 0.5)); });
+    var it = 0;
+    function unHours() { var h = 0; for (var i = 0; i < queue.length; i++) h += M.units[queue[i]].len; for (i = 0; i < failed.length; i++) h += M.units[failed[i]].len; return h; }
+    var bestH = unHours(), snap = null;
+    function takeSnap() { snap = { pos: M.pos.slice(), rooms: M.rooms.map(function (r) { return r.slice(); }) }; }
+    while (queue.length && it < maxIter) {
+      if ((it & 255) === 0 && Date.now() > deadline) break;
+      it++;
+      var h0 = unHours();
+      if (h0 < bestH) { bestH = h0; takeSnap(); }
+      var bi = 0, bs = 1e18;
+      for (var q = 0; q < queue.length; q++) { var sc = diff[queue[q]] - ej[queue[q]] * 2 + rng() * 0.5; if (sc < bs) { bs = sc; bi = q; } }
+      u = queue[bi]; queue[bi] = queue[queue.length - 1]; queue.pop();
+      var U = M.units[u], best = null, bestS = 1e18;
+      for (var di = 0; di < U.dom.length; di++) {
+        var t = U.dom[di], cf = conflicts(M, u, t);
+        if (cf.blocked) continue;
+        var s = 0;
+        cf.set.forEach(function (v) { s += 1000 + ej[v] * 150 + M.units[v].len * 50; });
+        s += heur(M, u, t) + rng() * 12;
+        if (t === last[u]) s += 400;
+        if (s < bestS) { bestS = s; best = { t: t, cf: cf }; }
+      }
+      if (!best) { failed.push(u); continue; }
+      best.cf.set.forEach(function (v) { remove(M, v); queue.push(v); ej[v]++; });
+      place(M, u, best.t, best.cf.rooms);
+      last[u] = best.t;
+    }
+    // bitmediyse: bulunan en iyi kısmi duruma dön
+    if (queue.length && snap && unHours() > bestH) {
+      for (u = 0; u < M.nU; u++) if (M.pos[u] >= 0 && !M.pinned[u]) remove(M, u);
+      for (u = 0; u < M.nU; u++) if (snap.pos[u] >= 0 && !M.pinned[u]) place(M, u, snap.pos[u], snap.rooms[u]);
+    }
+    return greedyFill(M, rng);
+  }
+
+  // yerleşmeyen birim için zincirleme takas: çakışan dersleri başka boş yerlere kaydırarak yer aç
+  function undoTo(M, mark) {
+    var lg = M.log; M.log = null;
+    while (lg.length > mark) { var op = lg.pop(); if (op[0] === 0) remove(M, op[1]); else place(M, op[1], op[2], op[3]); }
+    M.log = lg;
+  }
+  function tryInsert(M, u, depth, rng, used, budget) {
+    var U = M.units[u];
+    var order = U.dom.slice();
+    for (var i = order.length - 1; i > 0; i--) { var j = (rng() * (i + 1)) | 0, x = order[i]; order[i] = order[j]; order[j] = x; }
+    for (i = 0; i < order.length; i++) {
+      if (budget.n-- <= 0) return false;
+      var t = order[i], cf = conflicts(M, u, t);
+      if (cf.blocked) continue;
+      if (!cf.set.size) { place(M, u, t, cf.rooms); return true; }
+      if (depth <= 0 || cf.set.size > 2) continue;
+      var vs = Array.from(cf.set), skip = false;
+      for (var k = 0; k < vs.length; k++) if (used[vs[k]]) skip = true;
+      if (skip) continue;
+      var mark = M.log.length;
+      vs.forEach(function (v) { remove(M, v); used[v] = 1; });
+      var cf2 = conflicts(M, u, t);
+      var ok = !(cf2.set.size || cf2.blocked);
+      if (ok) {
+        place(M, u, t, cf2.rooms);
+        for (k = 0; k < vs.length && ok; k++) ok = tryInsert(M, vs[k], depth - 1, rng, used, budget);
+      }
+      vs.forEach(function (v) { used[v] = 0; });
+      if (ok) return true;
+      undoTo(M, mark);
+    }
+    return false;
+  }
+  function repair(M, rng, deadline) {
+    var rest = [];
+    for (var u = 0; u < M.nU; u++) if (M.pos[u] < 0 && !M.pinned[u]) rest.push(u);
+    var changed = true;
+    while (changed && rest.length && Date.now() < deadline) {
+      changed = false;
+      for (var i = 0; i < rest.length; i++) {
+        if (Date.now() > deadline) break;
+        var used = {}; used[rest[i]] = 1;
+        M.log = [];
+        var ok = tryInsert(M, rest[i], 3, rng, used, { n: 4000 });
+        if (!ok) undoTo(M, 0);
+        M.log = null;
+        if (ok) { rest.splice(i, 1); i--; changed = true; }
+      }
+    }
+    return rest;
+  }
+
+  // çakışmasız boş yer bulan herkesi yerleştir; kalanları döndür
+  function greedyFill(M, rng) {
+    var rest = [];
+    for (var u = 0; u < M.nU; u++) {
+      if (M.pos[u] >= 0) continue;
+      var U = M.units[u], best = -1, bs = 1e18, br = null;
+      for (var i = 0; i < U.dom.length; i++) {
+        var cf = conflicts(M, u, U.dom[i]);
+        if (cf.set.size || cf.blocked) continue;
+        var s = heur(M, u, U.dom[i]) + rng();
+        if (s < bs) { bs = s; best = U.dom[i]; br = cf.rooms; }
+      }
+      if (best >= 0) place(M, u, best, br); else rest.push(u);
+    }
+    return rest;
+  }
+
+  /* ---------- İyileştirme aşaması: benzetimli tavlama ---------- */
+  function anneal(M, rng, deadline, onTick) {
+    var movable = [];
+    for (var u = 0; u < M.nU; u++) if (M.pos[u] >= 0 && !M.pinned[u]) movable.push(u);
+    if (!movable.length) return totalCost(M);
+    var cur = totalCost(M), best = cur, bestPos = M.pos.slice(), bestRooms = M.rooms.map(function (r) { return r.slice(); });
+    var temp0 = 30, it = 0, startT = Date.now(), dur = Math.max(1, deadline - startT);
+    while (true) {
+      if ((it & 511) === 0) {
+        var now = Date.now();
+        if (now > deadline) break;
+        if (onTick && (it & 8191) === 0) onTick(best);
+      }
+      it++;
+      var frac = (Date.now() - startT) / dur;
+      var temp = temp0 * Math.pow(0.002, frac);
+      u = movable[(rng() * movable.length) | 0];
+      var U = M.units[u], old = M.pos[u], oldR = M.rooms[u].slice();
+      var mv = rng();
+      if (mv < 0.35) {
+        // zincir hamle: hedefteki tek dersi başka bir yere kaydır
+        var t3 = U.dom[(rng() * U.dom.length) | 0];
+        if (t3 === old) continue;
+        remove(M, u);
+        var cf3 = conflicts(M, u, t3);
+        if (cf3.blocked || cf3.set.size !== 1) { place(M, u, old, oldR); continue; }
+        var v3 = cf3.set.values().next().value, V3 = M.units[v3];
+        if (M.pinned[v3]) { place(M, u, old, oldR); continue; }
+        place(M, u, old, oldR);
+        var before3 = localCost(M, [u, v3]), pv3 = M.pos[v3], vR3 = M.rooms[v3].slice();
+        remove(M, u); remove(M, v3);
+        var cfu = conflicts(M, u, t3);
+        if (cfu.set.size || cfu.blocked) { place(M, v3, pv3, vR3); place(M, u, old, oldR); continue; }
+        place(M, u, t3, cfu.rooms);
+        // v için aday yerler: önce u'nun eski yeri (takas), sonra rastgele birkaç yer
+        var cands = [old];
+        for (var q = 0; q < 6; q++) cands.push(V3.dom[(rng() * V3.dom.length) | 0]);
+        var bestT = -1, bestC = 1e18, bestRr = null;
+        for (q = 0; q < cands.length; q++) {
+          var tv = cands[q];
+          if (tv === pv3 || V3.dom.indexOf(tv) < 0) continue;
+          var cfv = conflicts(M, v3, tv);
+          if (cfv.set.size || cfv.blocked) continue;
+          place(M, v3, tv, cfv.rooms);
+          var cc = localCost(M, [u, v3]);
+          remove(M, v3);
+          if (cc < bestC) { bestC = cc; bestT = tv; bestRr = cfv.rooms; }
+        }
+        if (bestT < 0) { remove(M, u); place(M, u, old, oldR); place(M, v3, pv3, vR3); continue; }
+        place(M, v3, bestT, bestRr);
+        delta = bestC - before3;
+        if (delta <= 0 || rng() < Math.exp(-delta / temp)) { cur += delta; }
+        else { remove(M, u); remove(M, v3); place(M, u, old, oldR); place(M, v3, pv3, vR3); }
+      } else if (mv < 0.75 || !U.classes.length) {
+        var t = U.dom[(rng() * U.dom.length) | 0];
+        if (t === old) continue;
+        var before = localCost(M, [u]);
+        remove(M, u);
+        var cf = conflicts(M, u, t);
+        if (cf.set.size || cf.blocked) { place(M, u, old, oldR); continue; }
+        place(M, u, t, cf.rooms);
+        var delta = localCost(M, [u]) - before;
+        // eski gündeki maliyet değişimi de localCost içinde (aynı öğretmen/sınıf tüm günler)
+        if (delta <= 0 || rng() < Math.exp(-delta / temp)) { cur += delta; }
+        else { remove(M, u); place(M, u, old, oldR); }
+      } else {
+        // aynı sınıftaki eşit uzunluklu başka dersle yer değiştir
+        var c = U.classes[(rng() * U.classes.length) | 0], list = M.unitsOfClass[c];
+        var v = list[(rng() * list.length) | 0];
+        if (v === u || M.pinned[v] || M.pos[v] < 0) continue;
+        var V = M.units[v];
+        if (V.len !== U.len) continue;
+        var pu = M.pos[u], pv = M.pos[v];
+        if (U.dom.indexOf(pv) < 0 || V.dom.indexOf(pu) < 0) continue;
+        var vR = M.rooms[v].slice();
+        before = localCost(M, [u, v]);
+        remove(M, u); remove(M, v);
+        var c1 = conflicts(M, u, pv);
+        if (c1.set.size || c1.blocked) { place(M, u, pu, oldR); place(M, v, pv, vR); continue; }
+        place(M, u, pv, c1.rooms);
+        var c2 = conflicts(M, v, pu);
+        if (c2.set.size || c2.blocked) { remove(M, u); place(M, u, pu, oldR); place(M, v, pv, vR); continue; }
+        place(M, v, pu, c2.rooms);
+        delta = localCost(M, [u, v]) - before;
+        if (delta <= 0 || rng() < Math.exp(-delta / temp)) { cur += delta; }
+        else { remove(M, u); remove(M, v); place(M, u, pu, oldR); place(M, v, pv, vR); }
+      }
+      if (cur < best - 1e-9) { best = cur; bestPos = M.pos.slice(); bestRooms = M.rooms.map(function (r) { return r.slice(); }); }
+    }
+    // en iyiye dön
+    for (u = 0; u < M.nU; u++) if (M.pos[u] >= 0 && !M.pinned[u]) remove(M, u);
+    for (u = 0; u < M.nU; u++) if (bestPos[u] >= 0 && !M.pinned[u]) place(M, u, bestPos[u], bestRooms[u]);
+    return totalCost(M);
+  }
+
+  /* ---------- Mevcut yerleşimi modele yükle ---------- */
+  function loadPlacements(M, yer, mode) {
+    // mode: 'tum' -> tümünü yükle (pin bayrağıyla), 'pin' -> sadece sabitler, 'koru' -> hepsi sabit gibi
+    var bad = [];
+    yer = yer || {};
+    var roomIds = (M.st.derslikler || []).map(function (r) { return r.id; });
+    var order = [];
+    M.units.forEach(function (U) {
+      var p = yer[U.cards[0].key];
+      if (!p || p.g == null) return;
+      var pin = !!p.pin;
+      if (mode === 'pin' && !pin) return;
+      order.push({ u: U.id, p: p, pin: pin || mode === 'koru' });
+    });
+    order.sort(function (a, b) { return (b.pin ? 1 : 0) - (a.pin ? 1 : 0); });
+    order.forEach(function (o) {
+      var U = M.units[o.u], p = o.p;
+      if (p.g >= M.D || p.s + U.len > M.H) { bad.push(o.u); return; }
+      var t = p.g * M.H + p.s;
+      var cf = conflicts(M, o.u, t);
+      var rooms = U.cards.map(function (c, i) {
+        var q = yer[c.key]; var r = q && q.r ? M.rI[q.r] : undefined;
+        return r != null ? r : (cf.rooms ? cf.rooms[i] : -1);
+      });
+      if (cf.set.size) { if (mode === 'tum') { /* manuel çakışmayı yine de yükleme */ } bad.push(o.u); return; }
+      place(M, o.u, t, rooms);
+      if (o.pin) M.pinned[o.u] = 1;
+    });
+    return bad;
+  }
+
+  function exportPlacements(M) {
+    var out = {};
+    M.units.forEach(function (U) {
+      var t = M.pos[U.id]; if (t < 0) return;
+      var g = (t / M.H) | 0, s = t % M.H;
+      U.cards.forEach(function (c, i) {
+        var r = M.rooms[U.id][i];
+        out[c.key] = { g: g, s: s, r: r >= 0 ? M.st.derslikler[r].id : null, pin: !!M.pinned[U.id] };
+      });
+    });
+    return out;
+  }
+
+  /* ---------- Ön analiz ---------- */
+  function analyze(st) {
+    var M = build(st, {});
+    var err = [], warn = M.warnings.slice();
+    var tReq = new Array(M.nT).fill(0), cReq = new Array(M.nC).fill(0);
+    M.units.forEach(function (U) {
+      if (!U.ortak) U.teachers.forEach(function (t) { tReq[t] += U.len; });
+      U.classes.forEach(function (c) { cReq[c] += U.len; });
+      if (!U.dom.length) err.push(unitName(st, M, U) + ': yerleştirilebileceği hiç uygun saat yok (kapalı saatler / blok süresi / öğle arası).');
+    });
+    function freeCount(m) { var n = 0; for (var i = 0; i < m.length; i++) if (!m[i]) n++; return n; }
+    // blok bazlı günlük kapasite: öğretmenin bir günde sığdırabileceği en fazla saat (blok uzunlukları dikkate alınarak)
+    var tLens = st.ogretmenler.map(function () { return []; });
+    M.units.forEach(function (U) { U.teachers.forEach(function (t) { tLens[t].push(U.len); }); });
+    function dayCap(i, g) {
+      var fr = 0; for (var s = 0; s < M.H; s++) if (!M.unT[i][g * M.H + s]) fr++;
+      var lim = Math.min(fr, M.tMax[i]);
+      var minLen = Math.min.apply(null, tLens[i].concat([99]));
+      var allEven = tLens[i].length && tLens[i].every(function (l) { return l % 2 === 0; });
+      return allEven ? lim - (lim % 2) : (minLen === 99 ? lim : lim);
+    }
+    st.ogretmenler.forEach(function (t, i) {
+      var fr = freeCount(M.unT[i]), cap = 0;
+      for (var g = 0; g < M.D; g++) cap += dayCap(i, g);
+      cap = Math.min(fr, cap);
+      if (tReq[i] > cap) err.push(t.ad + ': ders yükü ' + tReq[i] + ' saat, ama uygun saati ' + cap + '.');
+      else if (tReq[i] > cap * 0.92 && tReq[i] > 0) warn.push(t.ad + ': çok sıkışık (' + tReq[i] + '/' + cap + ' saat).');
+    });
+    st.siniflar.forEach(function (c, i) {
+      var fr = freeCount(M.unC[i]);
+      if (cReq[i] > fr) err.push(c.ad + ': haftalık ders ' + cReq[i] + ' saat, ama açık saat ' + fr + '.');
+      if (cReq[i] === 0) warn.push(c.ad + ': hiç ders ataması yok.');
+    });
+    (st.atamalar || []).forEach(function (a) {
+      if (+a.saat > 0 && !a.ortak && !(a.ogretmenIds || []).length) warn.push(atamaName(st, a) + ': öğretmen atanmamış.');
+    });
+    return { errors: err, warnings: warn, tReq: tReq, cReq: cReq, units: M.nU, hours: cReq.reduce(function (a, b) { return a + b; }, 0) };
+  }
+  function atamaName(st, a) {
+    var d = (st.dersler.find(function (x) { return x.id === a.dersId; }) || {}).ad || 'Ders';
+    var cl = (a.sinifIds || []).map(function (id) { var c = st.siniflar.find(function (x) { return x.id === id; }); return c ? c.ad : '?'; });
+    return d + ' (' + (cl.length > 3 ? cl.slice(0, 3).join(', ') + '…' : cl.join(', ')) + ')';
+  }
+  function unitName(st, M, U) {
+    var a = st.atamalar.find(function (x) { return x.id === U.cards[0].aid; });
+    return atamaName(st, a) + ' [' + U.len + ' saatlik blok]';
+  }
+
+  /* ---------- Ana çözücü ---------- */
+  function solve(st, opts, progress) {
+    opts = opts || {};
+    var sure = (opts.sure || 20) * 1000, t0 = Date.now(), seed = opts.seed || ((Math.random() * 1e9) | 0);
+    var mod = opts.mod || 'pin';
+    var bestRes = null, attempt = 0;
+    var constructShare = 0.55;
+    while (true) {
+      attempt++;
+      var rng = rngOf(seed + attempt * 7919);
+      var M = build(st, opts);
+      loadPlacements(M, st.yerlesim, mod);
+      var now = Date.now(), left = sure - (now - t0);
+      var dl = now + Math.max(500, Math.min(left * 0.5, sure * constructShare / 2));
+      var un = construct(M, rng, 400000, dl);
+      // kalan birimler için ikinci şans
+      if (un.length) un = repair(M, rng, Date.now() + Math.max(400, Math.min(3000, left * 0.15)));
+      var shortSA = Math.min(1500, Math.max(200, left * 0.1));
+      var cost = anneal(M, rng, Date.now() + shortSA);
+      var res = { M: M, un: un, cost: cost };
+      if (!bestRes || un.length < bestRes.un.length || (un.length === bestRes.un.length && cost < bestRes.cost)) bestRes = res;
+      if (progress) progress({ asama: 'Deneme ' + attempt, yerlesmeyen: bestRes.un.length, maliyet: Math.round(bestRes.cost), oran: Math.min(0.6, (Date.now() - t0) / sure) });
+      if (Date.now() - t0 > sure * constructShare || (bestRes.un.length === 0 && attempt >= 2)) break;
+    }
+    M = bestRes.M;
+    var rng2 = rngOf(seed ^ 0x5bd1e995);
+    var finalCost = anneal(M, rng2, Math.max(Date.now() + 300, t0 + sure), function (c) {
+      if (progress) progress({ asama: 'İyileştirme', yerlesmeyen: bestRes.un.length, maliyet: Math.round(c), oran: Math.min(0.99, (Date.now() - t0) / sure) });
+    });
+    // yerleşmeyen birimleri bir kez daha dene
+    var stillUn = [];
+    for (var u = 0; u < M.nU; u++) if (M.pos[u] < 0) stillUn.push(u);
+    return {
+      yerlesim: exportPlacements(M),
+      yerlesmeyen: stillUn.map(function (u) { return { anahtar: M.units[u].cards.map(function (c) { return c.key; }), ad: unitName(st, M, M.units[u]), neden: reason(M, u) }; }),
+      istatistik: stats(M), maliyet: Math.round(finalCost), sureSn: Math.round((Date.now() - t0) / 100) / 10, deneme: attempt
+    };
+  }
+
+  function reason(M, u) {
+    var U = M.units[u];
+    if (!U.dom.length) return 'Uygun saat yok (kapalı saatler veya blok süresi).';
+    var pinBlock = 0, who = {};
+    U.dom.forEach(function (t) {
+      var cf = conflicts(M, u, t);
+      if (cf.blocked) pinBlock++;
+      cf.set.forEach(function (v) {
+        var V = M.units[v];
+        V.teachers.forEach(function (x) { if (U.teachers.indexOf(x) >= 0) who['Öğretmen: ' + M.st.ogretmenler[x].ad] = (who['Öğretmen: ' + M.st.ogretmenler[x].ad] || 0) + 1; });
+        V.classes.forEach(function (x) { if (U.classes.indexOf(x) >= 0) who['Sınıf: ' + M.st.siniflar[x].ad] = (who['Sınıf: ' + M.st.siniflar[x].ad] || 0) + 1; });
+      });
+    });
+    if (pinBlock === U.dom.length) return 'Tüm uygun saatler sabitlenmiş derslerle dolu.';
+    var top = Object.keys(who).sort(function (a, b) { return who[b] - who[a]; }).slice(0, 2);
+    return 'Sığmadı. En çok çakışan: ' + (top.join(', ') || 'derslik / aynı gün kuralı') + '. Kapalı saatleri azaltmayı veya blok yapısını değiştirmeyi deneyin.';
+  }
+
+  function stats(M) {
+    var H = M.H, D = M.D, T = M.T, tg = 0, cg = 0, i, g, s;
+    for (i = 0; i < M.nT; i++) for (g = 0; g < D; g++) {
+      var f = -1, l = -1, n = 0;
+      for (s = 0; s < H; s++) if (M.tOcc[i * T + g * H + s] >= 0) { if (f < 0) f = s; l = s; n++; }
+      if (n) tg += l - f + 1 - n;
+    }
+    for (i = 0; i < M.nC; i++) for (g = 0; g < D; g++) {
+      f = -1; l = -1; n = 0;
+      for (s = 0; s < H; s++) if (M.cOcc[i * T + g * H + s] >= 0) { if (f < 0) f = s; l = s; n++; }
+      if (n) for (s = f; s <= l; s++) if (M.cOcc[i * T + g * H + s] < 0 && !M.unC[i][g * H + s]) cg++;
+    }
+    var placed = 0, hours = 0;
+    for (var u = 0; u < M.nU; u++) { hours += M.units[u].len; if (M.pos[u] >= 0) placed += M.units[u].len; }
+    return { ogretmenBosluk: tg, sinifBosluk: cg, yerlesenSaat: placed, toplamSaat: hours };
+  }
+
+  return {
+    rngOf: rngOf, parseBloklar: parseBloklar, build: build, place: place, remove: remove, conflicts: conflicts,
+    loadPlacements: loadPlacements, exportPlacements: exportPlacements, analyze: analyze, solve: solve,
+    totalCost: totalCost, stats: stats, atamaName: atamaName, VARSAYILAN_AGIRLIK: VARSAYILAN_AGIRLIK
+  };
+})();
+
+if (typeof self !== 'undefined' && typeof window === 'undefined' && typeof self.postMessage === 'function' && typeof module === 'undefined') {
+  self.onmessage = function (e) {
+    var d = e.data;
+    if (d.tip === 'dagit') {
+      try {
+        var res = DDCore.solve(d.st, d.opts, function (p) { self.postMessage({ tip: 'ilerleme', p: p }); });
+        self.postMessage({ tip: 'bitti', sonuc: res });
+      } catch (err) { self.postMessage({ tip: 'hata', mesaj: String(err && err.stack || err) }); }
+    }
+  };
+}
+if (typeof module !== 'undefined') module.exports = DDCore;
+
+</script>
+<script>
+/* ===== ÖRNEK VERİ ===== */
+function ddOrnekVeri() {
+  var id = 0; function nid(p) { return p + (++id).toString(36); }
+  var dersTanim = [
+    ['Türkçe', 'TÜR', '#e76f51'], ['Matematik', 'MAT', '#2a9d8f'], ['Fen Bilimleri', 'FEN', '#457b9d'],
+    ['Sosyal Bilgiler', 'SOS', '#e9c46a'], ['T.C. İnkılap Tarihi', 'İNK', '#d4a373'], ['İngilizce', 'İNG', '#8e7dbe'],
+    ['Din Kültürü', 'DİN', '#6a994e'], ['Rehberlik', 'REH', '#bc6c25'], ['Deneme Sınavı', 'DNM', '#d62828'], ['Etüt', 'ETÜ', '#577590']
+  ];
+  var dersler = dersTanim.map(function (d) { return { id: nid('d'), ad: d[0], kisa: d[1], renk: d[2] }; });
+  function D(k) { return dersler.find(function (d) { return d.kisa === k; }).id; }
+  var siniflar = [];
+  [5, 6, 7, 8].forEach(function (sv) { ['A', 'B', 'C', 'D'].forEach(function (s) { siniflar.push({ id: nid('s'), ad: sv + '-' + s, seviye: sv, kapali: {} }); }); });
+  var ogrTanim = [
+    ['Ayşe Yılmaz', 'TÜR'], ['Mehmet Kaya', 'TÜR'], ['Zeynep Demir', 'TÜR'],
+    ['Ali Çelik', 'MAT'], ['Fatma Şahin', 'MAT'], ['Hasan Arslan', 'MAT'],
+    ['Elif Koç', 'FEN'], ['Murat Aydın', 'FEN'],
+    ['Selin Öztürk', 'SOS'], ['Okan Tekin', 'SOS'], ['Kemal Kurt', 'İNK'],
+    ['Deniz Polat', 'İNG'], ['Burak Erdem', 'İNG'],
+    ['Hatice Güneş', 'DİN'], ['Canan Yıldız', 'REH']
+  ];
+  var ogretmenler = ogrTanim.map(function (o) {
+    var p = o[0].split(' ');
+    return { id: nid('o'), ad: o[0], kisa: p[0][0] + '.' + p[1].slice(0, 3).toUpperCase(), brans: D(o[1]), maxGunluk: 8, bosGun: 0, maxBosluk: 2, kapali: {} };
+  });
+  ogretmenler[0].kapali = { '4-5': 1, '4-6': 1, '4-7': 1 };
+  ogretmenler[3].bosGun = 1;
+  ogretmenler.forEach(function (o) { if (o.brans === D('DİN') || o.brans === D('REH')) o.maxGunluk = 8; });
+  var derslikler = [{ id: nid('r'), ad: 'Fen Laboratuvarı', kapali: {} }];
+  var plan = {
+    5: [['TÜR', 5], ['MAT', 5], ['FEN', 4], ['SOS', 3], ['İNG', 3], ['DİN', 2], ['REH', 1]],
+    6: [['TÜR', 5], ['MAT', 5], ['FEN', 4], ['SOS', 3], ['İNG', 3], ['DİN', 2], ['REH', 1]],
+    7: [['TÜR', 5], ['MAT', 5], ['FEN', 4], ['SOS', 3], ['İNG', 4], ['DİN', 2], ['REH', 1]],
+    8: [['TÜR', 5], ['MAT', 5], ['FEN', 4], ['İNK', 2], ['İNG', 4], ['DİN', 2], ['REH', 1]]
+  };
+  var sayac = {};
+  var atamalar = [];
+  siniflar.forEach(function (c) {
+    plan[c.seviye].forEach(function (p) {
+      var br = ogretmenler.filter(function (o) { return o.brans === D(p[0]); });
+      sayac[p[0]] = (sayac[p[0]] || 0);
+      // yükü dengeli dağıt
+      br.sort(function (a, b) { return (a._y || 0) - (b._y || 0); });
+      var o = br[0]; o._y = (o._y || 0) + p[1];
+      atamalar.push({ id: nid('a'), dersId: D(p[0]), sinifIds: [c.id], ogretmenIds: [o.id], saat: p[1], bloklar: '', derslikIds: p[0] === 'FEN' && c.seviye === 8 ? [derslikler[0].id] : [], ayniGunTek: true, tercih: p[0] === 'MAT' ? 'sabah' : '', paralelGrup: '', ortak: false, sabit: null });
+    });
+  });
+  ogretmenler.forEach(function (o) { delete o._y; });
+  // ortak deneme: tüm 8. sınıflar cuma 1-3. saat, aynı görevli
+  atamalar.push({ id: nid('a'), dersId: D('DNM'), sinifIds: siniflar.filter(function (c) { return c.seviye === 8; }).map(function (c) { return c.id; }), ogretmenIds: [ogretmenler[14].id], saat: 3, bloklar: '3', derslikIds: [], ayniGunTek: true, tercih: '', paralelGrup: '', ortak: true, sabit: [{ g: 4, s: 0 }] });
+  // ortak etüt: tüm sınıflar perşembe 7-8
+  atamalar.push({ id: nid('a'), dersId: D('ETÜ'), sinifIds: siniflar.map(function (c) { return c.id; }), ogretmenIds: [], saat: 2, bloklar: '2', derslikIds: [], ayniGunTek: true, tercih: '', paralelGrup: '', ortak: true, sabit: [{ g: 3, s: 6 }] });
+  return {
+    v: 1,
+    ayar: { okulAdi: 'BKM AKADEMİ', gunler: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'], saatSayisi: 8, baslangic: '09:00', dersSure: 40, teneffus: 10, ogleSonrasi: 4, ogleSure: 40, ogleBolme: true },
+    dersler: dersler, siniflar: siniflar, ogretmenler: ogretmenler, derslikler: derslikler, atamalar: atamalar, yerlesim: {}
+  };
+}
+if (typeof module !== 'undefined') module.exports = ddOrnekVeri;
+
+</script>
+<script>
+/* ===== BKM DERS DAĞITIM — ARAYÜZ ===== */
+(function () {
+  'use strict';
+  var KURUMLAR = [
+    { kod: 'bkmakademicarsi', ad: 'BKM AKADEMİ ÇARŞI ŞUBESİ' },
+    { kod: 'bkmakademikarsiyaka', ad: 'BKM AKADEMİ KARŞIYAKA ŞUBESİ' }
+  ];
+  var GUNLER = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+  var PALET = ['#e76f51', '#2a9d8f', '#457b9d', '#e9c46a', '#8e7dbe', '#6a994e', '#d4a373', '#bc6c25', '#577590', '#d62828', '#f4a261', '#118ab2', '#ef476f', '#06d6a0', '#7f5539', '#9d4edd'];
+  var MEB = [['Türkçe', 'TÜR'], ['Matematik', 'MAT'], ['Fen Bilimleri', 'FEN'], ['Sosyal Bilgiler', 'SOS'], ['T.C. İnkılap Tarihi', 'İNK'], ['İngilizce', 'İNG'], ['Din Kültürü', 'DİN'], ['Rehberlik', 'REH'], ['Deneme Sınavı', 'DNM'], ['Etüt', 'ETÜ'], ['Soru Çözüm', 'SÇ'], ['Kazanım Denemesi', 'KZD']];
+
+  /* ---------- yardımcılar ---------- */
+  var LS = {
+    get: function (k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function uid(p) { return p + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 6); }
+  function find(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
+  function hexA(h, a) { h = (h || '#888').replace('#', ''); if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join(''); var n = parseInt(h, 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
+  function trUp(s) { return String(s).toLocaleUpperCase('tr-TR'); }
+  function kisaAd(ad) { var p = String(ad).trim().split(/\s+/); if (p.length < 2) return trUp(ad).slice(0, 5); return trUp(p[0][0]) + '.' + trUp(p[p.length - 1]).slice(0, 4); }
+
+  function bosVeri() {
+    return {
+      v: 1,
+      ayar: { okulAdi: '', gunler: GUNLER.slice(0, 5), saatSayisi: 8, baslangic: '09:00', dersSure: 40, teneffus: 10, ogleSonrasi: 4, ogleSure: 40, ogleBolme: true },
+      dersler: [], siniflar: [], ogretmenler: [], derslikler: [], atamalar: [], yerlesim: {}, sonDagitim: null
+    };
+  }
+  function normalize(st) {
+    var b = bosVeri();
+    st = st || b;
+    st.ayar = Object.assign(b.ayar, st.ayar || {});
+    ['dersler', 'siniflar', 'ogretmenler', 'derslikler', 'atamalar'].forEach(function (k) { if (!Array.isArray(st[k])) st[k] = []; });
+    if (!st.yerlesim) st.yerlesim = {};
+    st.siniflar.forEach(function (x) { x.kapali = x.kapali || {}; });
+    st.ogretmenler.forEach(function (x) { x.kapali = x.kapali || {}; if (x.maxGunluk == null) x.maxGunluk = st.ayar.saatSayisi; });
+    st.derslikler.forEach(function (x) { x.kapali = x.kapali || {}; });
+    st.atamalar.forEach(function (a) { a.sinifIds = a.sinifIds || []; a.ogretmenIds = a.ogretmenIds || []; a.derslikIds = a.derslikIds || []; });
+    return st;
+  }
+
+  var kurum = LS.get('dd_kurum') || KURUMLAR[0].kod;
+  var ST = normalize(LS.get('dd_veri_' + kurum));
+  var Y = Object.assign({ url: '', auth: '', yol: 'kurumlar/{kurum}/dersProgrami', sinifYolu: '', ogretmenYolu: '' }, LS.get('dd_yayin') || {});
+  var FB_DEF = 'https://bkm-sanal-koc-default-rtdb.europe-west1.firebasedatabase.app';
+  if (!Y.url) Y.url = FB_DEF;
+  var GOMULU = false; try { GOMULU = window.parent !== window; } catch (e) { GOMULU = true; }
+  var UI = { sayfa: LS.get('dd_sayfa') || 'ayar', gorunum: 'sinif', varlik: null, sel: -1, matSeviye: 'hepsi', atamaSekme: 'matris', dagSure: 30, dagMod: 'pin', onc: { tGap: 4, cBal: 3, tFree: 40 } };
+  var ENG = null;
+
+  function save(keepEng) {
+    if (!keepEng) ENG = null;
+    var ok = LS.set('dd_veri_' + kurum, ST);
+    var el = $('#kayit');
+    if (el) { el.textContent = ok ? 'Kaydedildi ✓' : 'Tarayıcı belleğine yazılamadı — JSON olarak dışa aktarın'; el.className = ok ? 'kayit ok' : 'kayit err'; }
+    navCounts();
+  }
+  function eng() {
+    if (!ENG) { ENG = DDCore.build(ST, {}); DDCore.loadPlacements(ENG, ST.yerlesim, 'tum'); }
+    return ENG;
+  }
+  function saatler() {
+    var A = ST.ayar, p = String(A.baslangic || '09:00').split(':'), cur = (+p[0]) * 60 + (+p[1] || 0), out = [];
+    function f(m) { m = ((m % 1440) + 1440) % 1440; return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2); }
+    for (var s = 0; s < A.saatSayisi; s++) {
+      var b = cur, e = cur + (+A.dersSure || 40);
+      out.push({ bas: f(b), bit: f(e) });
+      cur = e + ((+A.ogleSonrasi && s + 1 === +A.ogleSonrasi) ? (+A.ogleSure || 0) : (+A.teneffus || 0));
+    }
+    return out;
+  }
+  function toast(msg, tip) {
+    var t = $('#toast'); var d = document.createElement('div');
+    d.className = 'tst ' + (tip || ''); d.textContent = msg; t.appendChild(d);
+    setTimeout(function () { d.classList.add('git'); }, 3200); setTimeout(function () { d.remove(); }, 3700);
+  }
+  function modal(html, wide) {
+    var m = $('#modal');
+    m.innerHTML = '<div class="mbg" data-act="mkapat"></div><div class="mkut' + (wide ? ' genis' : '') + '">' + html + '</div>';
+    m.style.display = 'block';
+  }
+  function mkapat() { var m = $('#modal'); m.style.display = 'none'; m.innerHTML = ''; }
+  var _ask = null;
+  function ask(msg, onYes, yesTxt) {
+    _ask = onYes;
+    modal('<h3>Onay</h3><p>' + esc(msg) + '</p><div class="sag"><button class="btn" data-act="mkapat">Vazgeç</button> <button class="btn ana" data-act="askyes">' + esc(yesTxt || 'Evet') + '</button></div>');
+  }
+  function indir(ad, icerik, tip) {
+    var b = new Blob([icerik], { type: tip || 'application/octet-stream' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = ad;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function dersAd(id) { var d = find(ST.dersler, id); return d ? d.ad : '?'; }
+  function sinifAdlari(ids) { return ids.map(function (id) { var c = find(ST.siniflar, id); return c ? c.ad : '?'; }); }
+  function ogrAdlari(ids) { return ids.map(function (id) { var c = find(ST.ogretmenler, id); return c ? c.ad : '?'; }); }
+  function seviyeler() { var s = {}; ST.siniflar.forEach(function (c) { s[c.seviye] = 1; }); return Object.keys(s).sort(function (a, b) { return (+a || 0) - (+b || 0); }); }
+  function siraliSiniflar() { return ST.siniflar.slice().sort(function (a, b) { return ((+a.seviye || 0) - (+b.seviye || 0)) || a.ad.localeCompare(b.ad, 'tr'); }); }
+  function ogrYuk() {
+    var y = {}; ST.atamalar.forEach(function (a) { if (a.ortak) return; a.ogretmenIds.forEach(function (t) { y[t] = (y[t] || 0) + (+a.saat || 0); }); }); return y;
+  }
+  function sinifYuk() {
+    var y = {}; ST.atamalar.forEach(function (a) { a.sinifIds.forEach(function (c) { y[c] = (y[c] || 0) + (+a.saat || 0); }); }); return y;
+  }
+  function kapasite(o) {
+    var D = ST.ayar.gunler.length, H = ST.ayar.saatSayisi, n = 0;
+    for (var g = 0; g < D; g++) { var k = 0; for (var s = 0; s < H; s++) if (!o.kapali[g + '-' + s]) k++; n += Math.min(k, +o.maxGunluk || H); }
+    return n;
+  }
+
+  /* ---------- gezinme ---------- */
+  var SAYFALAR = [
+    ['ayar', '⚙️', 'Genel Ayarlar'], ['ders', '📚', 'Dersler'], ['sinif', '🏫', 'Sınıflar'], ['ogretmen', '👩‍🏫', 'Öğretmenler'],
+    ['derslik', '🚪', 'Derslikler'], ['atama', '🧩', 'Ders Atamaları'], ['ortak', '📝', 'Ortak Etkinlikler'],
+    ['dagit', '⚡', 'Dağıtım'], ['program', '🗓️', 'Programlar'], ['yayin', '📡', 'Sanal Etüt\'e Yayınla']
+  ];
+  function navCounts() {
+    var c = { ders: ST.dersler.length, sinif: ST.siniflar.length, ogretmen: ST.ogretmenler.length, derslik: ST.derslikler.length, atama: ST.atamalar.filter(function (a) { return !a.ortak; }).length, ortak: ST.atamalar.filter(function (a) { return a.ortak; }).length };
+    $$('#nav [data-sayfa]').forEach(function (b) { var k = b.getAttribute('data-sayfa'), s = b.querySelector('.say'); if (s) s.textContent = c[k] != null ? c[k] : ''; });
+  }
+  function renderNav() {
+    $('#nav').innerHTML = SAYFALAR.map(function (p, i) {
+      return '<button data-sayfa="' + p[0] + '" class="' + (UI.sayfa === p[0] ? 'akt' : '') + '"><span class="no">' + (i + 1) + '</span><span class="ik">' + p[1] + '</span><span class="ad">' + p[2] + '</span><span class="say"></span></button>';
+    }).join('');
+    navCounts();
+  }
+  function render() {
+    renderNav();
+    var f = { ayar: pAyar, ders: pDers, sinif: pSinif, ogretmen: pOgretmen, derslik: pDerslik, atama: pAtama, ortak: pOrtak, dagit: pDagit, program: pProgram, yayin: pYayin }[UI.sayfa] || pAyar;
+    var sc = $('#main').scrollTop;
+    $('#main').innerHTML = f();
+    $('#main').scrollTop = sc;
+    if (UI.sayfa === 'program') bindDrag();
+  }
+  function git(s) {
+    UI.sayfa = s; LS.set('dd_sayfa', s); UI.sel = -1; $('#main').scrollTop = 0; render();
+    if (GOMULU) { if (s === 'sinif' && !ST.siniflar.length) kmSinifAl(true); else if (s === 'ogretmen' && !ST.ogretmenler.length) kmOgrAl(true); }
+  }
+
+  /* ---------- kapalı saat ızgarası ---------- */
+  function kapaliGrid(kapali, attr) {
+    var A = ST.ayar, sa = saatler(), h = '<table class="kg" ' + attr + '><tr><th></th>';
+    A.gunler.forEach(function (g, gi) { h += '<th data-kgun="' + gi + '" title="Tüm günü değiştir">' + esc(g.slice(0, 3)) + '</th>'; });
+    h += '</tr>';
+    for (var s = 0; s < A.saatSayisi; s++) {
+      h += '<tr><th data-ksaat="' + s + '" title="Tüm satırı değiştir">' + (s + 1) + '<small>' + sa[s].bas + '</small></th>';
+      for (var g = 0; g < A.gunler.length; g++) h += '<td data-k="' + g + '-' + s + '" class="' + (kapali[g + '-' + s] ? 'kap' : '') + '"></td>';
+      h += '</tr>';
+    }
+    return h + '</table>';
+  }
+  var KG = null; // {liste, id}
+  function kapaliAc(liste, id) {
+    var x = find(ST[liste], id); if (!x) return;
+    KG = { liste: liste, id: id, kap: JSON.parse(JSON.stringify(x.kapali || {})) };
+    modal('<h3>' + esc(x.ad) + ' — Kapalı saatler</h3><p class="ipucu">Kırmızı hücreler kapalıdır; bu saatlere ders yerleştirilmez. Hücreye tıklayın veya sürükleyerek boyayın. Gün/saat başlığına tıklamak tüm satırı/sütunu değiştirir.</p><div id="kgw">' + kapaliGrid(KG.kap, 'id="kgt"') + '</div><div class="sag"><button class="btn" data-act="kgtemizle">Tümünü aç</button> <button class="btn" data-act="mkapat">Vazgeç</button> <button class="btn ana" data-act="kgkaydet">Kaydet</button></div>');
+    var boya = null;
+    var t = $('#kgt');
+    function set(td, v) { var k = td.getAttribute('data-k'); if (v) KG.kap[k] = 1; else delete KG.kap[k]; td.className = v ? 'kap' : ''; }
+    t.addEventListener('pointerdown', function (e) {
+      var td = e.target.closest('td[data-k]');
+      if (td) { boya = !KG.kap[td.getAttribute('data-k')]; set(td, boya); e.preventDefault(); return; }
+      var gh = e.target.closest('[data-kgun]'), sh = e.target.closest('[data-ksaat]');
+      if (gh || sh) {
+        var cells = $$(gh ? 'td[data-k^="' + gh.getAttribute('data-kgun') + '-"]' : 'td[data-k$="-' + sh.getAttribute('data-ksaat') + '"]', t);
+        var v = !cells.every(function (c) { return KG.kap[c.getAttribute('data-k')]; });
+        cells.forEach(function (c) { set(c, v); });
+      }
+    });
+    t.addEventListener('pointerover', function (e) { if (boya == null) return; var td = e.target.closest('td[data-k]'); if (td) set(td, boya); });
+    document.addEventListener('pointerup', function () { boya = null; }, { once: false });
+  }
+
+  /* ================= SAYFALAR ================= */
+  function pAyar() {
+    var A = ST.ayar, sa = saatler();
+    var ogleOpt = '<option value="0">Öğle arası yok</option>';
+    for (var i = 1; i < A.saatSayisi; i++) ogleOpt += '<option value="' + i + '"' + (+A.ogleSonrasi === i ? ' selected' : '') + '>' + i + '. dersten sonra</option>';
+    var digeri = KURUMLAR.filter(function (k) { return k.kod !== kurum; })[0];
+    return '<h1>Genel Ayarlar</h1><p class="alt">Haftalık çizelgenin iskeleti. Her şube (Çarşı / Karşıyaka) kendi verisini ayrı tutar — üstten şube seçebilirsiniz.</p>' +
+      '<div class="kart"><h2>Kurum</h2><div class="izg2"><label>Programda görünecek kurum adı<input data-a="okulAdi" value="' + esc(A.okulAdi) + '" placeholder="' + esc(kurumAd()) + '"></label></div></div>' +
+      '<div class="kart"><h2>Haftalık düzen</h2><div class="gunsec">' + GUNLER.map(function (g) { return '<label class="chip"><input type="checkbox" data-gun="' + g + '"' + (A.gunler.indexOf(g) >= 0 ? ' checked' : '') + '>' + g + '</label>'; }).join('') + '</div>' +
+      '<div class="izg4"><label>Günlük ders saati<input type="number" min="1" max="14" data-a="saatSayisi" data-t="n" value="' + A.saatSayisi + '"></label>' +
+      '<label>İlk ders başlangıcı<input type="time" data-a="baslangic" value="' + esc(A.baslangic) + '"></label>' +
+      '<label>Ders süresi (dk)<input type="number" min="10" max="120" data-a="dersSure" data-t="n" value="' + A.dersSure + '"></label>' +
+      '<label>Teneffüs (dk)<input type="number" min="0" max="60" data-a="teneffus" data-t="n" value="' + A.teneffus + '"></label>' +
+      '<label>Öğle arası<select data-a="ogleSonrasi" data-t="n">' + ogleOpt + '</select></label>' +
+      '<label>Öğle arası süresi (dk)<input type="number" min="0" max="120" data-a="ogleSure" data-t="n" value="' + A.ogleSure + '"></label></div>' +
+      '<label class="chk"><input type="checkbox" data-a="ogleBolme" data-t="b"' + (A.ogleBolme !== false ? ' checked' : '') + '><span>Blok dersler öğle arasıyla bölünmesin (ör. 2 saatlik ders öğleden önce başlayıp sonra bitmesin)</span></label>' +
+      '<div class="saatler">' + sa.map(function (x, i) { return '<span><b>' + (i + 1) + '.</b> ' + x.bas + '–' + x.bit + '</span>' + (+A.ogleSonrasi === i + 1 ? '<span class="ogle">Öğle</span>' : ''); }).join('') + '</div></div>' +
+      '<div class="kart"><h2>Şubeler arası aktarım</h2><p class="alt">Bu şubenin ayarlarını ve ders listesini <b>' + esc(digeri.ad) + '</b> şubesine kopyalar (oradaki sınıf, öğretmen ve atamalar korunur).</p><button class="btn" data-act="subekopya">Ayarları ve dersleri kopyala →</button></div>' +
+      '<div class="kart tehlike"><h2>Yeni dönem / sıfırlama</h2><div class="satir"><button class="btn" data-act="yerlesimsil">Sadece yerleşimi sil</button> <button class="btn kirmizi" data-act="hepsinisil">Bu şubenin tüm verisini sil</button></div></div>';
+  }
+  function kurumAd() { return (KURUMLAR.filter(function (k) { return k.kod === kurum; })[0] || {}).ad || ''; }
+
+  function remapGunler(yeni) {
+    var eski = ST.ayar.gunler, map = eski.map(function (g) { return yeni.indexOf(g); });
+    function rk(kap) { var o = {}; for (var k in kap) { var p = k.split('-'), ng = map[+p[0]]; if (ng >= 0) o[ng + '-' + p[1]] = kap[k]; } return o; }
+    ST.siniflar.concat(ST.ogretmenler, ST.derslikler).forEach(function (x) { x.kapali = rk(x.kapali || {}); });
+    var y = {}; for (var k in ST.yerlesim) { var p = ST.yerlesim[k], ng = map[p.g]; if (ng >= 0) { y[k] = Object.assign({}, p, { g: ng }); } } ST.yerlesim = y;
+    ST.atamalar.forEach(function (a) { if (a.sabit) a.sabit = a.sabit.map(function (x) { if (!x || x.g == null) return x; var ng = map[x.g]; return ng >= 0 ? { g: ng, s: x.s } : null; }); });
+    ST.ayar.gunler = yeni;
+  }
+
+  function pDers() {
+    var kul = {}; ST.atamalar.forEach(function (a) { kul[a.dersId] = (kul[a.dersId] || 0) + 1; });
+    return '<h1>Dersler</h1><p class="alt">Ders adı, programda görünecek kısa adı ve rengi. Deneme, etüt, soru çözüm gibi etkinlikler de birer ders olarak tanımlanır.</p>' +
+      '<div class="arac"><button class="btn ana" data-act="dersekle">+ Ders ekle</button> <button class="btn" data-act="dersmeb">Hazır ders listesini ekle</button></div>' +
+      '<div class="kart p0"><table class="tbl"><thead><tr><th style="width:56px">Renk</th><th>Ders adı</th><th style="width:110px">Kısa ad</th><th style="width:90px">Atama</th><th style="width:50px"></th></tr></thead><tbody>' +
+      (ST.dersler.length ? ST.dersler.map(function (d) {
+        return '<tr><td><input type="color" data-f="dersler" data-id="' + d.id + '" data-k="renk" value="' + esc(d.renk) + '"></td><td><input data-f="dersler" data-id="' + d.id + '" data-k="ad" value="' + esc(d.ad) + '"></td><td><input data-f="dersler" data-id="' + d.id + '" data-k="kisa" value="' + esc(d.kisa) + '" maxlength="6"></td><td class="mut">' + (kul[d.id] || 0) + '</td><td><button class="ibtn" data-act="sil" data-l="dersler" data-id="' + d.id + '" title="Sil">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="bos">Henüz ders yok. “Hazır ders listesini ekle” ile hızlıca başlayabilirsiniz.</td></tr>') + '</tbody></table></div>';
+  }
+
+  function pSinif() {
+    var y = sinifYuk(), T = ST.ayar.gunler.length * ST.ayar.saatSayisi;
+    return '<h1>Sınıflar</h1><p class="alt">Sınıflar Kurs Modülü’ndeki şubelerinizden alınır (ör. 8-A). Böylece yayınlanan program doğrudan o sınıfa düşer.</p>' +
+      '<div class="kart"><h2>Hızlı sınıf oluştur</h2><div class="izg4"><label>Seviyeler<input id="gSev" value="5,6,7,8" placeholder="5,6,7,8"></label><label>Şubeler<input id="gSub" value="A-D" placeholder="A-G veya A,B,C"></label><label>Ad biçimi<select id="gBic"><option value="-">8-A</option><option value="/">8/A</option><option value="">8A</option><option value=". Sınıf ">8. Sınıf A</option></select></label><label>&nbsp;<button class="btn ana" data-act="sinifuret">Oluştur</button></label></div>' +
+      '<div class="satir"><button class="btn" data-act="sinifekle">+ Tek sınıf ekle</button>' + (GOMULU ? ' <button class="btn ana" data-act="kmsinif">⇣ Şubelerden sınıfları al</button>' : Y.url ? ' <button class="btn" data-act="portalsinif">⇣ Sanal Etüt’ten sınıfları al</button>' : ' <span class="mut">Sanal Etüt bağlantısını “Yayınla” sayfasında kurarsanız sınıfları oradan çekebilirsiniz.</span>') + '</div></div>' +
+      '<div class="kart p0"><table class="tbl"><thead><tr><th>Sınıf adı</th><th style="width:90px">Seviye</th><th style="width:120px">Haftalık ders</th><th style="width:150px">Kapalı saatler</th><th style="width:50px"></th></tr></thead><tbody>' +
+      (ST.siniflar.length ? siraliSiniflar().map(function (c) {
+        var nk = Object.keys(c.kapali).length, h = y[c.id] || 0;
+        return '<tr><td><input data-f="siniflar" data-id="' + c.id + '" data-k="ad" value="' + esc(c.ad) + '">' + (c.pid ? '<span class="rozet">Sanal Etüt</span>' : '') + '</td><td><input data-f="siniflar" data-id="' + c.id + '" data-k="seviye" value="' + esc(c.seviye) + '"></td><td><span class="' + (h > T - nk ? 'kirmiziy' : '') + '">' + h + ' / ' + (T - nk) + '</span></td><td><button class="btn kucuk" data-act="kapali" data-l="siniflar" data-id="' + c.id + '">' + (nk ? nk + ' saat kapalı' : 'Düzenle') + '</button></td><td><button class="ibtn" data-act="sil" data-l="siniflar" data-id="' + c.id + '">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="bos">Henüz sınıf yok.</td></tr>') + '</tbody></table></div>';
+  }
+
+  function pOgretmen() {
+    var y = ogrYuk();
+    var dOpt = function (sel) { return '<option value="">—</option>' + ST.dersler.map(function (d) { return '<option value="' + d.id + '"' + (sel === d.id ? ' selected' : '') + '>' + esc(d.ad) + '</option>'; }).join(''); };
+    return '<h1>Öğretmenler</h1><p class="alt">Branş, günlük en fazla ders, istenen boş gün ve kapalı saatler dağıtımın en önemli kısıtlarıdır.</p>' +
+      '<div class="kart"><h2>Toplu ekle</h2><p class="ipucu">Her satıra bir öğretmen: <code>Ad Soyad; Branş</code> (branş isteğe bağlı, ders adıyla eşleşir)</p><textarea id="topluOgr" rows="3" placeholder="Ayşe Yılmaz; Türkçe&#10;Ali Çelik; Matematik"></textarea><div class="satir"><button class="btn ana" data-act="ogrtoplu">Ekle</button> <button class="btn" data-act="ogrekle">+ Tek öğretmen</button>' + (GOMULU ? ' <button class="btn ana" data-act="kmogr">⇣ Şubelerden öğretmenleri al</button>' : Y.url ? ' <button class="btn" data-act="portalogr">⇣ Sanal Etüt’ten öğretmenleri al</button>' : '') + '</div></div>' +
+      '<div class="kart p0 kaydir"><table class="tbl"><thead><tr><th>Ad Soyad</th><th style="width:90px">Kısa</th><th style="width:160px">Branş</th><th style="width:80px" title="Günlük en fazla ders">Gün. max</th><th style="width:80px" title="Haftada istenen boş gün sayısı">Boş gün</th><th style="width:80px" title="Gün içinde en fazla boş saat">Max boşluk</th><th style="width:100px">Yük / Kap.</th><th style="width:130px">Kapalı</th><th style="width:44px"></th></tr></thead><tbody>' +
+      (ST.ogretmenler.length ? ST.ogretmenler.map(function (o) {
+        var nk = Object.keys(o.kapali).length, h = y[o.id] || 0, cap = kapasite(o);
+        return '<tr><td><input data-f="ogretmenler" data-id="' + o.id + '" data-k="ad" value="' + esc(o.ad) + '"></td><td><input data-f="ogretmenler" data-id="' + o.id + '" data-k="kisa" value="' + esc(o.kisa) + '" maxlength="8"></td><td><select data-f="ogretmenler" data-id="' + o.id + '" data-k="brans">' + dOpt(o.brans) + '</select></td>' +
+          '<td><input type="number" min="1" max="14" data-t="n" data-f="ogretmenler" data-id="' + o.id + '" data-k="maxGunluk" value="' + esc(o.maxGunluk) + '"></td><td><input type="number" min="0" max="6" data-t="n" data-f="ogretmenler" data-id="' + o.id + '" data-k="bosGun" value="' + esc(o.bosGun || 0) + '"></td><td><input type="number" min="0" max="10" data-f="ogretmenler" data-id="' + o.id + '" data-k="maxBosluk" value="' + esc(o.maxBosluk == null ? '' : o.maxBosluk) + '" placeholder="—"></td>' +
+          '<td><span class="yuk ' + (h > cap ? 'kirmiziy' : h > cap * 0.9 ? 'turuncuy' : '') + '">' + h + ' / ' + cap + '</span></td><td><button class="btn kucuk" data-act="kapali" data-l="ogretmenler" data-id="' + o.id + '">' + (nk ? nk + ' saat kapalı' : 'Düzenle') + '</button></td><td><button class="ibtn" data-act="sil" data-l="ogretmenler" data-id="' + o.id + '">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="9" class="bos">Henüz öğretmen yok.</td></tr>') + '</tbody></table></div>';
+  }
+
+  function pDerslik() {
+    return '<h1>Derslikler</h1><p class="alt">İsteğe bağlı. Yalnızca özel mekân gerektiren dersler için (laboratuvar, bilgisayar sınıfı…) tanımlayın; derse derslik seçilmezse derslik çakışması aranmaz.</p>' +
+      '<div class="arac"><button class="btn ana" data-act="derslikekle">+ Derslik ekle</button></div>' +
+      '<div class="kart p0"><table class="tbl"><thead><tr><th>Derslik</th><th style="width:150px">Kapalı saatler</th><th style="width:50px"></th></tr></thead><tbody>' +
+      (ST.derslikler.length ? ST.derslikler.map(function (r) {
+        var nk = Object.keys(r.kapali).length;
+        return '<tr><td><input data-f="derslikler" data-id="' + r.id + '" data-k="ad" value="' + esc(r.ad) + '"></td><td><button class="btn kucuk" data-act="kapali" data-l="derslikler" data-id="' + r.id + '">' + (nk ? nk + ' saat kapalı' : 'Düzenle') + '</button></td><td><button class="ibtn" data-act="sil" data-l="derslikler" data-id="' + r.id + '">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="3" class="bos">Derslik tanımlı değil (gerekli değil).</td></tr>') + '</tbody></table></div>';
+  }
+
+  /* ---------- Ders atamaları ---------- */
+  function basitAtama(cid, did) {
+    for (var i = 0; i < ST.atamalar.length; i++) { var a = ST.atamalar[i]; if (!a.ortak && !a.paralelGrup && a.sinifIds.length === 1 && a.sinifIds[0] === cid && a.dersId === did) return a; }
+    return null;
+  }
+  function yeniAtama(o) { return Object.assign({ id: uid('a'), dersId: '', sinifIds: [], ogretmenIds: [], saat: 0, bloklar: '', derslikIds: [], ayniGunTek: true, tercih: '', paralelGrup: '', ortak: false, sabit: null }, o); }
+  function ogrOptions(did, sel) {
+    var br = ST.ogretmenler.filter(function (o) { return o.brans === did; }), dig = ST.ogretmenler.filter(function (o) { return o.brans !== did; });
+    var h = '<option value="">—</option>';
+    h += br.map(function (o) { return '<option value="' + o.id + '"' + (o.id === sel ? ' selected' : '') + '>' + esc(o.ad) + '</option>'; }).join('');
+    if (dig.length) h += '<optgroup label="Diğer branşlar">' + dig.map(function (o) { return '<option value="' + o.id + '"' + (o.id === sel ? ' selected' : '') + '>' + esc(o.ad) + '</option>'; }).join('') + '</optgroup>';
+    return h;
+  }
+  function pAtama() {
+    var sek = '<div class="sekme"><button data-act="asekme" data-v="matris" class="' + (UI.atamaSekme === 'matris' ? 'akt' : '') + '">Atama matrisi</button><button data-act="asekme" data-v="liste" class="' + (UI.atamaSekme === 'liste' ? 'akt' : '') + '">Tüm atamalar (gelişmiş)</button></div>';
+    if (!ST.siniflar.length || !ST.dersler.length) return '<h1>Ders Atamaları</h1><div class="kart bos">Önce ders ve sınıf tanımlayın.</div>';
+    return '<h1>Ders Atamaları</h1><p class="alt">Hangi sınıfa hangi dersin haftada kaç saat, hangi öğretmenle okutulacağını girin. Matris en hızlı yoldur; birleştirilmiş sınıflar, paralel gruplar, blok yapısı, derslik ve sabit saat için gelişmiş listeyi kullanın.</p>' + sek +
+      (UI.atamaSekme === 'matris' ? matris() : liste());
+  }
+  function matris() {
+    var sv = UI.matSeviye, cls = siraliSiniflar().filter(function (c) { return sv === 'hepsi' || String(c.seviye) === sv; });
+    var ders = ST.dersler.filter(function (d) { return !UI.gizliDers || !UI.gizliDers[d.id]; });
+    var h = '<div class="arac"><label class="inl">Seviye <select data-act="matsev"><option value="hepsi">Tümü</option>' + seviyeler().map(function (s) { return '<option' + (sv === String(s) ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></label> <button class="btn" data-act="otoogr" title="Öğretmeni boş atamalara, branşındaki en az yüklü öğretmeni yazar">🪄 Öğretmenleri otomatik ata</button> <button class="btn" data-act="yeniatama">+ Gelişmiş atama</button></div>';
+    h += '<div class="kart p0 kaydir"><table class="mat"><thead><tr><th class="yap">Sınıf</th>' + ders.map(function (d) { return '<th style="border-top:3px solid ' + esc(d.renk) + '"><div class="dad">' + esc(d.kisa || d.ad) + '</div><small>' + esc(d.ad) + '</small></th>'; }).join('') + '<th>Toplam</th></tr>';
+    h += '<tr class="hepsi"><th class="yap">Tümüne →</th>' + ders.map(function (d) { return '<th><input type="number" min="0" max="20" placeholder="saat" data-mall="' + d.id + '" title="Listelenen tüm sınıflara bu saati yaz"></th>'; }).join('') + '<th></th></tr></thead><tbody>';
+    var y = sinifYuk(), T = ST.ayar.gunler.length * ST.ayar.saatSayisi;
+    cls.forEach(function (c) {
+      h += '<tr><th class="yap">' + esc(c.ad) + '</th>';
+      ders.forEach(function (d) {
+        var a = basitAtama(c.id, d.id);
+        var diger = ST.atamalar.filter(function (x) { return x !== a && x.dersId === d.id && x.sinifIds.indexOf(c.id) >= 0; });
+        h += '<td class="' + (a && a.saat ? 'dolu' : '') + '" style="' + (a && a.saat ? 'background:' + hexA(d.renk, 0.10) : '') + '"><div class="mc"><input type="number" min="0" max="20" data-mc="' + c.id + '" data-md="' + d.id + '" value="' + (a && a.saat ? a.saat : '') + '"><select data-mt="' + c.id + '" data-md="' + d.id + '">' + ogrOptions(d.id, a && a.ogretmenIds[0]) + '</select></div>' +
+          (diger.length ? '<button class="ozel" data-act="atamaduz" data-id="' + diger[0].id + '">' + (diger[0].ortak ? 'ortak' : 'özel') + ' ' + diger.reduce(function (s, x) { return s + (+x.saat || 0); }, 0) + 's</button>' : '') + '</td>';
+      });
+      var top = y[c.id] || 0;
+      h += '<td class="top" data-tot="' + c.id + '"><b class="' + (top > T ? 'kirmiziy' : '') + '">' + top + '</b></td></tr>';
+    });
+    h += '</tbody></table></div><div class="kart"><h2>Öğretmen yükleri</h2><div id="yukler">' + yukHTML() + '</div></div>';
+    return h;
+  }
+  function yukHTML() {
+    var y = ogrYuk();
+    if (!ST.ogretmenler.length) return '<p class="mut">Öğretmen yok.</p>';
+    return '<div class="yukl">' + ST.ogretmenler.map(function (o) {
+      var h = y[o.id] || 0, cap = kapasite(o), p = cap ? Math.min(100, h / cap * 100) : 0;
+      return '<div class="yk"><span>' + esc(o.ad) + '</span><div class="bar"><i style="width:' + p + '%;background:' + (h > cap ? 'var(--kir)' : h > cap * 0.9 ? 'var(--tur)' : 'var(--yes)') + '"></i></div><b>' + h + '/' + cap + '</b></div>';
+    }).join('') + '</div>';
+  }
+  function matrisTazele(cid) {
+    var y = sinifYuk(), T = ST.ayar.gunler.length * ST.ayar.saatSayisi;
+    (cid ? [cid] : ST.siniflar.map(function (c) { return c.id; })).forEach(function (id) { var td = $('[data-tot="' + id + '"]'); if (td) td.innerHTML = '<b class="' + ((y[id] || 0) > T ? 'kirmiziy' : '') + '">' + (y[id] || 0) + '</b>'; });
+    var yk = $('#yukler'); if (yk) yk.innerHTML = yukHTML();
+  }
+  function liste() {
+    var rows = ST.atamalar.filter(function (a) { return !a.ortak; });
+    return '<div class="arac"><button class="btn ana" data-act="yeniatama">+ Yeni atama</button></div><div class="kart p0 kaydir"><table class="tbl"><thead><tr><th>Ders</th><th>Sınıf(lar)</th><th>Öğretmen(ler)</th><th>Saat</th><th>Blok</th><th>Özellik</th><th></th></tr></thead><tbody>' +
+      (rows.length ? rows.map(function (a) {
+        var d = find(ST.dersler, a.dersId) || {};
+        var oz = [];
+        if (a.paralelGrup) oz.push('Paralel: ' + esc(a.paralelGrup));
+        if (a.derslikIds.length) oz.push('Derslik');
+        if (a.tercih) oz.push(a.tercih === 'sabah' ? 'Sabah' : 'Öğleden sonra');
+        if (a.ayniGunTek === false) oz.push('Aynı gün olabilir');
+        if (a.sabit && a.sabit.some(function (x) { return x; })) oz.push('Sabit saat');
+        return '<tr><td><span class="nokta" style="background:' + esc(d.renk) + '"></span>' + esc(d.ad || '?') + '</td><td>' + esc(sinifAdlari(a.sinifIds).join(', ')) + '</td><td>' + esc(ogrAdlari(a.ogretmenIds).join(', ') || '—') + '</td><td>' + (a.saat || 0) + '</td><td>' + DDCore.parseBloklar(a.bloklar, a.saat).join('+') + '</td><td class="mut">' + oz.join(' · ') + '</td><td class="nw"><button class="btn kucuk" data-act="atamaduz" data-id="' + a.id + '">Düzenle</button> <button class="ibtn" data-act="sil" data-l="atamalar" data-id="' + a.id + '">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="7" class="bos">Atama yok.</td></tr>') + '</tbody></table></div>';
+  }
+  function atamaModal(id, ortakMi) {
+    var a = id ? find(ST.atamalar, id) : yeniAtama({ ortak: !!ortakMi, dersId: ST.dersler[0] ? ST.dersler[0].id : '' });
+    if (!a) return;
+    var bl = DDCore.parseBloklar(a.bloklar, a.saat);
+    var sa = saatler();
+    var svs = seviyeler();
+    var h = '<h3>' + (id ? 'Atamayı düzenle' : 'Yeni atama') + '</h3><div id="am" data-id="' + (id || '') + '">' +
+      '<div class="izg3"><label>Ders<select name="dersId">' + ST.dersler.map(function (d) { return '<option value="' + d.id + '"' + (d.id === a.dersId ? ' selected' : '') + '>' + esc(d.ad) + '</option>'; }).join('') + '</select></label>' +
+      '<label>Haftalık saat<input type="number" name="saat" min="0" max="40" value="' + (a.saat || 0) + '"></label>' +
+      '<label>Blok yapısı<input name="bloklar" value="' + esc(a.bloklar || '') + '" placeholder="' + bl.join('+') + ' (otomatik)"></label></div>' +
+      '<p class="ipucu">Blok: dersin haftaya nasıl bölüneceği. Örn. 5 saat için “2+2+1”, “3+2” ya da “1+1+1+1+1”. Boş bırakılırsa 2’şerli bloklar kullanılır.</p>' +
+      '<h4>Sınıflar <small>(birden fazla seçerseniz sınıflar birleşik ders yapar)</small></h4><div class="cokl">' +
+      svs.map(function (s) { return '<div class="svg"><button type="button" class="btn kucuk" data-act="svsec" data-sv="' + esc(s) + '">' + esc(s) + '. sınıflar</button> ' + siraliSiniflar().filter(function (c) { return String(c.seviye) === String(s); }).map(function (c) { return '<label class="chip"><input type="checkbox" name="sinif" data-sv="' + esc(s) + '" value="' + c.id + '"' + (a.sinifIds.indexOf(c.id) >= 0 ? ' checked' : '') + '>' + esc(c.ad) + '</label>'; }).join('') + '</div>'; }).join('') + '</div>' +
+      '<h4>Öğretmen(ler)</h4><div class="cokl">' + ST.ogretmenler.map(function (o) { return '<label class="chip"><input type="checkbox" name="ogr" value="' + o.id + '"' + (a.ogretmenIds.indexOf(o.id) >= 0 ? ' checked' : '') + '>' + esc(o.ad) + '</label>'; }).join('') + '</div>' +
+      (ST.derslikler.length ? '<h4>Derslik <small>(seçilenlerden boş olan kullanılır)</small></h4><div class="cokl">' + ST.derslikler.map(function (r) { return '<label class="chip"><input type="checkbox" name="oda" value="' + r.id + '"' + (a.derslikIds.indexOf(r.id) >= 0 ? ' checked' : '') + '>' + esc(r.ad) + '</label>'; }).join('') + '</div>' : '') +
+      '<h4>Kurallar</h4><div class="izg3"><label>Saat tercihi<select name="tercih"><option value="">Fark etmez</option><option value="sabah"' + (a.tercih === 'sabah' ? ' selected' : '') + '>Sabah saatleri</option><option value="ogle"' + (a.tercih === 'ogle' ? ' selected' : '') + '>Öğleden sonra</option></select></label>' +
+      '<label>Paralel grup adı<input name="paralelGrup" value="' + esc(a.paralelGrup || '') + '" placeholder="ör. 8-SEÇMELİ"></label><label>&nbsp;<span class="chk"><input type="checkbox" name="ayniGunTek"' + (a.ayniGunTek !== false ? ' checked' : '') + '> Aynı gün en fazla 1 blok</span></label></div>' +
+      '<label class="chk"><input type="checkbox" name="ortak"' + (a.ortak ? ' checked' : '') + '><span><b>Ortak etkinlik</b> — öğretmen ve derslik çakışması aranmaz (deneme, etüt, kazanım denemesi gibi tüm sınıflara aynı anda yapılanlar)</span></label>' +
+      '<p class="ipucu">Paralel grup: aynı grup adını taşıyan atamalar hep aynı saatte yapılır (ör. sınıfın yarısı İngilizce, yarısı Almanca). Blok yapıları aynı olmalıdır.</p>' +
+      '<h4>Sabit saat <small>(isteğe bağlı, her blok için)</small></h4><div id="sabitler">' + sabitHTML(a, bl, sa) + '</div>' +
+      '</div><div class="sag">' + (id ? '<button class="btn kirmizi" data-act="sil" data-l="atamalar" data-id="' + id + '" style="margin-right:auto">Sil</button>' : '') + '<button class="btn" data-act="mkapat">Vazgeç</button> <button class="btn ana" data-act="atamakaydet">Kaydet</button></div>';
+    modal(h, true);
+    UI._am = a;
+  }
+  function sabitHTML(a, bl, sa) {
+    return bl.map(function (len, i) {
+      var sb = a.sabit && a.sabit[i];
+      var gOpt = '<option value="">Serbest</option>' + ST.ayar.gunler.map(function (g, gi) { return '<option value="' + gi + '"' + (sb && sb.g === gi ? ' selected' : '') + '>' + g + '</option>'; }).join('');
+      var sOpt = ''; for (var s = 0; s + len <= ST.ayar.saatSayisi; s++) sOpt += '<option value="' + s + '"' + (sb && sb.s === s ? ' selected' : '') + '>' + (s + 1) + '. saat (' + sa[s].bas + ')</option>';
+      return '<div class="sbt"><span>' + (i + 1) + '. blok (' + len + ' saat)</span><select data-sg="' + i + '">' + gOpt + '</select><select data-ss="' + i + '">' + sOpt + '</select></div>';
+    }).join('');
+  }
+  function atamaKaydet() {
+    var w = $('#am'), id = w.getAttribute('data-id');
+    var a = id ? find(ST.atamalar, id) : UI._am;
+    var v = function (n) { return w.querySelector('[name="' + n + '"]'); };
+    a.dersId = v('dersId').value;
+    a.saat = Math.max(0, parseInt(v('saat').value, 10) || 0);
+    var b = v('bloklar').value.trim();
+    if (b && DDCore.parseBloklar(b, a.saat).join('+') !== b.replace(/\s/g, '').replace(/,/g, '+')) { toast('Blok toplamı haftalık saate eşit değil; otomatik bloklar kullanılacak.', 'uyari'); b = ''; }
+    a.bloklar = b;
+    a.sinifIds = $$('[name="sinif"]:checked', w).map(function (x) { return x.value; });
+    a.ogretmenIds = $$('[name="ogr"]:checked', w).map(function (x) { return x.value; });
+    a.derslikIds = $$('[name="oda"]:checked', w).map(function (x) { return x.value; });
+    a.tercih = v('tercih').value;
+    a.paralelGrup = v('paralelGrup').value.trim();
+    a.ayniGunTek = v('ayniGunTek').checked;
+    a.ortak = v('ortak').checked;
+    var bl = DDCore.parseBloklar(a.bloklar, a.saat);
+    a.sabit = bl.map(function (len, i) {
+      var g = $('[data-sg="' + i + '"]', w), s = $('[data-ss="' + i + '"]', w);
+      if (!g || g.value === '') return null;
+      return { g: +g.value, s: Math.min(+s.value || 0, ST.ayar.saatSayisi - len) };
+    });
+    if (!a.sabit.some(function (x) { return x; })) a.sabit = null;
+    if (!a.sinifIds.length) { toast('En az bir sınıf seçin.', 'hata'); return; }
+    if (!id) ST.atamalar.push(a);
+    mkapat(); save(); render();
+    toast('Atama kaydedildi.', 'ok');
+  }
+
+  /* ---------- Ortak etkinlikler ---------- */
+  function pOrtak() {
+    var rows = ST.atamalar.filter(function (a) { return a.ortak; }), sa = saatler();
+    var dOpt = ST.dersler.map(function (d) { var sel = /deneme|etüt|etut/i.test(d.ad) && !UI._od ? ' selected' : ''; if (sel) UI._od = 1; return '<option value="' + d.id + '"' + sel + '>' + esc(d.ad) + '</option>'; }).join(''); UI._od = 0;
+    var sOpt = ''; for (var s = 0; s < ST.ayar.saatSayisi; s++) sOpt += '<option value="' + s + '">' + (s + 1) + '. saat (' + sa[s].bas + ')</option>';
+    return '<h1>Ortak Etkinlikler</h1><p class="alt">Deneme sınavı, etüt, LGS konu denemesi, haftalık kazanım denemesi gibi birçok sınıfa <b>aynı anda</b> yapılan etkinlikler. Bunlarda öğretmen ve derslik çakışması aranmaz; aynı görevli öğretmen tüm sınıfların saatine yazılabilir. Sınıfların o saati ise kapatılır.</p>' +
+      '<div class="kart"><h2>Yeni ortak etkinlik</h2><div class="izg4"><label>Etkinlik (ders)<select id="oDers">' + dOpt + '</select></label><label>Gün<select id="oGun">' + ST.ayar.gunler.map(function (g, i) { return '<option value="' + i + '">' + g + '</option>'; }).join('') + '</select></label><label>Başlangıç<select id="oSaat">' + sOpt + '</select></label><label>Süre (ders saati)<input id="oSure" type="number" min="1" max="10" value="2"></label></div>' +
+      '<h4>Sınıflar</h4><div class="cokl"><div class="svg"><button class="btn kucuk" data-act="osec" data-sv="*">Tüm sınıflar</button></div>' + seviyeler().map(function (s) { return '<div class="svg"><button type="button" class="btn kucuk" data-act="osec" data-sv="' + esc(s) + '">' + esc(s) + '. sınıflar</button> ' + siraliSiniflar().filter(function (c) { return String(c.seviye) === String(s); }).map(function (c) { return '<label class="chip"><input type="checkbox" name="osinif" data-sv="' + esc(s) + '" value="' + c.id + '">' + esc(c.ad) + '</label>'; }).join('') + '</div>'; }).join('') + '</div>' +
+      '<h4>Görevli öğretmen(ler) <small>(isteğe bağlı — programlarında görünür, çakışma sayılmaz)</small></h4><div class="cokl">' + ST.ogretmenler.map(function (o) { return '<label class="chip"><input type="checkbox" name="oogr" value="' + o.id + '">' + esc(o.ad) + '</label>'; }).join('') + '</div>' +
+      '<div class="satir"><button class="btn ana" data-act="ortakekle">Etkinliği ekle</button></div></div>' +
+      '<div class="kart p0"><table class="tbl"><thead><tr><th>Etkinlik</th><th>Zaman</th><th>Sınıflar</th><th>Görevli</th><th></th></tr></thead><tbody>' +
+      (rows.length ? rows.map(function (a) {
+        var bl = DDCore.parseBloklar(a.bloklar, a.saat), z = (a.sabit || []).map(function (x, i) { return x ? ST.ayar.gunler[x.g] + ' ' + (x.s + 1) + '–' + (x.s + bl[i]) + '. saat' : 'serbest'; }).join(', ') || 'serbest (' + a.saat + ' saat)';
+        var sn = sinifAdlari(a.sinifIds);
+        return '<tr><td><span class="nokta" style="background:' + esc((find(ST.dersler, a.dersId) || {}).renk) + '"></span>' + esc(dersAd(a.dersId)) + '</td><td>' + esc(z) + '</td><td>' + (sn.length > 6 ? sn.length + ' sınıf' : esc(sn.join(', '))) + '</td><td>' + esc(ogrAdlari(a.ogretmenIds).join(', ') || '—') + '</td><td class="nw"><button class="btn kucuk" data-act="atamaduz" data-id="' + a.id + '">Düzenle</button> <button class="ibtn" data-act="sil" data-l="atamalar" data-id="' + a.id + '">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="bos">Ortak etkinlik yok.</td></tr>') + '</tbody></table></div>';
+  }
+
+  /* ---------- Dağıtım ---------- */
+  var WORK = null;
+  function pDagit() {
+    var an = DDCore.analyze(ST);
+    var sd = ST.sonDagitim;
+    var secs = [[10, 'Hızlı (10 sn)'], [30, 'Normal (30 sn)'], [90, 'Derin (1,5 dk)'], [180, 'Çok derin (3 dk)']];
+    var onc = function (k, vals, lbl) { return '<label>' + lbl + '<select data-onc="' + k + '">' + vals.map(function (v) { return '<option value="' + v[0] + '"' + (UI.onc[k] === v[0] ? ' selected' : '') + '>' + v[1] + '</option>'; }).join('') + '</select></label>'; };
+    var h = '<h1>Dağıtım</h1><p class="alt">Program; sınıf, öğretmen ve derslik çakışması olmadan, kapalı saatlere ve kurallara uyarak otomatik dağıtılır. Ardından öğretmen boşlukları, sınıf boşlukları ve günlük denge iyileştirilir.</p>' +
+      '<div class="ozet4"><div><b>' + ST.siniflar.length + '</b><span>sınıf</span></div><div><b>' + ST.ogretmenler.length + '</b><span>öğretmen</span></div><div><b>' + an.hours + '</b><span>sınıf-saat</span></div><div><b>' + an.units + '</b><span>ders bloğu</span></div></div>';
+    h += '<div class="kart"><h2>Ön kontrol</h2>' + (an.errors.length ? '<div class="uyarilar hata">' + an.errors.map(function (e) { return '<div>⛔ ' + esc(e) + '</div>'; }).join('') + '</div>' : '<div class="uyarilar ok"><div>✓ Dağıtımı engelleyen bir sorun görünmüyor.</div></div>') +
+      (an.warnings.length ? '<details class="uyarilar uyr"><summary>' + an.warnings.length + ' uyarı</summary>' + an.warnings.map(function (e) { return '<div>⚠️ ' + esc(e) + '</div>'; }).join('') + '</details>' : '') + '</div>';
+    h += '<div class="kart"><h2>Seçenekler</h2><div class="izg4"><label>Arama derinliği<select data-dag="sure">' + secs.map(function (s) { return '<option value="' + s[0] + '"' + (UI.dagSure === s[0] ? ' selected' : '') + '>' + s[1] + '</option>'; }).join('') + '</select></label>' +
+      '<label>Mevcut program<select data-dag="mod"><option value="pin"' + (UI.dagMod === 'pin' ? ' selected' : '') + '>📌 Sabitlenenleri koru, gerisini yeniden dağıt</option><option value="koru"' + (UI.dagMod === 'koru' ? ' selected' : '') + '>Yerleşmiş dersleri koru, sadece kalanları yerleştir</option></select></label>' +
+      onc('tGap', [[1, 'Az önemli'], [4, 'Normal'], [10, 'Çok önemli']], 'Öğretmen boş saatleri') +
+      onc('tFree', [[10, 'Az önemli'], [40, 'Normal'], [150, 'Çok önemli']], 'Öğretmen boş gün isteği') +
+      onc('cBal', [[1, 'Az önemli'], [3, 'Normal'], [8, 'Çok önemli']], 'Sınıf günlük ders dengesi') + '</div>' +
+      '<div class="satir"><button class="btn ana buyuk" data-act="dagit" id="dagBtn">⚡ Dağıtımı başlat</button> <button class="btn" data-act="dagdur" id="dagDur" style="display:none">Durdur</button></div>' +
+      '<div id="dagIl" class="ilerleme" style="display:none"><div class="bar"><i id="dagBar"></i></div><div id="dagMsg" class="mut"></div></div></div>';
+    if (sd) {
+      h += '<div class="kart"><h2>Son dağıtım sonucu <small class="mut">' + esc(sd.tarih) + '</small></h2><div class="ozet4"><div><b class="' + (sd.yerlesmeyen.length ? 'kirmiziy' : 'yesily') + '">' + sd.istatistik.yerlesenSaat + '/' + sd.istatistik.toplamSaat + '</b><span>yerleşen saat</span></div><div><b>' + sd.yerlesmeyen.length + '</b><span>yerleşmeyen blok</span></div><div><b>' + sd.istatistik.ogretmenBosluk + '</b><span>öğretmen boş saati</span></div><div><b>' + sd.istatistik.sinifBosluk + '</b><span>sınıf boşluğu</span></div></div>' +
+        (sd.yerlesmeyen.length ? '<div class="uyarilar hata">' + sd.yerlesmeyen.map(function (u) { return '<div><b>' + esc(u.ad) + '</b> — ' + esc(u.neden) + '</div>'; }).join('') + '</div><p class="ipucu">Yerleşmeyenleri “Programlar” sayfasında elle yerleştirebilir (çakışan dersi kenara alarak) ya da kısıtları gevşetip “Yerleşmiş dersleri koru” seçeneğiyle tekrar dağıtabilirsiniz.</p>' : '') +
+        '<div class="satir"><button class="btn ana" data-act="git" data-v="program">Programı gör →</button></div></div>';
+    }
+    return h;
+  }
+  function dagit() {
+    var an = DDCore.analyze(ST);
+    if (!an.units) { toast('Dağıtılacak ders yok. Önce ders atamalarını girin.', 'hata'); return; }
+    var opts = { sure: UI.dagSure, mod: UI.dagMod, agirlik: { tGap: UI.onc.tGap, tFree: UI.onc.tFree, cBal: UI.onc.cBal } };
+    $('#dagBtn').disabled = true; $('#dagDur').style.display = ''; $('#dagIl').style.display = '';
+    var t0 = Date.now();
+    function ilerle(p) {
+      var b = $('#dagBar'), m = $('#dagMsg');
+      if (b) b.style.width = Math.round((p.oran || 0) * 100) + '%';
+      if (m) m.textContent = p.asama + ' · yerleşmeyen: ' + p.yerlesmeyen + ' · ceza puanı: ' + p.maliyet + ' · ' + Math.round((Date.now() - t0) / 1000) + ' sn';
+    }
+    function bitti(r) {
+      WORK = null;
+      ST.yerlesim = r.yerlesim;
+      ST.sonDagitim = { tarih: new Date().toLocaleString('tr-TR'), yerlesmeyen: r.yerlesmeyen, istatistik: r.istatistik, maliyet: r.maliyet };
+      save(); render();
+      toast(r.yerlesmeyen.length ? r.yerlesmeyen.length + ' blok yerleşemedi — ayrıntılar aşağıda.' : 'Tüm dersler çakışmasız yerleşti ✓', r.yerlesmeyen.length ? 'uyari' : 'ok');
+    }
+    function senkron() {
+      ilerle({ asama: 'Hesaplanıyor (tarayıcı bu sürede yanıt vermeyebilir)', yerlesmeyen: '-', maliyet: '-', oran: 0.05 });
+      setTimeout(function () { try { bitti(DDCore.solve(ST, opts, null)); } catch (e) { toast('Dağıtım hatası: ' + e.message, 'hata'); render(); } }, 60);
+    }
+    try {
+      var src = $('#core').textContent;
+      var w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      WORK = w;
+      w.onmessage = function (e) {
+        var d = e.data;
+        if (d.tip === 'ilerleme') ilerle(d.p);
+        else if (d.tip === 'bitti') { w.terminate(); bitti(d.sonuc); }
+        else if (d.tip === 'hata') { w.terminate(); WORK = null; toast('Dağıtım hatası: ' + d.mesaj.split('\n')[0], 'hata'); render(); }
+      };
+      w.onerror = function () { try { w.terminate(); } catch (e) { } WORK = null; senkron(); };
+      w.postMessage({ tip: 'dagit', st: JSON.parse(JSON.stringify(ST)), opts: opts });
+    } catch (e) { senkron(); }
+  }
+
+  /* ---------- Programlar ---------- */
+  function varliklar(gor) {
+    if (gor === 'ogretmen' || gor === 'carsafO') return ST.ogretmenler;
+    if (gor === 'derslik') return ST.derslikler;
+    return siraliSiniflar();
+  }
+  // bir varlığın hücre listesi: cells[g][s] = [{u, ilk}]
+  function hucreler(M, gor, idx) {
+    var D = M.D, H = M.H, cells = [];
+    for (var g = 0; g < D; g++) { cells.push([]); for (var s = 0; s < H; s++) cells[g].push([]); }
+    var vid = varliklar(gor)[idx]; if (!vid) return cells;
+    M.units.forEach(function (U) {
+      var t = M.pos[U.id]; if (t < 0) return;
+      var ilgili = false;
+      if (gor === 'sinif' || gor === 'carsaf') ilgili = U.classes.indexOf(M.cI[vid.id]) >= 0;
+      else if (gor === 'ogretmen' || gor === 'carsafO') ilgili = U.teachers.indexOf(M.tI[vid.id]) >= 0 || U.cards.some(function (c) { var a = find(ST.atamalar, c.aid); return a && a.ogretmenIds.indexOf(vid.id) >= 0; });
+      else if (gor === 'derslik') ilgili = M.rooms[U.id].indexOf(M.rI[vid.id]) >= 0;
+      if (!ilgili) return;
+      var g = (t / H) | 0, s = t % H;
+      for (var k = 0; k < U.len; k++) cells[g][s + k].push({ u: U.id, k: k });
+    });
+    return cells;
+  }
+  function kartIcerik(M, u, gor, vid) {
+    var U = M.units[u], parts = [];
+    U.cards.forEach(function (c, i) {
+      var a = find(ST.atamalar, c.aid); if (!a) return;
+      if ((gor === 'sinif') && a.sinifIds.indexOf(vid.id) < 0) return;
+      if (gor === 'ogretmen' && a.ogretmenIds.indexOf(vid.id) < 0) return;
+      var d = find(ST.dersler, a.dersId) || { ad: '?', renk: '#999' };
+      var r = M.rooms[u][i] >= 0 ? ST.derslikler[M.rooms[u][i]].ad : '';
+      var alt;
+      if (gor === 'sinif') alt = ogrAdlari(a.ogretmenIds).join(', ');
+      else if (gor === 'ogretmen') { var sn = sinifAdlari(a.sinifIds); alt = sn.length > 3 ? sn.length + ' sınıf' : sn.join(', '); }
+      else alt = sinifAdlari(a.sinifIds).join(', ') + ' · ' + ogrAdlari(a.ogretmenIds).join(', ');
+      parts.push({ d: d, alt: alt, r: r, ortak: a.ortak });
+    });
+    return parts;
+  }
+  function gridHTML(M, gor, idx, yazdir) {
+    var vs = varliklar(gor), v = vs[idx]; if (!v) return '<div class="bos">Seçili kayıt yok.</div>';
+    var cells = hucreler(M, gor, idx), sa = saatler(), A = ST.ayar, sel = UI.sel, durum = yazdir ? null : UI._durum;
+    var kap = v.kapali || {};
+    var h = '<table class="prg' + (yazdir ? ' yz' : '') + '"><thead><tr><th class="sa">Saat</th>' + A.gunler.map(function (g) { return '<th>' + esc(g) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    for (var s = 0; s < A.saatSayisi; s++) {
+      if (+A.ogleSonrasi && s === +A.ogleSonrasi) h += '<tr class="ogleR"><td colspan="' + (A.gunler.length + 1) + '">Öğle arası</td></tr>';
+      h += '<tr><th class="sa"><b>' + (s + 1) + '</b><small>' + sa[s].bas + '<br>' + sa[s].bit + '</small></th>';
+      for (var g = 0; g < A.gunler.length; g++) {
+        var list = cells[g][s], cls = [], t = g * A.saatSayisi + s;
+        if (kap[g + '-' + s]) cls.push('kapc');
+        if (durum && durum[t]) cls.push('d-' + durum[t]);
+        h += '<td class="' + cls.join(' ') + '" data-g="' + g + '" data-s="' + s + '">';
+        list.forEach(function (it) {
+          var parts = kartIcerik(M, it.u, gor, v);
+          parts.forEach(function (p) {
+            h += '<div class="krt' + (it.k ? ' dev' : '') + (M.pinned[it.u] ? ' pin' : '') + (sel === it.u ? ' secili' : '') + (p.ortak ? ' ortk' : '') + '" data-u="' + it.u + '" draggable="' + (yazdir ? 'false' : 'true') + '" style="background:' + hexA(p.d.renk, yazdir ? 0.16 : 0.18) + ';border-left-color:' + esc(p.d.renk) + '">' +
+              '<b>' + esc(p.d.ad) + '</b>' + (M.pinned[it.u] && !yazdir ? '<i class="pn">📌</i>' : '') + '<span>' + esc(p.alt) + '</span>' + (p.r ? '<em>' + esc(p.r) + '</em>' : '') + '</div>';
+          });
+        });
+        h += '</td>';
+      }
+      h += '</tr>';
+    }
+    return h + '</tbody></table>';
+  }
+  function carsafHTML(M, gor) {
+    var vs = varliklar(gor), A = ST.ayar, H = A.saatSayisi;
+    var h = '<table class="crs"><thead><tr><th rowspan="2" class="yap">' + (gor === 'carsaf' ? 'Sınıf' : 'Öğretmen') + '</th>' + A.gunler.map(function (g) { return '<th colspan="' + H + '" class="gb">' + esc(g) + '</th>'; }).join('') + '</tr><tr>';
+    A.gunler.forEach(function () { for (var s = 0; s < H; s++) h += '<th class="' + (s === 0 ? 'gb' : '') + '">' + (s + 1) + '</th>'; });
+    h += '</tr></thead><tbody>';
+    vs.forEach(function (v, i) {
+      var cells = hucreler(M, gor, i);
+      h += '<tr><th class="yap"><a data-act="carsafgit" data-i="' + i + '">' + esc(v.ad) + '</a></th>';
+      for (var g = 0; g < A.gunler.length; g++) for (var s = 0; s < H; s++) {
+        var it = cells[g][s][0], txt = '', st = '';
+        if (it) {
+          var p = kartIcerik(M, it.u, gor === 'carsaf' ? 'sinif' : 'ogretmen', v)[0];
+          if (p) { txt = '<b>' + esc(p.d.kisa || p.d.ad.slice(0, 3)) + '</b><small>' + esc(gor === 'carsaf' ? kisaListe(find(ST.atamalar, M.units[it.u].cards[0].aid).ogretmenIds, ST.ogretmenler) : p.alt) + '</small>'; st = 'background:' + hexA(p.d.renk, 0.22); }
+        }
+        h += '<td class="' + (s === 0 ? 'gb' : '') + '" style="' + st + '">' + txt + '</td>';
+      }
+      h += '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+  function kisaListe(ids, arr) { return ids.map(function (id) { var o = find(arr, id); return o ? (o.kisa || kisaAd(o.ad)) : ''; }).join(','); }
+
+  function pProgram() {
+    var M = eng(), gor = UI.gorunum, vs = varliklar(gor);
+    if (UI.varlik == null || UI.varlik >= vs.length) UI.varlik = 0;
+    var tabs = [['sinif', 'Sınıf'], ['ogretmen', 'Öğretmen'], ['derslik', 'Derslik'], ['carsaf', 'Çarşaf (sınıflar)'], ['carsafO', 'Çarşaf (öğretmenler)']];
+    var un = []; for (var u = 0; u < M.nU; u++) if (M.pos[u] < 0) un.push(u);
+    var h = '<h1>Programlar</h1><div class="sekme">' + tabs.map(function (t) { return '<button data-act="gor" data-v="' + t[0] + '" class="' + (gor === t[0] ? 'akt' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    if (!Object.keys(ST.yerlesim).length && !un.length) return h + '<div class="kart bos">Henüz dağıtım yapılmadı. <button class="btn ana" data-act="git" data-v="dagit">Dağıtıma git →</button></div>';
+    var arac = '<div class="arac prgarac">';
+    if (gor === 'carsaf' || gor === 'carsafO') {
+      arac += '<button class="btn" data-act="yazdir" data-v="carsaf">🖨 Yazdır</button> <button class="btn" data-act="excel">⬇ Excel</button></div>';
+      return h + arac + '<div class="kart p0 kaydir">' + carsafHTML(M, gor) + '</div>';
+    }
+    if (!vs.length) return h + '<div class="kart bos">Bu görünüm için kayıt yok.</div>';
+    arac += '<button class="ibtn" data-act="vonce">◀</button><select data-act="vsec">' + vs.map(function (v, i) { return '<option value="' + i + '"' + (i === UI.varlik ? ' selected' : '') + '>' + esc(v.ad) + '</option>'; }).join('') + '</select><button class="ibtn" data-act="vsonra">▶</button>' +
+      '<span class="bosluk"></span><button class="btn" data-act="yazdir" data-v="tek">🖨 Yazdır</button> <button class="btn" data-act="yazdir" data-v="hepsi">🖨 Tümünü yazdır</button> <button class="btn" data-act="pinlerikaldir">📌 Sabitleri kaldır</button></div>';
+    UI._durum = null;
+    if (UI.sel >= 0 && UI.sel < M.nU) UI._durum = durumHesapla(M, UI.sel);
+    var selBar = '';
+    if (UI.sel >= 0 && UI.sel < M.nU) {
+      var Us = M.units[UI.sel], a0 = find(ST.atamalar, Us.cards[0].aid);
+      selBar = '<div class="selbar"><span><b>' + esc(dersAd(a0.dersId)) + '</b> · ' + esc(sinifAdlari(a0.sinifIds).join(', ')) + ' · ' + Us.len + ' saat — yeşil hücreye tıklayarak taşıyın, kırmızı: çakışma (o ders kenara alınır)</span><span><button class="btn kucuk" data-act="pin">' + (M.pinned[UI.sel] ? 'Sabitlemeyi kaldır' : '📌 Sabitle') + '</button> ' + (M.pos[UI.sel] >= 0 ? '<button class="btn kucuk" data-act="kenara">Kenara al</button> ' : '') + '<button class="btn kucuk" data-act="secbirak">Bırak</button></span></div>';
+    }
+    var v = vs[UI.varlik];
+    var bilgi = '';
+    if (gor === 'sinif') { var tot = 0, yer = 0; M.units.forEach(function (U) { if (U.classes.indexOf(M.cI[v.id]) >= 0) { tot += U.len; if (M.pos[U.id] >= 0) yer += U.len; } }); bilgi = yer + '/' + tot + ' saat yerleşti'; }
+    if (gor === 'ogretmen') { var ti = M.tI[v.id], n = 0; for (var t = 0; t < M.T; t++) if (M.tOcc[ti * M.T + t] >= 0) n++; bilgi = n + ' ders saati · ' + (find(ST.dersler, v.brans) || {}).ad; }
+    var ilgUn = un.filter(function (u) { var U = M.units[u]; if (gor === 'sinif') return U.classes.indexOf(M.cI[v.id]) >= 0; if (gor === 'ogretmen') return U.teachers.indexOf(M.tI[v.id]) >= 0; return false; });
+    var tepsi = '<div class="tepsi"><h4>Yerleşmeyenler <small>(' + un.length + ' toplam' + (ilgUn.length ? ', ' + ilgUn.length + ' bu sayfada' : '') + ')</small></h4>' +
+      (un.length ? (ilgUn.length ? ilgUn : un).slice(0, 60).map(function (u) { var U = M.units[u], a = find(ST.atamalar, U.cards[0].aid), d = find(ST.dersler, a.dersId) || {}; return '<div class="krt tp' + (UI.sel === u ? ' secili' : '') + '" data-u="' + u + '" draggable="true" style="background:' + hexA(d.renk, 0.18) + ';border-left-color:' + esc(d.renk) + '"><b>' + esc(d.ad) + ' · ' + U.len + 's</b><span>' + esc(sinifAdlari(a.sinifIds).join(', ')) + ' · ' + esc(ogrAdlari(a.ogretmenIds).join(', ')) + '</span></div>'; }).join('') : '<p class="mut">Hepsi yerleşti ✓</p>') + '</div>';
+    return h + arac + selBar + '<div class="prgw"><div class="kart p0 kaydir"><div class="prgbas"><b>' + esc(v.ad) + '</b><span class="mut">' + esc(bilgi) + '</span></div>' + gridHTML(M, gor, UI.varlik) + '</div>' + tepsi + '</div>';
+  }
+  function durumHesapla(M, u) {
+    var U = M.units[u], old = M.pos[u], oldR = old >= 0 ? M.rooms[u].slice() : null, d = {};
+    if (old >= 0) DDCore.remove(M, u);
+    U.dom.forEach(function (t) {
+      var cf = DDCore.conflicts(M, u, t);
+      d[t] = cf.blocked ? 'blk' : (cf.set.size ? 'cf' : 'ok');
+      for (var k = 1; k < U.len; k++) if (!d[t + k]) d[t + k] = 'ic';
+    });
+    // yalnızca başlangıç hücreleri tıklanabilir; 'ic' görsel
+    if (old >= 0) DDCore.place(M, u, old, oldR);
+    var out = {}; U.dom.forEach(function (t) { out[t] = d[t]; });
+    return out;
+  }
+  function tasi(u, g, s) {
+    var M = eng(), U = M.units[u], t = g * M.H + s;
+    if (U.dom.indexOf(t) < 0) { toast('Bu ders buraya konamaz (kapalı saat, blok süresi veya öğle arası).', 'hata'); return; }
+    var old = M.pos[u], oldR = old >= 0 ? M.rooms[u].slice() : null;
+    if (old >= 0) DDCore.remove(M, u);
+    var cf = DDCore.conflicts(M, u, t);
+    function uygula() {
+      cf.set.forEach(function (v) { DDCore.remove(M, v); });
+      var cf2 = DDCore.conflicts(M, u, t);
+      DDCore.place(M, u, t, cf2.rooms || cf.rooms);
+      ST.yerlesim = DDCore.exportPlacements(M);
+      save(true); render();
+    }
+    if (cf.blocked) { if (old >= 0) DDCore.place(M, u, old, oldR); toast('Bu saatte sabitlenmiş (📌) bir ders var.', 'hata'); return; }
+    if (!cf.set.size) { uygula(); return; }
+    var ad = Array.from(cf.set).map(function (v) { var a = find(ST.atamalar, M.units[v].cards[0].aid); return dersAd(a.dersId) + ' (' + sinifAdlari(a.sinifIds).join(', ') + ')'; });
+    if (old >= 0) DDCore.place(M, u, old, oldR);
+    ask('Bu saate yerleştirmek için şu ders(ler) kenara alınacak (yerleşmeyenlere): ' + ad.join('; ') + '. Devam edilsin mi?', function () {
+      if (M.pos[u] >= 0) DDCore.remove(M, u);
+      uygula();
+    }, 'Yerleştir');
+  }
+  var DRAG = -1;
+  function boya(M, u) {
+    UI._durum = durumHesapla(M, u);
+    var H = ST.ayar.saatSayisi;
+    $$('.prg td[data-g]').forEach(function (td) {
+      var t = (+td.getAttribute('data-g')) * H + (+td.getAttribute('data-s'));
+      td.classList.remove('d-ok', 'd-cf', 'd-blk');
+      if (UI._durum[t]) td.classList.add('d-' + UI._durum[t]);
+    });
+  }
+  function bindDrag() {
+    var m = $('#main');
+    m.ondragstart = function (e) { var k = e.target.closest && e.target.closest('.krt[data-u]'); if (!k) return; DRAG = +k.getAttribute('data-u'); try { e.dataTransfer.setData('text/plain', String(DRAG)); e.dataTransfer.effectAllowed = 'move'; } catch (x) { } UI.sel = DRAG; boya(eng(), DRAG); };
+    m.ondragover = function (e) { var td = e.target.closest && e.target.closest('.prg td[data-g]'); if (td && DRAG >= 0) { e.preventDefault(); } };
+    m.ondrop = function (e) { var td = e.target.closest && e.target.closest('.prg td[data-g]'); if (!td || DRAG < 0) return; e.preventDefault(); var u = DRAG; DRAG = -1; tasi(u, +td.getAttribute('data-g'), +td.getAttribute('data-s')); };
+    m.ondragend = function () { if (DRAG >= 0) { DRAG = -1; render(); } };
+  }
+
+  /* ---------- Yazdırma / Excel ---------- */
+  function yazdir(tur) {
+    var M = eng(), A = ST.ayar, baslik = esc(A.okulAdi || kurumAd()), html = '';
+    function sayfa(gor, i) {
+      var v = varliklar(gor)[i];
+      var alt = '';
+      if (gor === 'sinif') {
+        var lst = {}; ST.atamalar.forEach(function (a) { if (a.sinifIds.indexOf(v.id) >= 0 && a.saat) { var k = dersAd(a.dersId); lst[k] = (lst[k] || { s: 0, o: ogrAdlari(a.ogretmenIds).join(', ') }); lst[k].s += +a.saat; } });
+        alt = '<table class="lst">' + Object.keys(lst).map(function (k) { return '<tr><td>' + esc(k) + '</td><td>' + lst[k].s + ' saat</td><td>' + esc(lst[k].o) + '</td></tr>'; }).join('') + '</table>';
+      }
+      return '<div class="ysay"><div class="yb"><span>' + baslik + '</span><span>' + new Date().toLocaleDateString('tr-TR') + '</span></div><h2>' + esc(v.ad) + (gor === 'sinif' ? ' Sınıfı' : gor === 'derslik' ? ' Dersliği' : '') + ' Haftalık Ders Programı</h2>' + gridHTML(M, gor, i, true) + alt + '</div>';
+    }
+    if (tur === 'carsaf') html = '<div class="ysay yatay"><div class="yb"><span>' + baslik + '</span><span>' + new Date().toLocaleDateString('tr-TR') + '</span></div><h2>Çarşaf Program</h2>' + carsafHTML(M, UI.gorunum) + '</div>';
+    else if (tur === 'tek') html = sayfa(UI.gorunum, UI.varlik);
+    else html = varliklar(UI.gorunum).map(function (v, i) { return sayfa(UI.gorunum, i); }).join('');
+    $('#yazdir').innerHTML = html;
+    document.body.classList.toggle('yatayB', tur === 'carsaf');
+    setTimeout(function () { try { window.print(); } catch (e) { toast('Yazdırma bu ortamda engellendi; dosyayı tarayıcıda açıp yazdırın.', 'hata'); } }, 100);
+  }
+  function excel() {
+    var M = eng(), gor = UI.gorunum === 'carsafO' ? 'carsafO' : 'carsaf';
+    var tbl = carsafHTML(M, gor).replace(/<a [^>]*>/g, '').replace(/<\/a>/g, '').replace(/<small>/g, '<br>').replace(/<\/small>/g, '');
+    var doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><style>td,th{border:1px solid #999;font:10pt Calibri;text-align:center;vertical-align:middle}</style></head><body><h3>' + esc(ST.ayar.okulAdi || kurumAd()) + ' — Çarşaf Program</h3>' + tbl + '</body></html>';
+    indir('ders-programi-' + (gor === 'carsaf' ? 'siniflar' : 'ogretmenler') + '.xls', '﻿' + doc, 'application/vnd.ms-excel');
+  }
+
+  /* ---------- Sanal Etüt'e yayın ---------- */
+  function fbKey(s) { return String(s).trim().replace(/[.#$\[\]\/]/g, '-') || '_'; }
+  function fbUrl(path, q) {
+    var base = String(Y.url || '').trim().replace(/\/+$/, '');
+    var qs = []; if (q) qs.push(q); if (Y.auth) qs.push('auth=' + encodeURIComponent(Y.auth));
+    return base + '/' + String(path).replace(/^\/+|\/+$/g, '') + '.json' + (qs.length ? '?' + qs.join('&') : '');
+  }
+  function yayinYolu() { return String(Y.yol || 'kurumlar/{kurum}/dersProgrami').replace('{kurum}', kurum); }
+  function yayinVerisi() {
+    var M = eng(), sa = saatler(), A = ST.ayar;
+    var out = { meta: { kurumKodu: kurum, kurumAdi: kurumAd(), okulAdi: A.okulAdi || kurumAd(), guncelleme: Date.now(), guncellemeMetin: new Date().toLocaleString('tr-TR'), gunler: A.gunler, saatler: sa, ogleSonrasi: +A.ogleSonrasi || 0 }, siniflar: {}, ogretmenler: {}, derslikler: {} };
+    function ekle(hedef, key, ad, pid, g, s, kayit) {
+      if (!hedef[key]) hedef[key] = { ad: ad, dersler: {}, haftalikSaat: 0 };
+      if (pid) hedef[key].pid = pid;
+      var k = g + '_' + s;
+      if (hedef[key].dersler[k]) { hedef[key].dersler[k].ders += ' / ' + kayit.ders; return; }
+      hedef[key].dersler[k] = kayit; hedef[key].haftalikSaat++;
+    }
+    ST.siniflar.forEach(function (c) { out.siniflar[fbKey(c.ad)] = { ad: c.ad, seviye: c.seviye, dersler: {}, haftalikSaat: 0 }; if (c.pid) out.siniflar[fbKey(c.ad)].pid = c.pid; });
+    M.units.forEach(function (U) {
+      var t = M.pos[U.id]; if (t < 0) return;
+      var g = (t / M.H) | 0, s0 = t % M.H;
+      U.cards.forEach(function (c, ci) {
+        var a = find(ST.atamalar, c.aid); if (!a) return;
+        var d = find(ST.dersler, a.dersId) || { ad: '?', kisa: '', renk: '#999' };
+        var oda = M.rooms[U.id][ci] >= 0 ? ST.derslikler[M.rooms[U.id][ci]].ad : '';
+        var ogr = ogrAdlari(a.ogretmenIds).join(', '), sn = sinifAdlari(a.sinifIds);
+        for (var k = 0; k < U.len; k++) {
+          var s = s0 + k, ortakB = { ders: d.ad, kisa: d.kisa || '', renk: d.renk, saat: s + 1, bas: sa[s].bas, bit: sa[s].bit, blok: U.len, blokSira: k + 1, ortak: !!a.ortak, derslik: oda };
+          a.sinifIds.forEach(function (cid) { var cc = find(ST.siniflar, cid); if (cc) ekle(out.siniflar, fbKey(cc.ad), cc.ad, cc.pid, g, s, Object.assign({ ogretmen: ogr }, ortakB)); });
+          a.ogretmenIds.forEach(function (oid) { var o = find(ST.ogretmenler, oid); if (o) ekle(out.ogretmenler, fbKey(o.ad), o.ad, o.pid, g, s, Object.assign({ sinif: sn.length > 4 ? sn.length + ' sınıf' : sn.join(', ') }, ortakB)); });
+          if (oda) ekle(out.derslikler, fbKey(oda), oda, null, g, s, Object.assign({ sinif: sn.join(', '), ogretmen: ogr }, ortakB));
+        }
+      });
+    });
+    return out;
+  }
+  function pYayin() {
+    var bag = !!Y.url;
+    var veri = null; try { veri = yayinVerisi(); } catch (e) { }
+    var nS = veri ? Object.keys(veri.siniflar).length : 0, nO = veri ? Object.keys(veri.ogretmenler).length : 0;
+    return '<h1>Sanal Etüt’e Yayınla</h1><p class="alt">Program, Sanal Etüt’ün kullandığı Firebase Realtime Database’e yazılır. Her sınıf kendi programını, her öğretmen kendi programını portalda doğrudan görür. Şube verileri ayrı yollara yazılır.</p>' +
+      '<div class="kart"><h2>1 · Bağlantı</h2><div class="izg2"><label>Firebase Realtime Database adresi<input data-y="url" value="' + esc(Y.url) + '" placeholder="https://proje-adi-default-rtdb.europe-west1.firebasedatabase.app"></label>' +
+      '<label>Yetki anahtarı <small>(isteğe bağlı — veritabanı kuralları kapalıysa)</small><input data-y="auth" type="password" value="' + esc(Y.auth) + '" placeholder="ID token veya veritabanı gizli anahtarı"></label>' +
+      '<label>Yayın yolu<input data-y="yol" value="' + esc(Y.yol) + '"><small class="mut">Bu şube için: <code>' + esc(yayinYolu()) + '</code></small></label>' +
+      '<label>&nbsp;<button class="btn" data-act="ytest">Bağlantıyı test et</button></label></div></div>' +
+      '<div class="kart"><h2>2 · Sınıf ve öğretmenleri eşleştir</h2><p class="alt">Sanal Etüt’teki sınıf/öğretmen listelerinin veritabanındaki yolunu yazın; buradan çekilen kayıtlar portal kimlikleriyle (pid) eşleşir ve yayınlanan program her sınıfa doğrudan bağlanır.</p><div class="izg2"><label>Sınıf listesi yolu<input data-y="sinifYolu" value="' + esc(Y.sinifYolu) + '" placeholder="ör. kurumlar/{kurum}/siniflar"></label><label>Öğretmen listesi yolu<input data-y="ogretmenYolu" value="' + esc(Y.ogretmenYolu) + '" placeholder="ör. kurumlar/{kurum}/ogretmenler"></label></div><div class="satir"><button class="btn" data-act="' + (GOMULU ? 'kmsinif' : 'portalsinif') + '"' + (GOMULU || bag ? '' : ' disabled') + '>⇣ ' + (GOMULU ? 'Sınıfları şubelerden al' : 'Sınıfları al') + '</button> <button class="btn" data-act="' + (GOMULU ? 'kmogr' : 'portalogr') + '"' + (GOMULU || bag ? '' : ' disabled') + '>⇣ ' + (GOMULU ? 'Öğretmenleri şubelerden al' : 'Öğretmenleri al') + '</button></div></div>' +
+      '<div class="kart"><h2>3 · Yayınla</h2><div class="ozet4"><div><b>' + nS + '</b><span>sınıf programı</span></div><div><b>' + nO + '</b><span>öğretmen programı</span></div><div><b>' + Object.keys(ST.yerlesim).length + '</b><span>yerleşmiş kart</span></div><div><b>' + esc(kurumAd().replace('BKM AKADEMİ ', '')) + '</b><span>şube</span></div></div>' +
+      '<div class="satir"><button class="btn ana buyuk" data-act="yayinla"' + (bag ? '' : ' disabled') + '>📡 Programı Sanal Etüt’e yayınla</button> <button class="btn" data-act="yayinsil"' + (bag ? '' : ' disabled') + '>Yayından kaldır</button> <button class="btn" data-act="jsonyayin">⬇ Yayın verisini JSON indir</button></div>' +
+      '<div id="ysonuc"></div></div>' +
+      '<div class="kart"><h2>Veri yapısı</h2><p class="alt">Portal bu yoldan okur: <code>' + esc(yayinYolu()) + '/siniflar/{sınıf}/dersler/{gün_saat}</code> → <code>{ders, kisa, renk, ogretmen, derslik, bas, bit, ortak}</code>. Gün ve saat 0’dan başlar (0_0 = Pazartesi 1. ders). Öğretmenler için <code>/ogretmenler/{ad}</code> aynı yapıdadır.</p></div>';
+  }
+  function fbIstek(method, path, body, q) {
+    if (GOMULU && window.parent.kmFb) { try { return window.parent.kmFb(method, String(path).replace(/^\/+|\/+$/g, ''), body); } catch (e) { return Promise.reject(e); } }
+    if (!Y.url) return Promise.reject(new Error('Önce veritabanı adresini girin.'));
+    return fetch(fbUrl(path, q), { method: method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) })
+      .then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) { } if (!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status)); return j; }); });
+  }
+  function kurumKodu(ad) {
+    var f = String(ad || '').toLocaleLowerCase('tr').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u');
+    if (/karsiyaka/.test(f)) return 'bkmakademikarsiyaka';
+    if (/carsi/.test(f)) return 'bkmakademicarsi';
+    return '';
+  }
+  function kmOgrAl(sessiz) {
+    var P = null; try { P = window.parent.kmDDData(); } catch (e) { }
+    if (!P) { if (!sessiz) toast('Şube verisine ulaşılamadı. index.html ve sw.js dosyalarını da GitHub’a yükleyip Ctrl+Shift+R yapın.', 'hata'); return; }
+    var dersAdi = {}; P.subeler.forEach(function (b) { b.dersler.forEach(function (d) { dersAdi[d.id] = d.ad; }); });
+    var brans = {}; P.subeler.forEach(function (b) { b.ogretmenler.forEach(function (t) { if (t.dersId && !brans[t.ad]) brans[t.ad] = dersAdi[t.dersId]; }); });
+    var ad = {}, n = 0;
+    P.ogretmenler.concat(P.subeler.reduce(function (a, b) { return a.concat(b.ogretmenler.map(function (t) { return t.ad; })); }, [])).forEach(function (x) {
+      if (!x || ad[trUp(x)]) return; ad[trUp(x)] = 1;
+      if (ST.ogretmenler.some(function (o) { return trUp(o.ad) === trUp(x); })) return;
+      var d = brans[x] ? ST.dersler.filter(function (z) { return trUp(z.ad) === trUp(brans[x]); })[0] : null;
+      ST.ogretmenler.push({ id: uid('o'), ad: x, kisa: kisaAd(x), brans: d ? d.id : '', maxGunluk: ST.ayar.saatSayisi, bosGun: 0, maxBosluk: '', kapali: {} }); n++;
+    });
+    save(); render(); toast(n + ' yeni öğretmen eklendi.', 'ok');
+  }
+  function kmSinifAl(sessiz) {
+    var P = null; try { P = window.parent.kmDDData(); } catch (e) { }
+    if (!P) { toast('Şube verisine ulaşılamadı. index.html ve sw.js dosyalarını da GitHub’a yükleyip Ctrl+Shift+R yapın.', 'hata'); return; }
+    var n = 0, g = 0;
+    P.subeler.filter(function (b) { var kk = kurumKodu(b.kurum); return !kk || kk === kurum; }).forEach(function (b) {
+      var ad = b.sinif || b.ad; g++;
+      if (ST.siniflar.some(function (x) { return trUp(x.ad) === trUp(ad); })) return;
+      ST.siniflar.push({ id: uid('s'), ad: ad, seviye: b.seviye ? +b.seviye : '', kapali: {} }); n++;
+    });
+    save(); render(); toast(g + ' şubeden ' + n + ' yeni sınıf eklendi.', 'ok');
+  }
+  function kmAktar(sbl) {
+    var ns = 0, nd = 0, no = 0, na = 0;
+    function dersBul(dn) {
+      var x = ST.dersler.filter(function (d) { return trUp(d.ad) === trUp(dn.ad); })[0];
+      if (!x) { x = { id: uid('d'), ad: dn.ad, kisa: dn.kod || trUp(dn.ad).slice(0, 3), renk: PALET[ST.dersler.length % PALET.length] }; ST.dersler.push(x); nd++; }
+      return x;
+    }
+    function ogrBul(ad) {
+      var x = ST.ogretmenler.filter(function (o) { return trUp(o.ad) === trUp(ad); })[0];
+      if (!x) { x = { id: uid('o'), ad: ad, kisa: kisaAd(ad), brans: '', maxGunluk: ST.ayar.saatSayisi, bosGun: 0, maxBosluk: '', kapali: {} }; ST.ogretmenler.push(x); no++; }
+      return x;
+    }
+    sbl.forEach(function (b) {
+      var c = ST.siniflar.filter(function (x) { return trUp(x.ad) === trUp(b.sinif || b.ad); })[0];
+      if (!c) { c = { id: uid('s'), ad: b.sinif || b.ad, seviye: b.seviye ? +b.seviye : '', kapali: {} }; ST.siniflar.push(c); ns++; }
+      b.dersler.forEach(function (dn) {
+        var d = dersBul(dn);
+        var ogs = b.ogretmenler.filter(function (t) { return t.dersId === dn.id; }).map(function (t) { return ogrBul(t.ad).id; });
+        if (dn.ortak) return;
+        var a = ST.atamalar.filter(function (x) { return !x.ortak && x.dersId === d.id && x.sinifIds.indexOf(c.id) > -1; })[0];
+        if (a) { if (!a.ogretmenIds.length && ogs.length) a.ogretmenIds = ogs; return; }
+        ST.atamalar.push(yeniAtama({ dersId: d.id, sinifIds: [c.id], ogretmenIds: ogs, saat: dn.saat || 2 })); na++;
+      });
+      b.ogretmenler.forEach(function (t) { ogrBul(t.ad); });
+    });
+    save(); render();
+    toast(ns + ' sınıf, ' + nd + ' ders, ' + no + ' öğretmen, ' + na + ' atama eklendi.', 'ok');
+  }
+  function portalListe(data) {
+    var out = []; if (!data || typeof data !== 'object') return out;
+    var it = Array.isArray(data) ? data.map(function (v, i) { return [String(i), v]; }) : Object.keys(data).map(function (k) { return [k, data[k]]; });
+    it.forEach(function (p) {
+      var k = p[0], v = p[1]; if (v == null) return;
+      var ad = '';
+      if (typeof v === 'string') ad = v;
+      else if (typeof v === 'object') {
+        if (v.ad && v.soyad) ad = v.ad + ' ' + v.soyad;
+        else ad = v.adSoyad || v.adsoyad || v.ad || v.adi || v.isim || v.name || v.sinifAdi || v.sinif || v.baslik || '';
+      }
+      if (!ad) ad = k;
+      out.push({ pid: k, ad: String(ad).trim(), v: v });
+    });
+    return out;
+  }
+  function portaldanAl(tur) {
+    var yol = String(tur === 'sinif' ? Y.sinifYolu : Y.ogretmenYolu).replace('{kurum}', kurum);
+    if (!yol) { git('yayin'); toast('Önce ' + (tur === 'sinif' ? 'sınıf' : 'öğretmen') + ' listesi yolunu yazın.', 'uyari'); return; }
+    fbIstek('GET', yol).then(function (data) {
+      var l = portalListe(data), yeni = 0, esl = 0;
+      var hedef = tur === 'sinif' ? ST.siniflar : ST.ogretmenler;
+      l.forEach(function (x) {
+        var var1 = hedef.filter(function (h) { return h.pid === x.pid || trUp(h.ad) === trUp(x.ad); })[0];
+        if (var1) { var1.pid = x.pid; esl++; return; }
+        if (tur === 'sinif') { var m = String(x.ad).match(/^(\d+)/); hedef.push({ id: uid('s'), ad: x.ad, seviye: (x.v && (x.v.seviye || x.v.sinifSeviyesi)) || (m ? m[1] : ''), kapali: {}, pid: x.pid }); }
+        else hedef.push({ id: uid('o'), ad: x.ad, kisa: kisaAd(x.ad), brans: '', maxGunluk: ST.ayar.saatSayisi, bosGun: 0, maxBosluk: '', kapali: {}, pid: x.pid });
+        yeni++;
+      });
+      save(); render();
+      toast(l.length + ' kayıt okundu · ' + yeni + ' yeni eklendi · ' + esl + ' eşleşti', 'ok');
+    }).catch(function (e) { toast('Okunamadı: ' + e.message + ' (Bu sayfa kendi sitenizde açık değilse tarayıcı bağlantıyı engelliyor olabilir.)', 'hata'); });
+  }
+
+  /* ================= OLAYLAR ================= */
+  document.addEventListener('click', function (e) {
+    var nb = e.target.closest('#nav [data-sayfa]'); if (nb) { git(nb.getAttribute('data-sayfa')); return; }
+    // program ızgarası
+    if (UI.sayfa === 'program') {
+      var krt = e.target.closest('.krt[data-u]'), td = e.target.closest('.prg td[data-g]');
+      if (td && UI.sel >= 0 && UI._durum) {
+        var t = (+td.getAttribute('data-g')) * ST.ayar.saatSayisi + (+td.getAttribute('data-s'));
+        var ku = krt ? +krt.getAttribute('data-u') : -1;
+        if (UI._durum[t] && ku !== UI.sel) { tasi(UI.sel, +td.getAttribute('data-g'), +td.getAttribute('data-s')); return; }
+      }
+      if (krt) { var u = +krt.getAttribute('data-u'); UI.sel = UI.sel === u ? -1 : u; render(); return; }
+    }
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var act = b.getAttribute('data-act'), id = b.getAttribute('data-id'), l = b.getAttribute('data-l'), v = b.getAttribute('data-v');
+    if (b.tagName === 'SELECT') return;
+    switch (act) {
+      case 'mkapat': mkapat(); break;
+      case 'askyes': var f = _ask; _ask = null; mkapat(); if (f) f(); break;
+      case 'git': git(v); break;
+      case 'sil':
+        var x = find(ST[l], id); if (!x) return;
+        var ek = '';
+        if (l === 'dersler') { var n = ST.atamalar.filter(function (a) { return a.dersId === id; }).length; if (n) ek = ' Bu derse ait ' + n + ' atama da silinecek.'; }
+        if (l === 'siniflar' || l === 'ogretmenler') ek = ' Atamalardan da çıkarılacak.';
+        ask('“' + (x.ad || dersAd(x.dersId)) + '” silinsin mi?' + ek, function () {
+          ST[l] = ST[l].filter(function (y) { return y.id !== id; });
+          if (l === 'dersler') ST.atamalar = ST.atamalar.filter(function (a) { return a.dersId !== id; });
+          if (l === 'siniflar') { ST.atamalar.forEach(function (a) { a.sinifIds = a.sinifIds.filter(function (y) { return y !== id; }); }); ST.atamalar = ST.atamalar.filter(function (a) { return a.sinifIds.length; }); }
+          if (l === 'ogretmenler') ST.atamalar.forEach(function (a) { a.ogretmenIds = a.ogretmenIds.filter(function (y) { return y !== id; }); });
+          if (l === 'derslikler') ST.atamalar.forEach(function (a) { a.derslikIds = a.derslikIds.filter(function (y) { return y !== id; }); });
+          save(); render();
+        }, 'Sil');
+        break;
+      case 'kapali': kapaliAc(l, id); break;
+      case 'kgtemizle': KG.kap = {}; $$('#kgt td[data-k]').forEach(function (td) { td.className = ''; }); break;
+      case 'kgkaydet': var xx = find(ST[KG.liste], KG.id); if (xx) xx.kapali = KG.kap; mkapat(); save(); render(); break;
+      case 'subekopya':
+        var dig = KURUMLAR.filter(function (k) { return k.kod !== kurum; })[0];
+        ask('Ayarlar ve ders listesi “' + dig.ad + '” şubesine kopyalansın mı? Oradaki aynı adlı dersler güncellenir.', function () {
+          var o = normalize(LS.get('dd_veri_' + dig.kod));
+          o.ayar = JSON.parse(JSON.stringify(ST.ayar)); o.ayar.okulAdi = o.ayar.okulAdi && o.ayar.okulAdi !== ST.ayar.okulAdi ? o.ayar.okulAdi : '';
+          ST.dersler.forEach(function (d) { var m = o.dersler.filter(function (x) { return trUp(x.ad) === trUp(d.ad); })[0]; if (m) { m.kisa = d.kisa; m.renk = d.renk; } else o.dersler.push(JSON.parse(JSON.stringify(d))); });
+          LS.set('dd_veri_' + dig.kod, o); toast('Kopyalandı.', 'ok');
+        }); break;
+      case 'yerlesimsil': ask('Bu şubenin tüm yerleşimi (sabitlenenler dahil) silinsin mi?', function () { ST.yerlesim = {}; ST.sonDagitim = null; save(); render(); }); break;
+      case 'hepsinisil': ask('Bu şubenin TÜM verisi (dersler, sınıflar, öğretmenler, atamalar, program) silinecek. Önce JSON yedeği almanız önerilir. Emin misiniz?', function () { ST = bosVeri(); save(); render(); }, 'Hepsini sil'); break;
+      case 'dersekle': ST.dersler.push({ id: uid('d'), ad: 'Yeni ders', kisa: '', renk: PALET[ST.dersler.length % PALET.length] }); save(); render(); break;
+      case 'dersmeb':
+        var eklenen = 0;
+        MEB.forEach(function (m) { if (!ST.dersler.some(function (d) { return trUp(d.ad) === trUp(m[0]); })) { ST.dersler.push({ id: uid('d'), ad: m[0], kisa: m[1], renk: PALET[ST.dersler.length % PALET.length] }); eklenen++; } });
+        save(); render(); toast(eklenen + ' ders eklendi.', 'ok'); break;
+      case 'sinifekle': ST.siniflar.push({ id: uid('s'), ad: 'Yeni sınıf', seviye: '', kapali: {} }); save(); render(); break;
+      case 'sinifuret':
+        var sv = $('#gSev').value.split(/[,\s]+/).filter(Boolean), sb = $('#gSub').value.trim().toLocaleUpperCase('tr-TR'), bic = $('#gBic').value, harf = [];
+        var mm = sb.match(/^([A-ZÇĞİÖŞÜ])\s*-\s*([A-ZÇĞİÖŞÜ])$/);
+        var ALF = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ'.split('');
+        if (mm) { var i1 = ALF.indexOf(mm[1]), i2 = ALF.indexOf(mm[2]); harf = ALF.slice(i1, i2 + 1).filter(function (c) { return 'ÇĞIİÖŞÜ'.indexOf(c) < 0 || mm[1] === c || mm[2] === c; }); }
+        else harf = sb.split(/[,\s]+/).filter(Boolean);
+        var yeni = 0;
+        sv.forEach(function (s) { harf.forEach(function (hh) { var ad = s + bic + hh; if (!ST.siniflar.some(function (c) { return c.ad === ad; })) { ST.siniflar.push({ id: uid('s'), ad: ad, seviye: s, kapali: {} }); yeni++; } }); });
+        save(); render(); toast(yeni + ' sınıf oluşturuldu.', 'ok'); break;
+      case 'ogrekle': ST.ogretmenler.push({ id: uid('o'), ad: 'Yeni öğretmen', kisa: '', brans: '', maxGunluk: ST.ayar.saatSayisi, bosGun: 0, maxBosluk: '', kapali: {} }); save(); render(); break;
+      case 'ogrtoplu':
+        var n2 = 0;
+        $('#topluOgr').value.split('\n').forEach(function (line) {
+          var p = line.split(/[;\t]/), ad = (p[0] || '').trim(); if (!ad) return;
+          var br = (p[1] || '').trim(), d = br ? ST.dersler.filter(function (x) { return trUp(x.ad) === trUp(br) || trUp(x.kisa) === trUp(br) || trUp(x.ad).indexOf(trUp(br)) === 0; })[0] : null;
+          ST.ogretmenler.push({ id: uid('o'), ad: ad, kisa: kisaAd(ad), brans: d ? d.id : '', maxGunluk: ST.ayar.saatSayisi, bosGun: 0, maxBosluk: '', kapali: {} }); n2++;
+        });
+        save(); render(); toast(n2 + ' öğretmen eklendi.', 'ok'); break;
+      case 'derslikekle': ST.derslikler.push({ id: uid('r'), ad: 'Yeni derslik', kapali: {} }); save(); render(); break;
+      case 'asekme': UI.atamaSekme = v; render(); break;
+      case 'yeniatama': atamaModal(null); break;
+      case 'atamaduz': atamaModal(id); break;
+      case 'atamakaydet': atamaKaydet(); break;
+      case 'svsec': var cbs = $$('#am [name="sinif"][data-sv="' + b.getAttribute('data-sv') + '"]'); var all = cbs.every(function (c) { return c.checked; }); cbs.forEach(function (c) { c.checked = !all; }); break;
+      case 'osec': var sv2 = b.getAttribute('data-sv'), cb2 = $$(sv2 === '*' ? '[name="osinif"]' : '[name="osinif"][data-sv="' + sv2 + '"]'); var all2 = cb2.every(function (c) { return c.checked; }); cb2.forEach(function (c) { c.checked = !all2; }); break;
+      case 'ortakekle':
+        var cls = $$('[name="osinif"]:checked').map(function (c) { return c.value; });
+        if (!cls.length) { toast('Sınıf seçin.', 'hata'); return; }
+        var sure = Math.max(1, +$('#oSure').value || 1), gg = +$('#oGun').value, ss = Math.min(+$('#oSaat').value, ST.ayar.saatSayisi - sure);
+        if (ss < 0) { toast('Süre günlük ders saatinden uzun.', 'hata'); return; }
+        ST.atamalar.push(yeniAtama({ dersId: $('#oDers').value, sinifIds: cls, ogretmenIds: $$('[name="oogr"]:checked').map(function (c) { return c.value; }), saat: sure, bloklar: String(sure), ortak: true, sabit: [{ g: gg, s: ss }] }));
+        save(); render(); toast('Ortak etkinlik eklendi. Dağıtımda bu saat tüm seçili sınıflara yazılır.', 'ok'); break;
+      case 'otoogr':
+        var yk = ogrYuk(), n3 = 0;
+        ST.atamalar.forEach(function (a) {
+          if (a.ortak || a.ogretmenIds.length || !a.saat) return;
+          var br2 = ST.ogretmenler.filter(function (o) { return o.brans === a.dersId; });
+          if (!br2.length) return;
+          br2.sort(function (p, q) { return ((yk[p.id] || 0) - kapasite(p)) - ((yk[q.id] || 0) - kapasite(q)); });
+          a.ogretmenIds = [br2[0].id]; yk[br2[0].id] = (yk[br2[0].id] || 0) + (+a.saat); n3++;
+        });
+        save(); render(); toast(n3 + ' atamaya öğretmen yazıldı.', n3 ? 'ok' : 'uyari'); break;
+      case 'dagit': dagit(); break;
+      case 'dagdur': if (WORK) { WORK.terminate(); WORK = null; } toast('Dağıtım durduruldu.', 'uyari'); render(); break;
+      case 'gor': UI.gorunum = v; UI.varlik = 0; UI.sel = -1; render(); break;
+      case 'vonce': UI.varlik = Math.max(0, UI.varlik - 1); render(); break;
+      case 'vsonra': UI.varlik = Math.min(varliklar(UI.gorunum).length - 1, UI.varlik + 1); render(); break;
+      case 'carsafgit': UI.gorunum = UI.gorunum === 'carsafO' ? 'ogretmen' : 'sinif'; UI.varlik = +b.getAttribute('data-i'); render(); break;
+      case 'secbirak': UI.sel = -1; render(); break;
+      case 'pin': var M = eng(); M.pinned[UI.sel] = M.pinned[UI.sel] ? 0 : 1; if (M.pos[UI.sel] < 0) M.pinned[UI.sel] = 0; ST.yerlesim = DDCore.exportPlacements(M); save(true); render(); break;
+      case 'kenara': var M2 = eng(); M2.pinned[UI.sel] = 0; DDCore.remove(M2, UI.sel); ST.yerlesim = DDCore.exportPlacements(M2); save(true); render(); break;
+      case 'pinlerikaldir': var M3 = eng(); M3.pinned.fill(0); ST.yerlesim = DDCore.exportPlacements(M3); save(true); render(); toast('Tüm sabitlemeler kaldırıldı.', 'ok'); break;
+      case 'yazdir': yazdir(v); break;
+      case 'excel': excel(); break;
+      case 'kmal':
+        var P = null; try { P = GOMULU && window.parent.kmDDData ? window.parent.kmDDData() : null; } catch (e) { }
+        if (!P) { toast('Şube verisine ulaşılamadı. index.html ve sw.js dosyalarını da GitHub’a yükleyip sayfayı Ctrl+Shift+R ile yenileyin.', 'hata'); break; }
+        var sbl = P.subeler.filter(function (b) { var kk = kurumKodu(b.kurum); return !kk || kk === kurum; });
+        if (!sbl.length) { toast('Bu kuruma ait aktif şube bulunamadı.', 'uyari'); break; }
+        ask(sbl.length + ' şube Kurs Modülü’nden alınacak (sınıf, ders, öğretmen ve ders atamaları). Mevcut kayıtlar korunur, yalnızca yeniler eklenir. Devam edilsin mi?', function () { kmAktar(sbl); }, 'Evet, al');
+        break;
+      case 'ytest': fbIstek('GET', yayinYolu(), undefined, 'shallow=true').then(function () { toast('Bağlantı başarılı ✓', 'ok'); }).catch(function (er) { toast('Bağlanılamadı: ' + er.message, 'hata'); }); break;
+      case 'yayinla':
+        var veri = yayinVerisi();
+        if (!Object.keys(ST.yerlesim).length) { toast('Yayınlanacak program yok. Önce dağıtım yapın.', 'hata'); return; }
+        $('#ysonuc').innerHTML = '<p class="mut">Gönderiliyor…</p>';
+        fbIstek('PUT', yayinYolu(), veri).then(function () {
+          $('#ysonuc').innerHTML = '<div class="uyarilar ok"><div>✓ ' + Object.keys(veri.siniflar).length + ' sınıf ve ' + Object.keys(veri.ogretmenler).length + ' öğretmen programı <code>' + esc(yayinYolu()) + '</code> yoluna yayınlandı (' + esc(veri.meta.guncellemeMetin) + ').</div></div>';
+          toast('Program Sanal Etüt’e yayınlandı ✓', 'ok');
+        }).catch(function (er) { $('#ysonuc').innerHTML = '<div class="uyarilar hata"><div>Yayınlanamadı: ' + esc(er.message) + '. Bu sayfa Claude önizlemesinde açıksa tarayıcı dış bağlantıyı engeller; dosyayı kendi sitenizde (Vercel) açıp tekrar deneyin. Ya da JSON’u indirip Firebase konsolundan içe aktarın.</div></div>'; }); break;
+      case 'yayinsil': ask('Bu şubenin yayınlanmış programı Sanal Etüt’ten kaldırılsın mı?', function () { fbIstek('DELETE', yayinYolu()).then(function () { toast('Yayından kaldırıldı.', 'ok'); }).catch(function (er) { toast('Hata: ' + er.message, 'hata'); }); }); break;
+      case 'jsonyayin': indir('ders-programi-' + kurum + '.json', JSON.stringify(yayinVerisi(), null, 2), 'application/json'); break;
+      case 'portalsinif': if (GOMULU) { kmSinifAl(); break; } portaldanAl('sinif'); break;
+      case 'kmsinif': kmSinifAl(); break;
+      case 'portalogr': if (GOMULU) { kmOgrAl(); break; } portaldanAl('ogretmen'); break;
+      case 'kmogr': kmOgrAl(); break;
+      case 'ornek': ask('Bu şubeye örnek veri yüklensin mi? Mevcut veri silinir.', function () { ST = normalize(ddOrnekVeri()); save(); git('atama'); toast('Örnek veri yüklendi. “Dağıtım” sayfasından dağıtabilirsiniz.', 'ok'); }); break;
+      case 'disaktar': indir('ders-dagitim-' + kurum + '-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ kurum: kurum, veri: ST }, null, 1), 'application/json'); break;
+      case 'iceaktar': $('#dosya').click(); break;
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.id === 'kurumSec') { save(); kurum = el.value; LS.set('dd_kurum', kurum); ST = normalize(LS.get('dd_veri_' + kurum)); ENG = null; UI.sel = -1; render(); toast(kurumAd() + ' açıldı.', 'ok'); return; }
+    if (el.id === 'dosya') {
+      var f = el.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function () { try { var j = JSON.parse(r.result); var veri = j.veri || j; if (!veri.ayar) throw new Error('Geçersiz dosya'); ask('Dosyadaki veri “' + kurumAd() + '” şubesine yüklensin mi? Mevcut veri değiştirilir.', function () { ST = normalize(veri); save(); render(); toast('İçe aktarıldı.', 'ok'); }); } catch (er) { toast('Dosya okunamadı: ' + er.message, 'hata'); } el.value = ''; };
+      r.readAsText(f); return;
+    }
+    var val = el.type === 'checkbox' ? el.checked : el.value;
+    var tt = el.getAttribute('data-t'); if (tt === 'n') val = val === '' ? '' : +val; if (tt === 'b') val = !!el.checked;
+    if (el.hasAttribute('data-a')) {
+      var k = el.getAttribute('data-a'); ST.ayar[k] = val;
+      if (k === 'saatSayisi') ST.ayar.saatSayisi = Math.max(1, Math.min(14, +val || 8));
+      save(); render(); return;
+    }
+    if (el.hasAttribute('data-gun')) { var yeni = GUNLER.filter(function (g) { var c = $('[data-gun="' + g + '"]'); return c && c.checked; }); if (!yeni.length) { el.checked = true; return; } remapGunler(yeni); save(); render(); return; }
+    if (el.hasAttribute('data-f')) {
+      var x = find(ST[el.getAttribute('data-f')], el.getAttribute('data-id')); if (!x) return;
+      x[el.getAttribute('data-k')] = val;
+      if (el.getAttribute('data-f') === 'ogretmenler' && el.getAttribute('data-k') === 'ad' && !x.kisa) x.kisa = kisaAd(val);
+      save(); if (/maxGunluk|brans/.test(el.getAttribute('data-k')) || el.getAttribute('data-k') === 'seviye') render(); return;
+    }
+    if (el.hasAttribute('data-mc')) {
+      var cid = el.getAttribute('data-mc'), did = el.getAttribute('data-md'), h = Math.max(0, parseInt(el.value, 10) || 0), a = basitAtama(cid, did);
+      if (h > 0) { if (a) a.saat = h; else { var sel = $('[data-mt="' + cid + '"][data-md="' + did + '"]'); ST.atamalar.push(yeniAtama({ dersId: did, sinifIds: [cid], ogretmenIds: sel && sel.value ? [sel.value] : [], saat: h })); } }
+      else if (a) ST.atamalar = ST.atamalar.filter(function (y) { return y !== a; });
+      var td = el.closest('td'), d = find(ST.dersler, did); td.className = h ? 'dolu' : ''; td.style.background = h ? hexA(d.renk, 0.10) : '';
+      save(); matrisTazele(cid); return;
+    }
+    if (el.hasAttribute('data-mt')) {
+      var cid2 = el.getAttribute('data-mt'), did2 = el.getAttribute('data-md'), a2 = basitAtama(cid2, did2);
+      if (a2) a2.ogretmenIds = el.value ? [el.value] : [];
+      else if (el.value) ST.atamalar.push(yeniAtama({ dersId: did2, sinifIds: [cid2], ogretmenIds: [el.value], saat: 0 }));
+      save(); matrisTazele(cid2); return;
+    }
+    if (el.hasAttribute('data-mall')) {
+      var did3 = el.getAttribute('data-mall'), h3 = Math.max(0, parseInt(el.value, 10) || 0);
+      $$('[data-mc][data-md="' + did3 + '"]').forEach(function (inp) { inp.value = h3 || ''; inp.dispatchEvent(new Event('change', { bubbles: true })); });
+      el.value = ''; return;
+    }
+    if (el.getAttribute('data-act') === 'matsev') { UI.matSeviye = el.value; render(); return; }
+    if (el.getAttribute('data-act') === 'vsec') { UI.varlik = +el.value; UI.sel = -1; render(); return; }
+    if (el.hasAttribute('data-dag')) { if (el.getAttribute('data-dag') === 'sure') UI.dagSure = +el.value; else UI.dagMod = el.value; return; }
+    if (el.hasAttribute('data-onc')) { UI.onc[el.getAttribute('data-onc')] = +el.value; return; }
+    if (el.hasAttribute('data-y')) { Y[el.getAttribute('data-y')] = String(el.value).trim(); LS.set('dd_yayin', Y); if (UI.sayfa === 'yayin') render(); return; }
+    if (el.closest('#am') && (el.name === 'saat' || el.name === 'bloklar')) {
+      var w = $('#am'), a4 = UI._am; var tmp = { sabit: a4.sabit, saat: +$('[name="saat"]', w).value || 0, bloklar: $('[name="bloklar"]', w).value };
+      $('#sabitler').innerHTML = sabitHTML(tmp, DDCore.parseBloklar(tmp.bloklar, tmp.saat), saatler());
+    }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if ($('#modal').style.display === 'block') mkapat(); else if (UI.sel >= 0) { UI.sel = -1; render(); } } });
+  window.addEventListener('afterprint', function () { $('#yazdir').innerHTML = ''; document.body.classList.remove('yatayB'); });
+
+  /* ---------- başlat ---------- */
+  $('#kurumSec').innerHTML = KURUMLAR.map(function (k) { return '<option value="' + k.kod + '"' + (k.kod === kurum ? ' selected' : '') + '>' + k.ad + '</option>'; }).join('');
+  render();
+  var cerceve = false; try { cerceve = window.self !== window.top; } catch (e) { cerceve = true; }
+  if (cerceve && /claude|usercontent|anthropic/i.test(location.hostname + document.referrer)) {
+    var nb = document.createElement('div'); nb.className = 'onizleme';
+    nb.innerHTML = 'Önizleme modu: yazdırma, Excel/JSON indirme ve Sanal Etüt (Firebase) bağlantısı yalnızca dosyayı kendi sitenizde açtığınızda çalışır. Dağıtım ve düzenleme burada da çalışır.<button aria-label="Kapat">✕</button>';
+    nb.querySelector('button').onclick = function () { nb.remove(); };
+    nb.style.margin = '8px 12px 0'; document.querySelector('.duzen').before(nb);
+  }
+  if (!ST.dersler.length && !ST.siniflar.length) toast('Hoş geldiniz! Hızlı denemek için sağ üstten “Örnek veri”yi yükleyebilirsiniz.', 'ok');
+  window.DDApp = { state: function () { return ST; }, render: render, git: git, UI: UI, yayinVerisi: yayinVerisi };
+})();
+
+</script>
+</body>
+</html>
